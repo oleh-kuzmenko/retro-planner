@@ -4,14 +4,15 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     build-essential \
+    curl \
     libxrender1 \
     libxext6 \
     libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir streamlit groq rdkit streamlit-ketcher Pillow
-
 COPY . .
+
+RUN pip install --no-cache-dir .
 
 EXPOSE 8501
 

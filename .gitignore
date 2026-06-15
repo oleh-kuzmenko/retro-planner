@@ -1,3 +1,11 @@
 api-key
+venv
 .venv
 .idea
+__pycache__/
+.DS_Store
+.pytest_cache/
+*.py[cod]
+*.egg-info/
+build/
+dist/

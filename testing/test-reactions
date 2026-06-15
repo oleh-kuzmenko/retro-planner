@@ -1,0 +1,81 @@
+1. Aspirin
+SMILES: CC(=O)Oc1ccccc1C(=O)O
+Expected idea: acetylation of salicylic acid
+
+2. Ethyl benzoate
+SMILES: CCOC(=O)c1ccccc1
+Expected idea: esterification of benzoic acid with ethanol
+
+3. Acetaminophen / Paracetamol
+SMILES: CC(=O)Nc1ccc(O)cc1
+Expected idea: acetylation of p-aminophenol
+
+4. Benzocaine
+SMILES: CCOC(=O)c1ccc(N)cc1
+Expected idea: esterification of p-aminobenzoic acid
+
+5. Lidocaine
+SMILES: CCN(CC)CC(=O)Nc1c(C)cccc1C
+Expected idea: amide formation from chloroacetyl intermediate + diethylamine
+
+6. Ibuprofen
+SMILES: CC(C)Cc1ccc(C(C)C(=O)O)cc1
+Expected idea: arylpropionic acid synthesis route
+
+7. Phenyl acetate
+SMILES: CC(=O)Oc1ccccc1
+Expected idea: acetylation of phenol
+
+8. Methyl salicylate
+SMILES: COC(=O)c1ccccc1O
+Expected idea: esterification of salicylic acid with methanol
+
+9. Acetanilide
+SMILES: CC(=O)Nc1ccccc1
+Expected idea: acetylation of aniline
+
+10. Benzyl alcohol
+SMILES: OCc1ccccc1
+Expected idea: reduction of benzaldehyde
+
+
+
+Для кожного golden product запусти 3 режими:
+
+A. Groq без RAG
+B. RAG через product Morgan similarity
+C. Hybrid RAG: product similarity + reaction transformation similarity + reaction class similarity
+
+
+1. Correct precursor match, 0–3 бали
+0 = неправильні прекурсори
+1 = частково правильна ідея
+2 = правильний тип прекурсорів
+3 = очікуваний або хімічно еквівалентний precursor
+
+2. Correct reaction type, 0–2 бали
+0 = неправильна реакція
+1 = приблизно правильна
+2 = правильний клас реакції
+
+3. Retrieved evidence quality, 0–2 бали
+0 = retrieved reactions не пов’язані
+1 = частково схожі
+2 = явно релевантні приклади
+
+4. Metadata quality, 0–2 бали
+0 = вигадані точні умови
+1 = умови приблизні, але без джерела
+2 = умови позначені як RETRIEVED / ESTIMATED / UNKNOWN
+
+5. Explanation quality, 0–1 бал
+0 = нечітко
+1 = зрозуміле пояснення
+
+
+Максимум: 10 балів на молекулу.
+
+Підсумкова таблиця:
+Product | No RAG | Product RAG | Hybrid RAG | Best method
+Aspirin |   6    |      8      |     9      | Hybrid
+...
