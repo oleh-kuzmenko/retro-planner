@@ -9,13 +9,13 @@ RAG currently uses hybrid retrieval from two Qdrant collections:
 - `reactions_morgan` - 2048-bit Morgan fingerprints of reaction products.
 - `reaction_transforms` - 2048-bit MVP reaction transform fingerprints computed as `product_fp XOR combined_reactant_fp`.
 
-Retrieved hits are merged and reranked with product similarity, transform similarity, and inferred reaction-class similarity before being passed to Groq as context. There is also a Qdrant indexing utility under `scripts/` for loading USPTO-50K reactions into both collections.
+Retrieved hits are merged and reranked with product similarity, transform similarity, and inferred reaction-class similarity before being passed to Groq as context. There is also a Qdrant indexing utility under `scripts/` for rebuilding both collections from USPTO-50K and Open Reaction Database (ORD) reactions.
 
 ## Repository Layout
 
 - `app.py` - Thin Streamlit entrypoint that calls `retro_planner.app.main`.
 - `src/retro_planner/` - Application package with Streamlit UI, chemistry helpers, LLM providers, prompts, planning, rendering, and retrieval logic.
-- `scripts/index_uspto50k_to_qdrant.py` - CLI script for indexing USPTO-50K reactions into Qdrant.
+- `scripts/index_uspto50k_to_qdrant.py` - CLI script for recreating Qdrant collections and indexing USPTO-50K plus ORD reactions.
 - `tests/` - Unit tests for chemistry, prompts, planning, retrieval, reaction class inference, and indexer row normalization.
 - `pyproject.toml` - Packaging metadata, dependencies, optional extras, and pytest configuration.
 - `Dockerfile` - Container for running the Streamlit app.
@@ -34,7 +34,7 @@ source venv/bin/activate
 pip install -e .
 ```
 
-The indexing script has extra dependencies:
+The indexing script has extra dependencies, including Hugging Face dataset/download helpers and `ord-schema` for ORD protobuf parsing:
 
 ```bash
 pip install -e ".[indexing]"
@@ -75,23 +75,27 @@ Start Qdrant for indexing/search experiments:
 docker compose up -d qdrant
 ```
 
-Index a small sample first:
+Index a small sample from the default USPTO-50K + ORD sources first:
 
 ```bash
 python scripts/index_uspto50k_to_qdrant.py --limit 100 --recreate
 ```
 
-Index the configured dataset into the default `reactions_morgan` and `reaction_transforms` collections:
+Index up to 500,000 reactions from the configured sources into the default `reactions_morgan` and `reaction_transforms` collections:
 
 ```bash
 python scripts/index_uspto50k_to_qdrant.py --recreate
 ```
+
+The indexer always drops and recreates both collections; `--recreate` is accepted for backwards compatibility. Use `--limit 0` for all available reactions, or `--sources uspto`, `--sources ord`, `--ord-data-dir /path/to/ord-data`, and `--ord-allow-pattern "data/4d/*.pb.gz"` for narrower development runs.
 
 ## Development Guidance
 
 - Keep changes focused. This project is currently a compact prototype, so prefer clear functions over broad abstractions.
 - Preserve the user-facing Streamlit workflow unless the requested task explicitly changes it: draw or enter molecule, validate SMILES, optionally retrieve RAG context, call Groq, render routes and step images.
 - RAG mode searches `reactions_morgan` and `reaction_transforms` with 2048-bit Morgan-based vectors. Keep vector size and fingerprint generation aligned between `src/retro_planner/chemistry.py` and `scripts/index_uspto50k_to_qdrant.py`.
+- The indexer writes a shared payload schema with `product_smiles`, `reactant_smiles`, `reactants_smiles`, `conditions`, and `source`. Preserve legacy fields such as `solvent`, `temperature_celsius`, `yield_percent`, and `reactants_smiles` because retrieval and prompts still read them.
+- USPTO-50K records generally have unknown conditions. ORD records should extract available solvents, temperature, catalysts, and yields from protobuf messages, while tolerating incomplete or inconsistent records.
 - Treat model output as untrusted. Validate/clean SMILES with RDKit before rendering or using returned reactants.
 - When changing Groq prompts, keep the JSON-only contract intact because `get_retrosynthesis_plan` and `call_groq_with_rag` parse responses with `json.loads`.
 - Preserve the current multi-route schema where possible: `routes`, each with `summary`, `steps`, optional `objective_fit`/`evidence_reaction_ids`, plus `overall_recommendation`.
@@ -123,11 +127,11 @@ docker compose up -d qdrant
 python scripts/index_uspto50k_to_qdrant.py --limit 10 --recreate
 ```
 
-The full USPTO-50K load requires network access to Hugging Face and a running Qdrant instance.
+The uncapped USPTO-50K + ORD load requires network access to Hugging Face and a running Qdrant instance. Use `--limit`, ORD allow patterns, or a local ORD data directory for smaller, repeatable development checks.
 
 ## Style
 
 - Use plain Python with type hints where they clarify function contracts.
 - Keep Streamlit labels and messages concise and practical for chemists.
-- Prefer explicit error handling around external services: Groq, Hugging Face datasets, Qdrant, and RDKit parsing.
+- Prefer explicit error handling around external services and data parsers: Groq, Hugging Face datasets/downloads, Qdrant, ORD protobuf parsing, and RDKit parsing.
 - Keep files ASCII unless there is a clear reason to preserve existing non-ASCII UI copy.

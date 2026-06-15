@@ -206,7 +206,7 @@ def hybrid_retrieve_reactions_for_smiles(
         if resolved.transform_collection in error_text and "doesn't exist" in error_text:
             warnings.append(
                 "Hybrid transform retrieval is not indexed yet, so the app is using molecule retrieval only. "
-                "Run `python scripts/index_uspto50k_to_qdrant.py --recreate` to create `reaction_transforms`."
+                "Run `python scripts/index_uspto50k_to_qdrant.py --recreate` to rebuild the Qdrant RAG collections."
             )
         else:
             warnings.append(

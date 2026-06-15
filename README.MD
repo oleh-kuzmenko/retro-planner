@@ -82,7 +82,7 @@ Linux users: if RDKit image rendering fails because of missing GUI libraries, in
 sudo apt-get install libxrender1 libxext6 libgl1
 ```
 
-Install the extra indexing dependencies if you plan to load USPTO-50K into Qdrant:
+Install the extra indexing dependencies if you plan to load USPTO-50K and ORD reactions into Qdrant:
 
 ```bash
 pip install -e ".[indexing]"
@@ -108,19 +108,51 @@ docker compose up -d qdrant
 
 ### 4. Index Reaction Examples for RAG
 
-For a small smoke test:
+The indexer rebuilds the Qdrant RAG database from scratch. It drops and recreates both vector collections before loading data, so run it only when you are ready to replace the existing local index.
+
+For a small smoke test against both default sources:
 
 ```bash
 python scripts/index_uspto50k_to_qdrant.py --limit 100 --recreate
 ```
 
-For the full configured USPTO-50K dataset:
+By default, the configured USPTO-50K + ORD run indexes up to 500,000 reactions total:
 
 ```bash
 python scripts/index_uspto50k_to_qdrant.py --recreate
 ```
 
-The indexer downloads `pingzhili/uspto-50k` from Hugging Face by default and creates two Qdrant collections:
+To process all available reactions instead of using the default cap:
+
+```bash
+python scripts/index_uspto50k_to_qdrant.py --limit 0 --recreate
+```
+
+The `--recreate` flag is still accepted for older commands, but collections are now always recreated. The indexer downloads `pingzhili/uspto-50k` through `datasets` and, unless `--ord-data-dir` is provided, downloads ORD protobuf files from the Hugging Face mirror `Open-Reaction-Database/ord-data`.
+
+To index only one source:
+
+```bash
+python scripts/index_uspto50k_to_qdrant.py --sources uspto --limit 100
+python scripts/index_uspto50k_to_qdrant.py --sources ord --limit 100
+```
+
+To use a local ORD checkout or a single ORD protobuf file:
+
+```bash
+python scripts/index_uspto50k_to_qdrant.py --sources ord --ord-data-dir /path/to/ord-data
+python scripts/index_uspto50k_to_qdrant.py --sources ord --ord-data-dir /path/to/sample.pb.gz
+```
+
+To download only a subset of ORD from Hugging Face:
+
+```bash
+python scripts/index_uspto50k_to_qdrant.py --sources ord --ord-allow-pattern "data/4d/*.pb.gz"
+```
+
+The indexer writes a shared payload schema with `product_smiles`, `reactant_smiles`, `reactants_smiles`, `conditions`, and `source`. USPTO records have empty/unknown conditions. ORD records attempt to include solvents, temperature in Celsius, catalysts, and yield when present in the source protobuf.
+
+It creates two Qdrant collections:
 
 * `reactions_morgan`: product Morgan fingerprints for molecule similarity.
 * `reaction_transforms`: MVP reaction fingerprints computed as `product_fp XOR reactant_fp`.
@@ -219,8 +251,8 @@ The app also shows a score breakdown for the selected context reactions:
 * **AI Hallucinations**: The model is a text predictor, not a physics engine. Occasionally, it may suggest atoms appearing out of nowhere or disappearing. Always verify the atom count.
 * **Complex Stereochemistry**: The visualization tool may flatten specific stereochemical centers (R/S) depending on the complexity.
 * **Route Depth**: Routes are limited to 1-5 linear steps, not a full branching synthesis tree.
-* **RAG Evidence**: USPTO-50K examples are useful context, but retrieved reactions may be similar rather than directly applicable.
-* **Conditions Metadata**: The default USPTO-50K index does not include rich experimental conditions, so model-proposed conditions should be treated as estimates unless independently verified.
+* **RAG Evidence**: USPTO-50K and ORD examples are useful context, but retrieved reactions may be similar rather than directly applicable.
+* **Conditions Metadata**: USPTO-50K records usually lack rich experimental conditions. ORD can add solvents, temperature, catalysts, and yields when present, but model-proposed conditions should still be independently verified.
 
 ## Development Checks
 
@@ -237,5 +269,7 @@ For indexing changes, smoke test against a small limit first:
 docker compose up -d qdrant
 python scripts/index_uspto50k_to_qdrant.py --limit 10 --recreate
 ```
+
+The uncapped USPTO-50K + ORD load requires network access to Hugging Face and a running Qdrant instance. Use `--limit`, `--ord-allow-pattern`, or `--ord-data-dir` when you want a smaller, repeatable development run.
 
 `testing/test-reactions` contains manual golden-product prompts and scoring notes for comparing no-RAG, product-RAG, and hybrid-RAG behavior.

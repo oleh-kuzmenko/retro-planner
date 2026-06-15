@@ -24,6 +24,8 @@ dev = [
 ]
 indexing = [
     "datasets",
+    "huggingface_hub",
+    "ord-schema",
     "tqdm",
 ]
 
