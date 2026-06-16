@@ -19,8 +19,8 @@ class GenerationRequest:
     llm_provider: LLMProvider
     model: str
     temperature: float
-    route_count: int
     optimization_objective: str = "BALANCED"
+    route_count: int = 1
     reactions: list[dict] | None = None
 
 
@@ -31,76 +31,80 @@ class PlanResult:
     errors: list[str]
 
 
-def _route_steps(route: dict) -> list[dict]:
-    steps = route.get("steps", [])
-    if not isinstance(steps, list):
-        return []
-    return [step for step in steps if isinstance(step, dict)][:5]
-
-
-def route_final_product(route: dict) -> str | None:
-    steps = _route_steps(route)
-    if not steps:
-        return None
-
-    raw_product_smiles = steps[-1].get("product_smiles")
+def reaction_product(result: dict) -> str | None:
+    raw_product_smiles = result.get("product_smiles")
     if not raw_product_smiles:
         return None
     return canonicalize_smiles(str(raw_product_smiles))
 
 
-def route_final_product_matches_target(route: dict, canonical_target: str) -> bool:
-    return route_final_product(route) == canonical_target
+def reaction_product_matches_target(result: dict, canonical_target: str) -> bool:
+    return reaction_product(result) == canonical_target
 
 
-def off_target_route_summaries(
+def validate_target_matching_reaction(
     result: dict,
     canonical_target: str,
-) -> list[dict]:
+) -> tuple[dict | None, str | None]:
+    product = reaction_product(result)
+    if not product:
+        return None, "The LLM response did not include a valid product_smiles value."
+    if product != canonical_target:
+        return None, (
+            "The LLM produced a reaction whose product does not match the target molecule."
+        )
+    return result, None
+
+
+def _final_step(route: dict) -> dict | None:
+    steps = route.get("steps")
+    if isinstance(steps, list):
+        valid_steps = [step for step in steps if isinstance(step, dict)]
+        if valid_steps:
+            return valid_steps[-1]
+    if route.get("product_smiles"):
+        return route
+    return None
+
+
+def validate_target_matching_plan(
+    result: dict,
+    canonical_target: str,
+    route_count: int,
+) -> tuple[dict | None, list[str], list[str]]:
+    bounded_count = max(1, min(int(route_count), 5))
     routes = result.get("routes")
     if not isinstance(routes, list):
-        return []
+        valid_result, error = validate_target_matching_reaction(result, canonical_target)
+        return valid_result, [], [error] if error else []
 
-    summaries = []
-    for idx, route in enumerate(routes, start=1):
+    valid_routes = []
+    warnings = []
+    for index, route in enumerate(routes[:bounded_count], start=1):
         if not isinstance(route, dict):
+            warnings.append(f"Route {index} was skipped because it was not an object.")
             continue
-        final_product = route_final_product(route)
-        if final_product != canonical_target:
-            summaries.append({
-                "route_index": idx,
-                "route_name": route.get("route_name"),
-                "strategy": route.get("strategy"),
-                "final_product_smiles": final_product,
-                "target_smiles": canonical_target,
-            })
-    return summaries
 
+        final_step = _final_step(route)
+        if not final_step:
+            warnings.append(f"Route {index} was skipped because it has no usable steps.")
+            continue
 
-def filter_target_matching_routes(
-    result: dict,
-    canonical_target: str,
-) -> tuple[dict | None, int]:
-    routes = result.get("routes")
-    if not isinstance(routes, list):
-        return result, 0
+        _, error = validate_target_matching_reaction(final_step, canonical_target)
+        if error:
+            warnings.append(f"Route {index} was skipped: {error}")
+            continue
 
-    route_dicts = [route for route in routes if isinstance(route, dict)]
-    valid_routes = [
-        route
-        for route in route_dicts
-        if route_final_product_matches_target(route, canonical_target)
-    ]
-    removed_count = len(route_dicts) - len(valid_routes)
+        valid_routes.append(route)
 
-    if not route_dicts or removed_count == 0:
-        return result, 0
     if not valid_routes:
-        return None, removed_count
+        return None, warnings, [
+            "The LLM did not produce any route whose final product matches the target molecule."
+        ]
 
-    filtered_result = dict(result)
-    filtered_result["routes"] = valid_routes
-    return filtered_result, removed_count
+    valid_result = dict(result)
+    valid_result["routes"] = valid_routes
+    return valid_result, warnings, []
 
 
 def _parse_json_or_text(content: str) -> dict | str:
@@ -114,7 +118,10 @@ def get_retrosynthesis_plan(request: GenerationRequest) -> PlanResult:
     try:
         content = request.llm_provider.generate(
             messages=[
-                {"role": "system", "content": build_no_rag_system_prompt()},
+                {
+                    "role": "system",
+                    "content": build_no_rag_system_prompt(request.route_count),
+                },
                 {
                     "role": "user",
                     "content": build_no_rag_user_prompt(
@@ -131,35 +138,26 @@ def get_retrosynthesis_plan(request: GenerationRequest) -> PlanResult:
         if not isinstance(parsed, dict):
             return PlanResult(result=parsed, warnings=[], errors=[])
 
-        filtered_result, removed_count = filter_target_matching_routes(
+        valid_result, warnings, errors = validate_target_matching_plan(
             parsed,
             request.target_smiles,
+            request.route_count,
         )
-        warnings = []
-        errors = []
-        if removed_count:
-            warnings.append(
-                "Some generated routes were removed because their final product did not match the target."
-            )
-        if filtered_result is None:
-            errors.append(
-                "The LLM did not produce any routes whose final product matches the target molecule."
-            )
-        return PlanResult(result=filtered_result, warnings=warnings, errors=errors)
+        return PlanResult(
+            result=valid_result,
+            warnings=warnings,
+            errors=errors,
+        )
     except Exception as exc:
         return PlanResult(result=None, warnings=[], errors=[f"API Error: {exc}"])
 
 
-def repair_off_target_routes_with_llm(
+def repair_off_target_reaction_with_llm(
     request: GenerationRequest,
     original_result: dict,
 ) -> dict | str | None:
     reactions = request.reactions or []
-    off_target_routes = off_target_route_summaries(
-        original_result,
-        request.target_smiles,
-    )
-    if not off_target_routes:
+    if reaction_product_matches_target(original_result, request.target_smiles):
         return original_result
 
     content = request.llm_provider.generate(
@@ -171,7 +169,6 @@ def repair_off_target_routes_with_llm(
                     target_smiles=request.target_smiles,
                     reactions=reactions,
                     original_result=original_result,
-                    off_target_routes=off_target_routes,
                     optimization_objective=request.optimization_objective,
                     route_count=request.route_count,
                 ),
@@ -189,7 +186,10 @@ def call_llm_with_rag(request: GenerationRequest) -> PlanResult:
     try:
         content = request.llm_provider.generate(
             messages=[
-                {"role": "system", "content": build_rag_system_prompt()},
+                {
+                    "role": "system",
+                    "content": build_rag_system_prompt(request.route_count),
+                },
                 {
                     "role": "user",
                     "content": build_rag_prompt(
@@ -208,41 +208,33 @@ def call_llm_with_rag(request: GenerationRequest) -> PlanResult:
         if not isinstance(parsed, dict):
             return PlanResult(result=parsed, warnings=[], errors=[])
 
-        filtered_result, removed_count = filter_target_matching_routes(
+        valid_result, warnings, errors = validate_target_matching_plan(
             parsed,
             request.target_smiles,
+            request.route_count,
         )
-        if removed_count:
+        repair_warning = None
+        if errors:
             try:
-                repair_result = repair_off_target_routes_with_llm(request, parsed)
+                repair_result = repair_off_target_reaction_with_llm(request, parsed)
             except Exception as exc:
                 repair_result = parsed
-                repair_warning = f"Could not repair off-target routes: {exc}"
+                repair_warning = f"Could not repair off-target reaction: {exc}"
             else:
                 repair_warning = None
 
             if isinstance(repair_result, dict):
-                filtered_result, removed_count = filter_target_matching_routes(
+                valid_result, repair_warnings, errors = validate_target_matching_plan(
                     repair_result,
                     request.target_smiles,
+                    request.route_count,
                 )
+                warnings.extend(repair_warnings)
             elif isinstance(repair_result, str):
                 return PlanResult(result=repair_result, warnings=[], errors=[])
-        else:
-            repair_warning = None
 
-        warnings = []
-        errors = []
         if repair_warning:
             warnings.append(repair_warning)
-        if removed_count:
-            warnings.append(
-                "Some generated routes were removed because their final product did not match the target."
-            )
-        if filtered_result is None:
-            errors.append(
-                "The LLM did not produce any routes whose final product matches the target molecule."
-            )
-        return PlanResult(result=filtered_result, warnings=warnings, errors=errors)
+        return PlanResult(result=valid_result, warnings=warnings, errors=errors)
     except Exception as exc:
         return PlanResult(result=None, warnings=[], errors=[f"LLM API failure: {exc}"])

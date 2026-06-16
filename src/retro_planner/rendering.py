@@ -31,13 +31,14 @@ def generate_reaction_image(reactants_smiles, product_smiles):
             for product in product_values
             if product
         ]
+        valid_reactants = [reactant for reactant in reactants if reactant]
         valid_products = [product for product in products if product]
 
-        if not all(reactants) or not valid_products:
+        if not valid_reactants or not valid_products:
             return None
 
         reaction = AllChem.ChemicalReaction()
-        for reactant in reactants:
+        for reactant in valid_reactants:
             reaction.AddReactantTemplate(reactant)
         for product in valid_products:
             reaction.AddProductTemplate(product)

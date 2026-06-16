@@ -16,12 +16,10 @@ Retrieved hits are merged and reranked with product similarity, transform simila
 - `app.py` - Thin Streamlit entrypoint that calls `retro_planner.app.main`.
 - `src/retro_planner/` - Application package with Streamlit UI, chemistry helpers, LLM providers, prompts, planning, rendering, and retrieval logic.
 - `scripts/index_uspto50k_to_qdrant.py` - CLI script for recreating Qdrant collections and indexing USPTO-50K plus ORD reactions.
-- `tests/` - Unit tests for chemistry, prompts, planning, retrieval, reaction class inference, and indexer row normalization.
-- `pyproject.toml` - Packaging metadata, dependencies, optional extras, and pytest configuration.
+- `pyproject.toml` - Packaging metadata, dependencies, and optional indexing extras.
 - `Dockerfile` - Container for running the Streamlit app.
 - `docker-compose.yml` - Qdrant service for local vector search work.
 - `README.MD` - User setup and app usage instructions.
-- `testing/test-reactions` - Manual golden-product evaluation notes for no-RAG, product-RAG, and hybrid-RAG comparisons.
 - `venv/` - Local virtual environment may exist in the workspace; do not edit or rely on committing it.
 
 ## Setup
@@ -38,12 +36,6 @@ The indexing script has extra dependencies, including Hugging Face dataset/downl
 
 ```bash
 pip install -e ".[indexing]"
-```
-
-Install test dependencies for development:
-
-```bash
-pip install -e ".[dev]"
 ```
 
 Do not hard-code API keys. The app asks for the Groq API key in the Streamlit sidebar and also accepts `GROQ_API_KEY` from the environment as the default field value.
@@ -105,11 +97,10 @@ The indexer always drops and recreates both collections; `--recreate` is accepte
 
 ## Verification
 
-For code changes, run syntax checks and the unit test suite:
+For code changes, run syntax checks:
 
 ```bash
 python -m py_compile app.py scripts/index_uspto50k_to_qdrant.py src/retro_planner/*.py
-python -m pytest
 ```
 
 For UI changes, run Streamlit and manually verify:

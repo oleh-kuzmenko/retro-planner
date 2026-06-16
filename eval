@@ -43,8 +43,7 @@ Expected idea: reduction of benzaldehyde
 Для кожного golden product запусти 3 режими:
 
 A. Groq без RAG
-B. RAG через product Morgan similarity
-C. Hybrid RAG: product similarity + reaction transformation similarity + reaction class similarity
+B. Hybrid RAG: product similarity + reaction transformation similarity + reaction class similarity
 
 
 1. Correct precursor match, 0–3 бали

@@ -1,6 +1,6 @@
 # 🧪 AI Retro-Synthesis Planner
 
-An AI-powered Streamlit tool that suggests retrosynthetic route options for organic molecules. It uses a pluggable LLM provider interface with Groq-hosted Llama models as the current implementation, RDKit for molecule validation/visualization, Ketcher for structure drawing, and optional Qdrant RAG for reaction-example context.
+An AI-powered Streamlit tool that suggests one retrosynthetic reaction for making an organic target molecule. It uses a pluggable LLM provider interface with Groq-hosted Llama models as the current implementation, RDKit for molecule validation/visualization, Ketcher for structure drawing, and optional Qdrant RAG for reaction-example context.
 
 ## Prerequisites
 
@@ -88,18 +88,6 @@ Install the extra indexing dependencies if you plan to load USPTO-50K and ORD re
 pip install -e ".[indexing]"
 ```
 
-Install the test dependency for local development:
-
-```bash
-pip install -e ".[dev]"
-```
-
-To install both development and indexing extras in one step:
-
-```bash
-pip install -e ".[dev,indexing]"
-```
-
 ### 3. Start Qdrant
 
 ```bash
@@ -179,7 +167,6 @@ Before you can analyze any molecules, you must connect the application to an LLM
 3.  **Adjust Retrieval and Generation (Optional)**:
     * Toggle **RAG enabled** to include or skip Qdrant retrieval.
     * Use **Top-K** to control how many retrieved reaction examples are passed as context.
-    * Use **Route options** to request 1-5 distinct routes.
     * Pick an **Optimization objective**: balanced, cheapest, fastest, or highest yield.
     * Edit the provider model field if you want to use a different compatible model.
 4.  **Adjust Creativity (Optional)**:
@@ -212,25 +199,22 @@ Once your target molecule is ready:
     * In RAG mode, search Qdrant for similar reactions in `reactions_morgan` and `reaction_transforms`.
     * Merge and rerank retrieved reactions with hybrid product, transformation, and reaction-class scores.
     * Send hybrid-ranked reaction context and the target structure to the selected LLM provider.
-    * Request several route options, each with 1-5 forward synthesis steps.
+    * Request one practical forward synthesis reaction whose product is the target.
 
 ---
 
 ## 4. Interpreting Results
 
-If the analysis is successful, you will see route options with the following:
+If the analysis is successful, you will see one proposed reaction with the following:
 
-### ⚗️ Route Summaries
-Each route includes a short strategy plus difficulty, cleanliness, cost, expected overall yield, major risks, and best use case.
-
-### 🧪 Step Conditions
-Each step includes reactants, product, stoichiometry, reagents, solvent, temperature, time, atmosphere, workup or purification, expected yield, and other important conditions.
+### 🧪 Reaction Conditions
+The reaction includes reactants, product, stoichiometry, reagents, solvent, temperature, time, atmosphere, workup or purification, expected yield, and other important conditions.
 
 ### 🧠 Chemist's Reasoning
-Each step includes a brief explanation of why the transformation is plausible. Each route also notes where it is cheapest, cleanest, easiest, or most useful.
+The reaction includes a brief explanation of why the transformation is plausible and how it fits the selected optimization objective.
 
 ### 🖼️ Reaction Visualizer
-The app will generate chemical equation images for steps where RDKit can parse the returned SMILES:
+The app will generate a chemical equation image when RDKit can parse the returned SMILES:
 `Reactants -> Product`
 
 When RAG mode is enabled, retrieved Qdrant reactions are primarily used as model context. The app shows score metadata for transparency, but not full retrieved reaction cards.
@@ -250,18 +234,25 @@ The app also shows a score breakdown for the selected context reactions:
 
 * **AI Hallucinations**: The model is a text predictor, not a physics engine. Occasionally, it may suggest atoms appearing out of nowhere or disappearing. Always verify the atom count.
 * **Complex Stereochemistry**: The visualization tool may flatten specific stereochemical centers (R/S) depending on the complexity.
-* **Route Depth**: Routes are limited to 1-5 linear steps, not a full branching synthesis tree.
+* **Single-Reaction Output**: The app requests one forward reaction to the target, not a full multi-step synthesis plan.
 * **RAG Evidence**: USPTO-50K and ORD examples are useful context, but retrieved reactions may be similar rather than directly applicable.
 * **Conditions Metadata**: USPTO-50K records usually lack rich experimental conditions. ORD can add solvents, temperature, catalysts, and yields when present, but model-proposed conditions should still be independently verified.
 
 ## Development Checks
 
-For code changes, run syntax checks and the unit test suite:
+For code changes, run syntax checks:
 
 ```bash
 python -m py_compile app.py scripts/index_uspto50k_to_qdrant.py src/retro_planner/*.py
-python -m pytest
 ```
+
+For UI changes, run Streamlit and manually verify:
+
+* default aspirin molecule validates;
+* missing Groq API key shows a warning;
+* invalid structures show an error instead of calling the API;
+* successful model responses render one reaction, condition tables, text details, and either a reaction image or clear warnings;
+* RAG mode can fall back gracefully if Qdrant or `reaction_transforms` is unavailable.
 
 For indexing changes, smoke test against a small limit first:
 
@@ -271,5 +262,3 @@ python scripts/index_uspto50k_to_qdrant.py --limit 10 --recreate
 ```
 
 The uncapped USPTO-50K + ORD load requires network access to Hugging Face and a running Qdrant instance. Use `--limit`, `--ord-allow-pattern`, or `--ord-data-dir` when you want a smaller, repeatable development run.
-
-`testing/test-reactions` contains manual golden-product prompts and scoring notes for comparing no-RAG, product-RAG, and hybrid-RAG behavior.

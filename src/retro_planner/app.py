@@ -63,7 +63,7 @@ def configure_page() -> None:
     """, unsafe_allow_html=True)
     st.title("🧪 AI Retro-Synthesis Planner")
     st.markdown("""
-**Instruction:** Draw or paste a target molecule below. The AI will propose several retrosynthetic routes with practical reaction conditions.
+**Instruction:** Draw or paste a target molecule below. The AI will propose alternative ways to make it with practical reaction conditions.
 """)
 
 
@@ -179,8 +179,8 @@ def generate_plan(
         llm_provider=provider,
         model=settings.model,
         temperature=settings.temperature,
-        route_count=settings.route_count,
         optimization_objective=settings.optimization_objective,
+        route_count=settings.route_count,
         reactions=reactions,
     )
     with st.spinner(f"Generating route options with {settings.provider_label}..."):
@@ -195,6 +195,7 @@ def generate_plan(
         "canonical_input": canonical_input,
         "provider_key": settings.provider_key,
         "model": settings.model,
+        "route_count": settings.route_count,
         "rag_enabled": settings.rag_enabled,
         "reactions": reactions,
         "result": plan_result.result,
@@ -210,6 +211,7 @@ def render_latest_run(canonical_input: str | None, settings: SidebarSettings) ->
         and latest_run.get("canonical_input") == canonical_input
         and latest_run.get("provider_key") == settings.provider_key
         and latest_run.get("model") == settings.model
+        and latest_run.get("route_count") == settings.route_count
     ):
         return
 

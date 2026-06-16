@@ -1,7 +1,7 @@
 from typing import Optional
 
 import numpy as np
-from rdkit import Chem
+from rdkit import Chem, rdBase
 from rdkit.Chem import rdFingerprintGenerator
 
 from retro_planner.config import VECTOR_SIZE
@@ -20,18 +20,57 @@ SMILES_ABBREVIATIONS = {
     "Ts": "S(=O)(=O)c1ccc(C)cc1",
 }
 
+INORGANIC_FORMULA_SMILES = {
+    "Br2": "[Br][Br]",
+    "Cl2": "[Cl][Cl]",
+    "F2": "[F][F]",
+    "H2": "[H][H]",
+    "I2": "[I][I]",
+    "KOH": "[K+].[OH-]",
+    "LiOH": "[Li+].[OH-]",
+    "NaOH": "[Na+].[OH-]",
+    "FS(O)(=O)Na": "[Na+].[O-]S(=O)(=O)F",
+    "NaSO2F": "[Na+].[O-]S(=O)(=O)F",
+    "PPh3": "P(c1ccccc1)(c1ccccc1)c1ccccc1",
+    "Pd(PPh3)4": (
+        "[Pd]."
+        "P(c1ccccc1)(c1ccccc1)c1ccccc1."
+        "P(c1ccccc1)(c1ccccc1)c1ccccc1."
+        "P(c1ccccc1)(c1ccccc1)c1ccccc1."
+        "P(c1ccccc1)(c1ccccc1)c1ccccc1"
+    ),
+}
+
+
+def normalize_formula_smiles(smiles: str | None) -> str | None:
+    """Normalize supported formula-style reagent names to parseable SMILES."""
+    if not smiles:
+        return None
+
+    normalized = str(smiles).strip()
+    return INORGANIC_FORMULA_SMILES.get(normalized, normalized)
+
+
+def is_known_formula_smiles(smiles: str | None) -> bool:
+    if not smiles:
+        return False
+    return str(smiles).strip() in INORGANIC_FORMULA_SMILES
+
 
 def canonicalize_smiles(smiles: str | None) -> Optional[str]:
     """Return canonical RDKit SMILES after a small Ketcher abbreviation cleanup."""
     if not smiles:
         return None
 
-    normalized = str(smiles).strip()
+    normalized = normalize_formula_smiles(smiles)
+    if not normalized:
+        return None
     for abbreviation, replacement in SMILES_ABBREVIATIONS.items():
         normalized = normalized.replace(abbreviation, replacement)
 
     try:
-        mol = Chem.MolFromSmiles(normalized)
+        with rdBase.BlockLogs():
+            mol = Chem.MolFromSmiles(normalized)
     except Exception:
         return None
 
@@ -45,7 +84,12 @@ def clean_and_canonicalize(smiles: str | None) -> Optional[str]:
 
 
 def morgan_array(smiles: str) -> Optional[np.ndarray]:
-    mol = Chem.MolFromSmiles(smiles)
+    normalized = normalize_formula_smiles(smiles)
+    if not normalized:
+        return None
+
+    with rdBase.BlockLogs():
+        mol = Chem.MolFromSmiles(normalized)
     if mol is None:
         return None
 
@@ -124,7 +168,12 @@ def mol_from_smiles_without_atom_maps(smiles: str | None):
     if not smiles:
         return None
 
-    mol = Chem.MolFromSmiles(smiles)
+    normalized = normalize_formula_smiles(smiles)
+    if not normalized:
+        return None
+
+    with rdBase.BlockLogs():
+        mol = Chem.MolFromSmiles(normalized)
     if mol is None:
         return None
 
