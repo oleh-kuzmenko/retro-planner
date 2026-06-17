@@ -75,6 +75,6 @@ B. Hybrid RAG: product similarity + reaction transformation similarity + reactio
 Максимум: 10 балів на молекулу.
 
 Підсумкова таблиця:
-Product | No RAG | Product RAG | Hybrid RAG | Best method
-Aspirin |   6    |      8      |     9      | Hybrid
+Product | No RAG | Hybrid RAG | Best method
+Aspirin |   6    |     9      | Hybrid
 ...

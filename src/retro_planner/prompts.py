@@ -41,7 +41,7 @@ ROUTES_JSON_SCHEMA = """
               "workup_purification": "Quench, extraction, chromatography, crystallization, etc.",
               "expected_yield_percent": "estimated percent or range with percent sign",
               "important_conditions": "Other important operational details",
-              "rationale": "Why this reaction forms the step product",
+              "rationale": "Why this single reaction forms the target product",
               "objective_fit": "How this route addresses the selected optimization objective without contradicting the expected yield or other routes",
               "evidence_reaction_ids": ["reaction_id_1", "reaction_id_2"]
             }
@@ -63,6 +63,13 @@ def route_count_instruction(route_count: int) -> str:
     )
 
 
+def one_step_route_instruction() -> str:
+    return (
+        "Each route must contain exactly one reaction step in its steps list. "
+        "Do not propose intermediates, precursor syntheses, or multi-step sequences."
+    )
+
+
 def build_no_rag_system_prompt(route_count: int = 1) -> str:
     return f"""
     You are an expert Organic Chemist specializing in Retrosynthesis.
@@ -75,13 +82,13 @@ def build_no_rag_system_prompt(route_count: int = 1) -> str:
     4. Do not output Markdown formatting like ```json.
     5. Use literature-like reaction conditions. If exact values are uncertain, provide realistic approximate ranges.
     6. {route_count_instruction(route_count)}
-    7. The final step product_smiles in every route MUST be the target molecule SMILES after canonicalization.
-    8. Each route must be genuinely distinct: different disconnection, starting material class, or key reaction type.
-    9. Avoid ambiguous reagent descriptions: if SMILES CO is methanol, call it methanol or MeOH in conditions; only use carbon monoxide when the intended reagent is truly carbon monoxide.
-    10. The named or descriptive reaction must include the catalysts, activators, bases, acids, or other reagents that make the stated chemistry plausible.
-    11. Temperature values must include units or clear descriptors such as room temperature, reflux, or ambient.
-    12. Do not write generic rationales; explain the target-specific bond formation and functional group compatibility.
-    13. Prefer one-step routes when plausible, but use multiple steps if that makes a route more realistic.
+    7. {one_step_route_instruction()}
+    8. The only step product_smiles in every route MUST be the target molecule SMILES after canonicalization.
+    9. Each route must be genuinely distinct: different disconnection, starting material class, or key reaction type.
+    10. Avoid ambiguous reagent descriptions: if SMILES CO is methanol, call it methanol or MeOH in conditions; only use carbon monoxide when the intended reagent is truly carbon monoxide.
+    11. The named or descriptive reaction must include the catalysts, activators, bases, acids, or other reagents that make the stated chemistry plausible.
+    12. Temperature values must include units or clear descriptors such as room temperature, reflux, or ambient.
+    13. Do not write generic rationales; explain the target-specific bond formation and functional group compatibility.
     14. If optimizing for yield, do not claim a route has the highest yield unless its expected_yield_percent is equal to or higher than the other returned routes.
     15. The overall_recommendation must name one of the returned routes and must not contradict any route objective_fit text.
 
@@ -93,7 +100,8 @@ def build_no_rag_system_prompt(route_count: int = 1) -> str:
 def build_no_rag_user_prompt(target_smiles: str, route_count: int = 1) -> str:
     return (
         f"Target Molecule SMILES: {target_smiles}\n"
-        "Every route's final step product_smiles must be this exact target molecule.\n"
+        "Every route must contain exactly one reaction step.\n"
+        "Every route's only step product_smiles must be this exact target molecule.\n"
         f"{route_count_instruction(route_count)}"
     )
 
@@ -104,7 +112,8 @@ def build_rag_system_prompt(route_count: int = 1) -> str:
     Use retrieved reaction examples as context for proposing grounded alternative routes.
     Retrieved examples are analogies and evidence, not reactions to copy blindly.
     If a retrieved example makes a different product, adapt the reaction logic to the target molecule.
-    The final step product_smiles in every route MUST be the target molecule SMILES after canonicalization.
+    {one_step_route_instruction()}
+    The only step product_smiles in every route MUST be the target molecule SMILES after canonicalization.
     The rationale must explain target-specific adaptation when retrieved evidence is used.
     {route_count_instruction(route_count)}
     Each route must be genuinely distinct: different disconnection, starting material class, or key reaction type.
@@ -112,7 +121,6 @@ def build_rag_system_prompt(route_count: int = 1) -> str:
     The named or descriptive reaction must include the catalysts, activators, bases, acids, or other reagents that make the chemistry plausible.
     Temperature values must include units or clear descriptors such as room temperature, reflux, or ambient.
     Do not write generic rationales like "adapted from Example 1"; explain the target-specific bond formation and functional group compatibility.
-    Prefer one-step routes when plausible, but use multiple steps if that makes a route more realistic.
     If optimizing for yield, do not claim a route has the highest yield unless its expected_yield_percent is equal to or higher than the other returned routes.
     The overall_recommendation must name one of the returned routes and must not contradict any route objective_fit text.
 
@@ -173,7 +181,8 @@ Use the hybrid-retrieved examples as evidence, prioritizing reactions with highe
 Retrieved product_smiles values are example products only. They are not the requested target unless they exactly match the target molecule SMILES above.
 {route_count_instruction(route_count)}
 Generate practical forward route options from simpler commercially available or commonly available reactants to the target.
-Every route's final step must have product_smiles equal to the target molecule SMILES above after canonicalization.
+{one_step_route_instruction()}
+Every route's only step must have product_smiles equal to the target molecule SMILES above after canonicalization.
 Each route must include reactants, product, reaction name, stoichiometric proportions/equivalents, solvent, temperature, time, catalyst or reagent loading, atmosphere, workup or purification, expected yield, and any other important organic reaction conditions.
 The rationale must explain how the chemistry applies to the target. If a retrieved reaction is used, explain how it was adapted rather than copied.
 If a reactant SMILES is CO, describe it as methanol/MeOH in stoichiometry or conditions; do not let it be confused with carbon monoxide.
@@ -190,10 +199,11 @@ def build_repair_system_prompt() -> str:
     return """
     You are an expert organic chemist correcting retrosynthesis JSON.
     Return valid JSON only, without Markdown fences.
-    The previous answer's product_smiles was missing or not the requested target.
-    Replace it with one chemically plausible reaction to the requested target.
+    The previous answer had missing products, off-target products, or multi-step routes.
+    Replace it with the requested number of distinct one-step routes to the requested target.
     Retrieved reactions are evidence only. Do not copy a retrieved reaction if it makes a different product.
-    product_smiles MUST be the target molecule SMILES after canonicalization.
+    Each route must contain exactly one reaction step in its steps list.
+    Each route's only step product_smiles MUST be the target molecule SMILES after canonicalization.
     The rationale must explain how any retrieved evidence was adapted to the target.
     Fix ambiguous methanol/carbon monoxide wording, unsupported reaction conditions, missing temperature units, and generic "adapted from Example N" rationales.
     Preserve the routes JSON schema with objective_fit and evidence_reaction_ids.
@@ -221,5 +231,6 @@ Retrieved reaction context:
 {build_rag_prompt(target_smiles, reactions, optimization_objective, route_count)}
 
 {route_count_instruction(route_count)}
-Every route's final step product_smiles must be the target molecule SMILES above.
+{one_step_route_instruction()}
+Every route's only step product_smiles must be the target molecule SMILES above.
 """

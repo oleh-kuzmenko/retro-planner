@@ -38,10 +38,6 @@ def reaction_product(result: dict) -> str | None:
     return canonicalize_smiles(str(raw_product_smiles))
 
 
-def reaction_product_matches_target(result: dict, canonical_target: str) -> bool:
-    return reaction_product(result) == canonical_target
-
-
 def validate_target_matching_reaction(
     result: dict,
     canonical_target: str,
@@ -56,15 +52,19 @@ def validate_target_matching_reaction(
     return result, None
 
 
-def _final_step(route: dict) -> dict | None:
+def _single_step(route: dict) -> tuple[dict | None, str | None]:
     steps = route.get("steps")
-    if isinstance(steps, list):
-        valid_steps = [step for step in steps if isinstance(step, dict)]
-        if valid_steps:
-            return valid_steps[-1]
-    if route.get("product_smiles"):
-        return route
-    return None
+    if not isinstance(steps, list):
+        return None, "it does not include a steps list."
+
+    valid_steps = [step for step in steps if isinstance(step, dict)]
+    if len(valid_steps) != 1:
+        return (
+            None,
+            f"it includes {len(valid_steps)} usable steps instead of exactly one.",
+        )
+
+    return valid_steps[0], None
 
 
 def validate_target_matching_plan(
@@ -75,8 +75,9 @@ def validate_target_matching_plan(
     bounded_count = max(1, min(int(route_count), 5))
     routes = result.get("routes")
     if not isinstance(routes, list):
-        valid_result, error = validate_target_matching_reaction(result, canonical_target)
-        return valid_result, [], [error] if error else []
+        return None, [], [
+            "The LLM response did not include a routes list with one-step route options."
+        ]
 
     valid_routes = []
     warnings = []
@@ -85,12 +86,12 @@ def validate_target_matching_plan(
             warnings.append(f"Route {index} was skipped because it was not an object.")
             continue
 
-        final_step = _final_step(route)
-        if not final_step:
-            warnings.append(f"Route {index} was skipped because it has no usable steps.")
+        step, step_error = _single_step(route)
+        if step_error:
+            warnings.append(f"Route {index} was skipped because {step_error}")
             continue
 
-        _, error = validate_target_matching_reaction(final_step, canonical_target)
+        _, error = validate_target_matching_reaction(step, canonical_target)
         if error:
             warnings.append(f"Route {index} was skipped: {error}")
             continue
@@ -99,7 +100,7 @@ def validate_target_matching_plan(
 
     if not valid_routes:
         return None, warnings, [
-            "The LLM did not produce any route whose final product matches the target molecule."
+            "The LLM did not produce any valid one-step reaction to the target molecule."
         ]
 
     valid_result = dict(result)
@@ -157,8 +158,6 @@ def repair_off_target_reaction_with_llm(
     original_result: dict,
 ) -> dict | str | None:
     reactions = request.reactions or []
-    if reaction_product_matches_target(original_result, request.target_smiles):
-        return original_result
 
     content = request.llm_provider.generate(
         messages=[

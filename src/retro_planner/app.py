@@ -26,6 +26,7 @@ class SidebarSettings:
     provider_key: str
     provider_config: LLMProviderConfig
     api_key: str
+    base_url: str | None
     rag_enabled: bool
     top_k: int
     route_count: int
@@ -77,13 +78,36 @@ def render_sidebar() -> SidebarSettings:
         )
         provider_config = LLM_PROVIDER_REGISTRY[provider_key]
         provider_label = provider_config.label
+        api_key_help = (
+            "Required for AI generation"
+            if provider_config.api_key_required
+            else "Optional for local endpoints such as Ollama"
+        )
         api_key = st.text_input(
-            f"{provider_label} API Key",
+            (
+                f"{provider_label} API Key"
+                if provider_config.api_key_required
+                else f"{provider_label} API Key (optional)"
+            ),
             value=os.getenv(provider_config.api_key_env_var, ""),
             type="password",
-            help="Required for AI generation",
+            help=api_key_help,
         )
-        st.markdown(f"[Get {provider_label} API Key]({provider_config.key_url})")
+        api_key = api_key.strip()
+        if provider_config.key_url:
+            st.markdown(f"[Get {provider_label} API Key]({provider_config.key_url})")
+
+        base_url = None
+        if provider_config.base_url_env_var:
+            base_url = st.text_input(
+                f"{provider_label} base URL",
+                value=os.getenv(
+                    provider_config.base_url_env_var,
+                    provider_config.default_base_url or "",
+                ),
+                help="OpenAI-compatible chat completions endpoint, for example Ollama /v1.",
+            )
+            base_url = base_url.strip()
 
         st.divider()
         rag_enabled = st.checkbox("RAG enabled", value=True)
@@ -105,6 +129,7 @@ def render_sidebar() -> SidebarSettings:
         provider_key=provider_key,
         provider_config=provider_config,
         api_key=api_key,
+        base_url=base_url,
         rag_enabled=rag_enabled,
         top_k=top_k,
         route_count=route_count,
@@ -155,7 +180,10 @@ def generate_plan(
     canonical_input: str,
     settings: SidebarSettings,
 ) -> dict:
-    provider = settings.provider_config.create_provider(settings.api_key)
+    provider = settings.provider_config.create_provider(
+        settings.api_key,
+        settings.base_url,
+    )
     reactions: list[dict] = []
     warnings: list[str] = []
 
@@ -195,6 +223,7 @@ def generate_plan(
         "canonical_input": canonical_input,
         "provider_key": settings.provider_key,
         "model": settings.model,
+        "base_url": settings.base_url,
         "route_count": settings.route_count,
         "rag_enabled": settings.rag_enabled,
         "reactions": reactions,
@@ -211,6 +240,7 @@ def render_latest_run(canonical_input: str | None, settings: SidebarSettings) ->
         and latest_run.get("canonical_input") == canonical_input
         and latest_run.get("provider_key") == settings.provider_key
         and latest_run.get("model") == settings.model
+        and latest_run.get("base_url") == settings.base_url
         and latest_run.get("route_count") == settings.route_count
     ):
         return
@@ -241,11 +271,17 @@ def main() -> None:
 
     with col2:
         if analyze_clicked:
-            if not settings.api_key:
+            if settings.provider_config.api_key_required and not settings.api_key:
                 st.session_state.pop("latest_retrosynthesis_run", None)
                 st.error(
                     f"Missing {settings.provider_config.api_key_env_var}. Add it in the sidebar "
                     f"or set the {settings.provider_config.api_key_env_var} environment variable."
+                )
+            elif settings.provider_config.base_url_env_var and not settings.base_url:
+                st.session_state.pop("latest_retrosynthesis_run", None)
+                st.error(
+                    f"Missing {settings.provider_config.base_url_env_var}. Add it in the sidebar "
+                    f"or set the {settings.provider_config.base_url_env_var} environment variable."
                 )
             elif not canonical_input:
                 st.session_state.pop("latest_retrosynthesis_run", None)

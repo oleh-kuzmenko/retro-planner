@@ -1,10 +1,10 @@
 # 🧪 AI Retro-Synthesis Planner
 
-An AI-powered Streamlit tool that suggests one retrosynthetic reaction for making an organic target molecule. It uses a pluggable LLM provider interface with Groq-hosted Llama models as the current implementation, RDKit for molecule validation/visualization, Ketcher for structure drawing, and optional Qdrant RAG for reaction-example context.
+An AI-powered Streamlit tool that suggests one retrosynthetic reaction for making an organic target molecule. It uses a pluggable LLM provider interface with Groq, OpenAI, and custom OpenAI-compatible implementations, RDKit for molecule validation/visualization, Ketcher for structure drawing, and optional Qdrant RAG for reaction-example context.
 
 ## Prerequisites
 
-* **LLM Provider API Key**: Groq is the current provider. Get a key at [console.groq.com](https://console.groq.com/keys). The app accepts it in the sidebar or from `GROQ_API_KEY`.
+* **LLM Provider API Key**: Groq and OpenAI are built-in providers. The app accepts keys in the sidebar or from `GROQ_API_KEY` / `OPENAI_API_KEY`. A custom OpenAI-compatible provider can use local endpoints such as Ollama without an API key.
 * **Python 3.10+** for local execution, or **Docker** for containerized app execution.
 * **Qdrant** for RAG mode. The included `docker-compose.yml` starts local Qdrant on ports `6333` and `6334`.
 
@@ -13,6 +13,11 @@ Useful environment variables:
 ```bash
 GROQ_API_KEY=...
 GROQ_MODEL=llama-3.3-70b-versatile
+OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-4.1
+CUSTOM_LLM_BASE_URL=http://localhost:11434/v1
+CUSTOM_LLM_MODEL=llama3.1
+CUSTOM_LLM_API_KEY=...
 QDRANT_HOST=localhost
 QDRANT_PORT=6333
 ```
@@ -53,6 +58,8 @@ docker run -p 8501:8501 -e QDRANT_HOST=host.docker.internal retro-planner
 ```
 
 On Linux, use your Docker network or host networking equivalent so the app can reach Qdrant.
+
+For a local Ollama model from inside the app container on macOS/Windows Docker Desktop, set the custom provider base URL to `http://host.docker.internal:11434/v1`.
 
 ## 🐍 Option 2: Run Locally (Python)
 
@@ -151,6 +158,17 @@ It creates two Qdrant collections:
 streamlit run app.py
 ```
 
+### 6. Use a Local Ollama Model
+
+Ollama exposes an OpenAI-compatible API at `/v1`.
+
+```bash
+ollama serve
+ollama pull llama3.1
+```
+
+In the sidebar, choose **Custom / OpenAI-compatible**, set the base URL to `http://localhost:11434/v1`, set the model to `llama3.1`, and leave the API key blank.
+
 # 📝 User Guide & Usage
 
 This application acts as an AI assistant for organic chemists, helping to brainstorm **retrosynthetic disconnections** (working backwards from a target molecule to simpler precursors).
@@ -159,11 +177,12 @@ This application acts as an AI assistant for organic chemists, helping to brains
 
 ## 1. Initial Setup
 
-Before you can analyze any molecules, you must connect the application to an LLM provider. Groq is the current built-in provider.
+Before you can analyze any molecules, you must connect the application to an LLM provider.
 
 1.  **Locate the Sidebar** on the left side of the screen.
-2.  **Select a provider and enter your API key**: Choose **Groq** in the provider selector and paste your Groq API key into the password field.
-    * *If you don't have one, click the link provided in the sidebar to generate a free key.*
+2.  **Select a provider and enter connection details**: Choose **Groq**, **OpenAI**, or **Custom / OpenAI-compatible** in the provider selector.
+    * For Groq or OpenAI, paste the matching API key into the password field.
+    * For a local Ollama endpoint, use base URL `http://localhost:11434/v1`, set the loaded model name, and leave the API key blank.
 3.  **Adjust Retrieval and Generation (Optional)**:
     * Toggle **RAG enabled** to include or skip Qdrant retrieval.
     * Use **Top-K** to control how many retrieved reaction examples are passed as context.
@@ -249,7 +268,7 @@ python -m py_compile app.py scripts/index_uspto50k_to_qdrant.py src/retro_planne
 For UI changes, run Streamlit and manually verify:
 
 * default aspirin molecule validates;
-* missing Groq API key shows a warning;
+* missing provider API key shows a warning;
 * invalid structures show an error instead of calling the API;
 * successful model responses render one reaction, condition tables, text details, and either a reaction image or clear warnings;
 * RAG mode can fall back gracefully if Qdrant or `reaction_transforms` is unavailable.
