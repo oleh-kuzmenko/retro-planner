@@ -1,6 +1,27 @@
+import json
+import logging
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
+
+
+LOGGER = logging.getLogger(__name__)
+
+
+def _json_log(value) -> str:
+    if hasattr(value, "model_dump"):
+        value = value.model_dump()
+    elif hasattr(value, "to_dict"):
+        value = value.to_dict()
+    return json.dumps(value, indent=2, default=str, ensure_ascii=True)
+
+
+def _response_log(content: str) -> str:
+    try:
+        return _json_log(json.loads(content))
+    except json.JSONDecodeError:
+        return _json_log({"content": content})
 
 
 class LLMProvider(Protocol):
@@ -29,6 +50,66 @@ class LLMProviderConfig:
     default_base_url: str | None = None
 
 
+REACTION_STEP_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "reaction_name": {"type": "string"},
+        "reactants": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+        "product_smiles": {"type": "string"},
+        "stoichiometry": {"type": "string"},
+        "reagents": {"type": "string"},
+        "solvent": {"type": "string"},
+        "temperature_celsius": {"type": "string"},
+        "reaction_time": {"type": "string"},
+        "atmosphere": {"type": "string"},
+        "workup_purification": {"type": "string"},
+        "expected_yield_percent": {"type": "string"},
+        "important_conditions": {"type": "string"},
+        "rationale": {"type": "string"},
+        "objective_fit": {"type": "string"},
+        "evidence_reaction_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+    },
+    "additionalProperties": True,
+}
+
+
+RETROSYNTHESIS_RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "routes": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "route_name": {"type": "string"},
+                    "summary": {"type": "string"},
+                    "steps": {
+                        "type": "array",
+                        "items": REACTION_STEP_SCHEMA,
+                    },
+                    "objective_fit": {"type": "string"},
+                    "evidence_reaction_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                },
+                "required": ["steps"],
+                "additionalProperties": True,
+            },
+        },
+        "overall_recommendation": {"type": "string"},
+    },
+    "required": ["routes"],
+    "additionalProperties": True,
+}
+
+
 class GroqLLMProvider:
     def __init__(self, api_key: str):
         from groq import Groq
@@ -50,8 +131,40 @@ class GroqLLMProvider:
         if json_mode:
             request["response_format"] = {"type": "json_object"}
 
-        completion = self.client.chat.completions.create(**request)
-        return completion.choices[0].message.content or ""
+        LOGGER.info(
+            "Groq request started model=%s temperature=%.2f json_mode=%s messages=%d",
+            model,
+            temperature,
+            json_mode,
+            len(messages),
+        )
+        LOGGER.info("Groq request payload:\n%s", _json_log(request))
+        started_at = time.perf_counter()
+
+        try:
+            completion = self.client.chat.completions.create(**request)
+        except Exception:
+            LOGGER.exception(
+                "Groq request failed model=%s duration_seconds=%.3f",
+                model,
+                time.perf_counter() - started_at,
+            )
+            raise
+
+        content = completion.choices[0].message.content or ""
+        choice = completion.choices[0]
+        usage = getattr(completion, "usage", None)
+        LOGGER.info(
+            "Groq response received model=%s duration_seconds=%.3f "
+            "finish_reason=%s response_chars=%d usage=%s",
+            model,
+            time.perf_counter() - started_at,
+            getattr(choice, "finish_reason", None),
+            len(content),
+            _json_log(usage) if usage is not None else "null",
+        )
+        LOGGER.info("Groq response payload:\n%s", _response_log(content))
+        return content
 
 
 class OpenAILLMProvider:
@@ -104,7 +217,13 @@ class OpenAICompatibleLLMProvider:
             "temperature": temperature,
         }
         if json_mode:
-            request["response_format"] = {"type": "json_object"}
+            request["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "retrosynthesis_plan",
+                    "schema": RETROSYNTHESIS_RESPONSE_SCHEMA,
+                },
+            }
 
         completion = self.client.chat.completions.create(**request)
         return completion.choices[0].message.content or ""

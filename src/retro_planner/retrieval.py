@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+import logging
+import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -22,6 +25,13 @@ from retro_planner.reaction_classes import (
 
 if TYPE_CHECKING:
     from qdrant_client import QdrantClient
+
+
+LOGGER = logging.getLogger(__name__)
+
+
+def _json_log(value) -> str:
+    return json.dumps(value, indent=2, default=str, ensure_ascii=True)
 
 
 @dataclass(frozen=True)
@@ -175,54 +185,124 @@ def hybrid_retrieve_reactions_for_smiles(
     config: RetrievalConfig | None = None,
 ) -> RetrievalResult:
     resolved = config or RetrievalConfig()
-    qdrant = client or create_qdrant_client(resolved)
-    product_vector = generate_morgan_fingerprint(smiles)
-    transform_vector = generate_reaction_fingerprint(smiles)
     query_limit = max(top_k * 3, top_k)
+    request_payload = {
+        "target_smiles": smiles,
+        "top_k": top_k,
+        "query_limit": query_limit,
+        "product_collection": resolved.product_collection,
+        "transform_collection": resolved.transform_collection,
+        "host": resolved.host,
+        "port": resolved.port,
+        "weights": {
+            "molecule": resolved.weights.molecule,
+            "reaction": resolved.weights.reaction,
+            "reaction_class": resolved.weights.reaction_class,
+        },
+    }
+    LOGGER.info(
+        "RAG request started target=%s top_k=%d product_collection=%s "
+        "transform_collection=%s query_limit=%d",
+        smiles,
+        top_k,
+        resolved.product_collection,
+        resolved.transform_collection,
+        query_limit,
+    )
+    LOGGER.info("RAG request payload:\n%s", _json_log(request_payload))
+    started_at = time.perf_counter()
     warnings: list[str] = []
 
-    molecule_hits = [
-        reaction_from_hit(hit, "molecule_similarity")
-        for hit in query_qdrant_collection(
-            qdrant,
-            resolved.product_collection,
-            product_vector,
-            query_limit,
-        )
-    ]
-
     try:
-        transform_hits = [
-            reaction_from_hit(hit, "reaction_similarity")
+        qdrant = client or create_qdrant_client(resolved)
+        product_vector = generate_morgan_fingerprint(smiles)
+        transform_vector = generate_reaction_fingerprint(smiles)
+        molecule_hits = [
+            reaction_from_hit(hit, "molecule_similarity")
             for hit in query_qdrant_collection(
                 qdrant,
-                resolved.transform_collection,
-                transform_vector,
+                resolved.product_collection,
+                product_vector,
                 query_limit,
             )
         ]
-    except Exception as exc:
-        error_text = str(exc)
-        if resolved.transform_collection in error_text and "doesn't exist" in error_text:
-            warnings.append(
-                "Hybrid transform retrieval is not indexed yet, so the app is using molecule retrieval only. "
-                "Run `python scripts/index_uspto50k_to_qdrant.py --recreate` to rebuild the Qdrant RAG collections."
-            )
-        else:
-            warnings.append(
-                "Reaction transform retrieval unavailable; using molecule retrieval only. "
-                f"Details: {exc}"
-            )
-        transform_hits = []
 
-    target_classes = infer_target_reaction_classes(smiles)
-    reactions = merge_retrieval_hits(
-        molecule_hits,
-        transform_hits,
-        target_classes,
-        resolved.weights,
-    )
-    return RetrievalResult(reactions=reactions[:top_k], warnings=warnings)
+        try:
+            transform_hits = [
+                reaction_from_hit(hit, "reaction_similarity")
+                for hit in query_qdrant_collection(
+                    qdrant,
+                    resolved.transform_collection,
+                    transform_vector,
+                    query_limit,
+                )
+            ]
+        except Exception as exc:
+            error_text = str(exc)
+            if (
+                resolved.transform_collection in error_text
+                and "doesn't exist" in error_text
+            ):
+                warnings.append(
+                    "Hybrid transform retrieval is not indexed yet, so the app is using molecule retrieval only. "
+                    "Run `python scripts/index_uspto50k_to_qdrant.py --recreate` to rebuild the Qdrant RAG collections."
+                )
+            else:
+                warnings.append(
+                    "Reaction transform retrieval unavailable; using molecule retrieval only. "
+                    f"Details: {exc}"
+                )
+            LOGGER.warning(
+                "RAG transform query failed collection=%s fallback=molecule-only error=%s",
+                resolved.transform_collection,
+                exc,
+            )
+            transform_hits = []
+
+        target_classes = infer_target_reaction_classes(smiles)
+        reactions = merge_retrieval_hits(
+            molecule_hits,
+            transform_hits,
+            target_classes,
+            resolved.weights,
+        )
+        returned_reactions = reactions[:top_k]
+        scores = [
+            float(reaction.get("final_hybrid_score", 0.0))
+            for reaction in returned_reactions
+        ]
+        score_range = (
+            f"{min(scores):.4f}..{max(scores):.4f}" if scores else "none"
+        )
+        LOGGER.info(
+            "RAG response received duration_seconds=%.3f molecule_hits=%d "
+            "transform_hits=%d merged_hits=%d returned_hits=%d score_range=%s "
+            "warnings=%d",
+            time.perf_counter() - started_at,
+            len(molecule_hits),
+            len(transform_hits),
+            len(reactions),
+            len(returned_reactions),
+            score_range,
+            len(warnings),
+        )
+        LOGGER.info(
+            "RAG response payload:\n%s",
+            _json_log(
+                {
+                    "reactions": returned_reactions,
+                    "warnings": warnings,
+                }
+            ),
+        )
+        return RetrievalResult(reactions=returned_reactions, warnings=warnings)
+    except Exception:
+        LOGGER.exception(
+            "RAG request failed target=%s duration_seconds=%.3f",
+            smiles,
+            time.perf_counter() - started_at,
+        )
+        raise
 
 
 def retrieve_reactions_for_smiles(

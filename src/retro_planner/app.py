@@ -1,3 +1,4 @@
+import logging
 import os
 from dataclasses import dataclass
 
@@ -21,6 +22,14 @@ from retro_planner.retrieval import (
 from retro_planner.streamlit_views import display_hybrid_retrieval, display_llm_answer
 
 
+def configure_logging() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+    logging.getLogger("retro_planner").setLevel(logging.INFO)
+
+
 @dataclass(frozen=True)
 class SidebarSettings:
     provider_key: str
@@ -32,7 +41,6 @@ class SidebarSettings:
     route_count: int
     optimization_objective: str
     model: str
-    temperature: float
 
     @property
     def provider_label(self) -> str:
@@ -121,9 +129,6 @@ def render_sidebar() -> SidebarSettings:
             f"{provider_label} model",
             value=os.getenv(provider_config.model_env_var, provider_config.default_model),
         )
-        st.divider()
-        temperature = st.slider("Creativity (Temperature)", 0.0, 1.0, 0.2, 0.1)
-        st.info("Lower temperature (0.1-0.3) is better for strict chemistry rules.")
 
     return SidebarSettings(
         provider_key=provider_key,
@@ -135,7 +140,6 @@ def render_sidebar() -> SidebarSettings:
         route_count=route_count,
         optimization_objective=optimization_objective,
         model=model,
-        temperature=temperature,
     )
 
 
@@ -206,7 +210,6 @@ def generate_plan(
         target_smiles=canonical_input,
         llm_provider=provider,
         model=settings.model,
-        temperature=settings.temperature,
         optimization_objective=settings.optimization_objective,
         route_count=settings.route_count,
         reactions=reactions,
@@ -261,6 +264,7 @@ def render_latest_run(canonical_input: str | None, settings: SidebarSettings) ->
 
 
 def main() -> None:
+    configure_logging()
     configure_page()
     settings = render_sidebar()
     _, canonical_input = select_target_smiles()

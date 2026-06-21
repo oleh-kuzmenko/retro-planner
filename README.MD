@@ -188,11 +188,6 @@ Before you can analyze any molecules, you must connect the application to an LLM
     * Use **Top-K** to control how many retrieved reaction examples are passed as context.
     * Pick an **Optimization objective**: balanced, cheapest, fastest, or highest yield.
     * Edit the provider model field if you want to use a different compatible model.
-4.  **Adjust Creativity (Optional)**:
-    * Use the **Temperature** slider to control the AI's randomness.
-    * **Low (0.1 - 0.3)**: Best for standard, well-known reactions (more reliable).
-    * **High (0.7+)**: Good for exploring novel or unusual disconnections, but may produce chemically invalid results.
-
 ---
 
 ## 2. Entering Your Target Molecule

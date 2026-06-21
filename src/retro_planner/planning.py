@@ -12,13 +12,15 @@ from retro_planner.prompts import (
     build_repair_system_prompt,
 )
 
+GENERATION_TEMPERATURE = 0.2
+REPAIR_TEMPERATURE = 0.0
+
 
 @dataclass(frozen=True)
 class GenerationRequest:
     target_smiles: str
     llm_provider: LLMProvider
     model: str
-    temperature: float
     optimization_objective: str = "BALANCED"
     route_count: int = 1
     reactions: list[dict] | None = None
@@ -132,7 +134,7 @@ def get_retrosynthesis_plan(request: GenerationRequest) -> PlanResult:
                 },
             ],
             model=request.model,
-            temperature=request.temperature,
+            temperature=GENERATION_TEMPERATURE,
             json_mode=True,
         )
         parsed = _parse_json_or_text(content)
@@ -174,7 +176,7 @@ def repair_off_target_reaction_with_llm(
             },
         ],
         model=request.model,
-        temperature=max(0.0, min(request.temperature, 0.2)),
+        temperature=REPAIR_TEMPERATURE,
         json_mode=True,
     )
     return _parse_json_or_text(content)
@@ -200,7 +202,7 @@ def call_llm_with_rag(request: GenerationRequest) -> PlanResult:
                 },
             ],
             model=request.model,
-            temperature=request.temperature,
+            temperature=GENERATION_TEMPERATURE,
             json_mode=True,
         )
         parsed = _parse_json_or_text(content)
