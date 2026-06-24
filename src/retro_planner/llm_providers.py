@@ -4,6 +4,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
+from urllib.parse import urlparse
 
 
 LOGGER = logging.getLogger(__name__)
@@ -199,9 +200,13 @@ class OpenAICompatibleLLMProvider:
         if not base_url:
             raise ValueError("Custom LLM base URL is required.")
 
+        normalized_base_url = base_url.rstrip("/")
+        if urlparse(normalized_base_url).path in {"", "/"}:
+            normalized_base_url = f"{normalized_base_url}/chat"
+
         self.client = OpenAI(
             api_key=api_key or "not-needed",
-            base_url=base_url,
+            base_url=normalized_base_url,
         )
 
     def generate(
@@ -225,8 +230,87 @@ class OpenAICompatibleLLMProvider:
                 },
             }
 
-        completion = self.client.chat.completions.create(**request)
-        return completion.choices[0].message.content or ""
+        LOGGER.info(
+            "Custom OpenAI chat request started model=%s temperature=%.2f "
+            "json_mode=%s messages=%d",
+            model,
+            temperature,
+            json_mode,
+            len(messages),
+        )
+        LOGGER.info("Custom OpenAI chat request payload:\n%s", _json_log(request))
+        started_at = time.perf_counter()
+
+        try:
+            completion = self.client.chat.completions.create(**request)
+        except Exception:
+            LOGGER.exception(
+                "Custom OpenAI chat request failed model=%s duration_seconds=%.3f",
+                model,
+                time.perf_counter() - started_at,
+            )
+            raise
+
+        choice = completion.choices[0]
+        content = choice.message.content or ""
+        usage = getattr(completion, "usage", None)
+        LOGGER.info(
+            "Custom OpenAI chat response received model=%s duration_seconds=%.3f "
+            "finish_reason=%s response_chars=%d usage=%s",
+            model,
+            time.perf_counter() - started_at,
+            getattr(choice, "finish_reason", None),
+            len(content),
+            _json_log(usage) if usage is not None else "null",
+        )
+        LOGGER.info("Custom OpenAI chat model response:\n%s", content)
+        return content
+
+    def generate_completion(
+        self,
+        prompt: str,
+        model: str,
+    ) -> str:
+        request = {
+            "model": model,
+            "prompt": prompt,
+        }
+        LOGGER.info(
+            "Custom OpenAI completion request started model=%s prompt_chars=%d",
+            model,
+            len(prompt),
+        )
+        LOGGER.info(
+            "Custom OpenAI completion request payload:\n%s",
+            _json_log(request),
+        )
+        started_at = time.perf_counter()
+
+        try:
+            completion = self.client.completions.create(**request)
+        except Exception:
+            LOGGER.exception(
+                "Custom OpenAI completion request failed model=%s "
+                "duration_seconds=%.3f",
+                model,
+                time.perf_counter() - started_at,
+            )
+            raise
+
+        choice = completion.choices[0]
+        content = choice.text or ""
+        usage = getattr(completion, "usage", None)
+        LOGGER.info(
+            "Custom OpenAI completion response received model=%s "
+            "duration_seconds=%.3f finish_reason=%s response_chars=%d usage=%s",
+            model,
+            time.perf_counter() - started_at,
+            getattr(choice, "finish_reason", None),
+            len(content),
+            _json_log(usage) if usage is not None else "null",
+        )
+        LOGGER.info("Custom OpenAI completion model response:\n%s", content)
+        return content
 
 
 LLM_PROVIDER_REGISTRY: dict[str, LLMProviderConfig] = {

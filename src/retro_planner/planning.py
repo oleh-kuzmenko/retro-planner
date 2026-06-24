@@ -24,6 +24,7 @@ class GenerationRequest:
     optimization_objective: str = "BALANCED"
     route_count: int = 1
     reactions: list[dict] | None = None
+    target_smiles_only: bool = False
 
 
 @dataclass(frozen=True)
@@ -117,8 +118,101 @@ def _parse_json_or_text(content: str) -> dict | str:
         return content
 
 
+def _strip_code_fence(content: str) -> str:
+    stripped = content.strip()
+    if not stripped.startswith("```"):
+        return stripped
+
+    lines = stripped.splitlines()
+    if lines and lines[0].strip().startswith("```"):
+        lines = lines[1:]
+    if lines and lines[-1].strip() == "```":
+        lines = lines[:-1]
+    return "\n".join(lines).strip()
+
+
+def _reactant_plan_from_text(
+    content: str,
+    target_smiles: str,
+) -> PlanResult:
+    raw_output = _strip_code_fence(content)
+    try:
+        decoded = json.loads(raw_output)
+    except json.JSONDecodeError:
+        decoded = raw_output
+
+    if isinstance(decoded, str):
+        reactant_text = decoded.strip()
+    else:
+        return PlanResult(
+            result=None,
+            warnings=[],
+            errors=[
+                "Target-only mode expected the model to return reactant SMILES as plain text."
+            ],
+        )
+
+    if ">>" in reactant_text:
+        reactant_text = reactant_text.split(">>", 1)[0].strip()
+    reactant_text = "".join(reactant_text.split())
+    reactants = [
+        canonicalize_smiles(part)
+        for part in reactant_text.split(".")
+        if part
+    ]
+
+    if not reactants or any(reactant is None for reactant in reactants):
+        return PlanResult(
+            result=None,
+            warnings=[],
+            errors=[
+                "The custom model did not return valid dot-separated reactant SMILES. "
+                f"Raw response: {raw_output or '(empty)'}"
+            ],
+        )
+
+    step = {
+        "reaction_name": "Custom model prediction",
+        "reactants": reactants,
+        "product_smiles": target_smiles,
+    }
+    return PlanResult(
+        result={
+            "routes": [
+                {
+                    "route_name": "Predicted precursors",
+                    "summary": "Reactants predicted directly from the target SMILES.",
+                    "steps": [step],
+                }
+            ]
+        },
+        warnings=[],
+        errors=[],
+    )
+
+
 def get_retrosynthesis_plan(request: GenerationRequest) -> PlanResult:
     try:
+        if request.target_smiles_only:
+            generate_completion = getattr(
+                request.llm_provider,
+                "generate_completion",
+                None,
+            )
+            if not callable(generate_completion):
+                return PlanResult(
+                    result=None,
+                    warnings=[],
+                    errors=[
+                        "The selected provider does not support prompt-based completions."
+                    ],
+                )
+            content = generate_completion(
+                prompt=request.target_smiles,
+                model=request.model,
+            )
+            return _reactant_plan_from_text(content, request.target_smiles)
+
         content = request.llm_provider.generate(
             messages=[
                 {

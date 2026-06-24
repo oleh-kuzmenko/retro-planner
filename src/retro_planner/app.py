@@ -36,6 +36,7 @@ class SidebarSettings:
     provider_config: LLMProviderConfig
     api_key: str
     base_url: str | None
+    target_smiles_only: bool
     rag_enabled: bool
     top_k: int
     route_count: int
@@ -118,12 +119,47 @@ def render_sidebar() -> SidebarSettings:
             base_url = base_url.strip()
 
         st.divider()
-        rag_enabled = st.checkbox("RAG enabled", value=True)
-        top_k = st.slider("Top-K", min_value=1, max_value=20, value=5)
-        route_count = st.slider("Route options", min_value=1, max_value=5, value=3)
+        target_smiles_only = False
+        if provider_key == "custom_openai":
+            target_smiles_only = st.toggle(
+                "Send target SMILES only",
+                value=False,
+                help=(
+                    "Send one user message containing only the canonical target SMILES. "
+                    "No system prompt, custom prompt, RAG context, or JSON response format "
+                    "is added."
+                ),
+            )
+            if target_smiles_only:
+                st.caption(
+                    "The model response is interpreted as dot-separated reactant SMILES."
+                )
+
+        rag_enabled = st.checkbox(
+            "RAG enabled",
+            value=not target_smiles_only,
+            disabled=target_smiles_only,
+        )
+        if target_smiles_only:
+            rag_enabled = False
+        top_k = st.slider(
+            "Top-K",
+            min_value=1,
+            max_value=20,
+            value=5,
+            disabled=target_smiles_only,
+        )
+        route_count = st.slider(
+            "Route options",
+            min_value=1,
+            max_value=5,
+            value=3,
+            disabled=target_smiles_only,
+        )
         optimization_objective = st.selectbox(
             "Optimization objective",
             list(OPTIMIZATION_OBJECTIVES),
+            disabled=target_smiles_only,
         )
         model = st.text_input(
             f"{provider_label} model",
@@ -135,6 +171,7 @@ def render_sidebar() -> SidebarSettings:
         provider_config=provider_config,
         api_key=api_key,
         base_url=base_url,
+        target_smiles_only=target_smiles_only,
         rag_enabled=rag_enabled,
         top_k=top_k,
         route_count=route_count,
@@ -213,6 +250,7 @@ def generate_plan(
         optimization_objective=settings.optimization_objective,
         route_count=settings.route_count,
         reactions=reactions,
+        target_smiles_only=settings.target_smiles_only,
     )
     with st.spinner(f"Generating route options with {settings.provider_label}..."):
         plan_result = (
@@ -227,6 +265,7 @@ def generate_plan(
         "provider_key": settings.provider_key,
         "model": settings.model,
         "base_url": settings.base_url,
+        "target_smiles_only": settings.target_smiles_only,
         "route_count": settings.route_count,
         "rag_enabled": settings.rag_enabled,
         "reactions": reactions,
@@ -244,6 +283,7 @@ def render_latest_run(canonical_input: str | None, settings: SidebarSettings) ->
         and latest_run.get("provider_key") == settings.provider_key
         and latest_run.get("model") == settings.model
         and latest_run.get("base_url") == settings.base_url
+        and latest_run.get("target_smiles_only") == settings.target_smiles_only
         and latest_run.get("route_count") == settings.route_count
     ):
         return
