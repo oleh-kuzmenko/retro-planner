@@ -7,6 +7,8 @@
 - C. ReactionT5v2 без RAG: `sagawa/ReactionT5v2-retrosynthesis-USPTO_50k`
 - D. ChemLLM-20B-Chat-SFT GGUF без RAG: `mradermacher/ChemLLM-20B-Chat-SFT-i1-GGUF`, файл `ChemLLM-20B-Chat-SFT.i1-Q4_K_M.gguf`
 
+У режимах A і B через Groq API використовувалась проста модель `llama-3.3-70b-versatile`.
+
 Конфігурація режиму D:
 
 ```python
