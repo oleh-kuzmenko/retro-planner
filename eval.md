@@ -2,13 +2,13 @@
 
 Для кожного еталонного продукту запускаємо 5 режимів:
 
-- A. Groq без RAG
-- B. Гібридний RAG: схожість продукту + схожість реакційної трансформації + схожість класу реакції
+- A. Groq без RAG: Groq API, модель `llama-3.3-70b-versatile`
+- B. Гібридний RAG: Groq API, модель `llama-3.3-70b-versatile`; схожість продукту + схожість реакційної трансформації + схожість класу реакції
 - C. ReactionT5v2 без RAG: `sagawa/ReactionT5v2-retrosynthesis-USPTO_50k`
 - D. ChemLLM-20B-Chat-SFT GGUF без RAG: `mradermacher/ChemLLM-20B-Chat-SFT-i1-GGUF`, файл `ChemLLM-20B-Chat-SFT.i1-Q4_K_M.gguf`
 - F. Two-stage fine-tuned Qwen2.5-7B LoRA без RAG: reactant/class adapter `oleh13/retro-reactants-qwen25-7b-lora` + condition adapter `oleh13/retro-conditions-qwen25-7b-lora`
 
-У режимах A і B через Groq API використовувалась проста модель `llama-3.3-70b-versatile`.
+У режимах A і B через Groq API використовувалась модель `llama-3.3-70b-versatile`.
 
 Конфігурація режиму D:
 
