@@ -66,7 +66,6 @@ For a local Ollama model from inside the app container on macOS/Windows Docker D
 If you prefer running without Docker, ensure you have Python 3.10+ installed.
 
 ### 1. Create a Virtual Environment
-It is best practice to use a virtual environment to avoid conflicts.
 
 ```bash
 # macOS / Linux
@@ -103,9 +102,9 @@ docker compose up -d qdrant
 
 ### 4. Index Reaction Examples for RAG
 
-The indexer rebuilds the Qdrant RAG database from scratch. It drops and recreates both vector collections before loading data, so run it only when you are ready to replace the existing local index.
+The indexer rebuilds the Qdrant RAG database from scratch. It drops and recreates both vector collections before loading data.
 
-For a small smoke test against both default sources:
+Index a limited sample from both default sources:
 
 ```bash
 python scripts/index_uspto50k_to_qdrant.py --limit 100 --recreate
@@ -196,10 +195,8 @@ The main interface supports both the **Ketcher Editor** and direct SMILES entry.
 
 * **Draw from Scratch**: Use the toolbar on the left to select atoms (C, N, O, etc.) and bonds (Single, Double, Aromatic).
 * **Templates**: Use the "Benzene" or "Cyclopentadiene" icons for quick ring structures.
-* **Clear/Reset**: If you make a mistake, you can clear the canvas or simply reload the page to reset to the default (Aspirin).
+* **Clear/Reset**: Clear the canvas or reload the page to reset to the default molecule.
 * **SMILES Support**: Choose **SMILES** as the input source and paste a SMILES string into the text field.
-
-> **Tip:** Ensure your valences are correct (e.g., don't draw 5 bonds to Carbon). The app attempts to "clean" the structure, but bad inputs often lead to bad AI suggestions.
 
 ---
 
@@ -225,7 +222,7 @@ If the analysis is successful, you will see one proposed reaction with the follo
 The reaction includes reactants, product, stoichiometry, reagents, solvent, temperature, time, atmosphere, workup or purification, expected yield, and other important conditions.
 
 ### 🧠 Chemist's Reasoning
-The reaction includes a brief explanation of why the transformation is plausible and how it fits the selected optimization objective.
+The reaction includes a brief transformation rationale and objective-fit summary.
 
 ### 🖼️ Reaction Visualizer
 The app will generate a chemical equation image when RDKit can parse the returned SMILES:
@@ -246,8 +243,8 @@ The app also shows a score breakdown for the selected context reactions:
 
 ## ⚠️ Known Limitations
 
-* **AI Hallucinations**: The model is a text predictor, not a physics engine. Occasionally, it may suggest atoms appearing out of nowhere or disappearing. Always verify the atom count.
-* **Complex Stereochemistry**: The visualization tool may flatten specific stereochemical centers (R/S) depending on the complexity.
+* **AI Outputs**: Verify proposed reactants, atom balance, and conditions before use.
+* **Complex Stereochemistry**: The visualization tool may flatten specific stereochemical centers.
 * **Single-Reaction Output**: The app requests one forward reaction to the target, not a full multi-step synthesis plan.
 * **RAG Evidence**: USPTO-50K and ORD examples are useful context, but retrieved reactions may be similar rather than directly applicable.
 * **Conditions Metadata**: USPTO-50K records usually lack rich experimental conditions. ORD can add solvents, temperature, catalysts, and yields when present, but model-proposed conditions should still be independently verified.
@@ -268,7 +265,7 @@ For UI changes, run Streamlit and manually verify:
 * successful model responses render one reaction, condition tables, text details, and either a reaction image or clear warnings;
 * RAG mode can fall back gracefully if Qdrant or `reaction_transforms` is unavailable.
 
-For indexing changes, smoke test against a small limit first:
+For indexing changes, run a limited indexing check:
 
 ```bash
 docker compose up -d qdrant

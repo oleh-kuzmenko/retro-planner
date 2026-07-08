@@ -10,3 +10,5 @@ __pycache__/
 build/
 dist/
 .agents/
+fine-tune/v2/01/content/
+fine-tune/v2/02/*.jsonl

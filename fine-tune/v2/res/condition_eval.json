@@ -1,0 +1,13 @@
+{
+  "total": 300,
+  "json_valid": 272,
+  "has_solvent_or_reagents": 230,
+  "temperature_has_units": 272,
+  "time_has_units": 272,
+  "fake_evidence_ids": 0,
+  "json_valid_rate": 0.9066666666666666,
+  "has_solvent_or_reagents_rate": 0.7666666666666667,
+  "temperature_has_units_rate": 0.9066666666666666,
+  "time_has_units_rate": 0.9066666666666666,
+  "fake_evidence_ids_rate": 0.0
+}

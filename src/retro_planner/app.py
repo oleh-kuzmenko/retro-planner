@@ -114,7 +114,7 @@ def render_sidebar() -> SidebarSettings:
                     provider_config.base_url_env_var,
                     provider_config.default_base_url or "",
                 ),
-                help="OpenAI-compatible chat completions endpoint, for example Ollama /v1.",
+                help="OpenAI-compatible base URL, for example an HF Space root URL or Ollama /v1.",
             )
             base_url = base_url.strip()
 

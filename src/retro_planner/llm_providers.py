@@ -4,7 +4,6 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
-from urllib.parse import urlparse
 
 
 LOGGER = logging.getLogger(__name__)
@@ -200,13 +199,9 @@ class OpenAICompatibleLLMProvider:
         if not base_url:
             raise ValueError("Custom LLM base URL is required.")
 
-        normalized_base_url = base_url.rstrip("/")
-        if urlparse(normalized_base_url).path in {"", "/"}:
-            normalized_base_url = f"{normalized_base_url}/chat"
-
         self.client = OpenAI(
             api_key=api_key or "not-needed",
-            base_url=normalized_base_url,
+            base_url=base_url.rstrip("/"),
         )
 
     def generate(
