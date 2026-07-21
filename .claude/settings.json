@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import datasets\")",
+      "Bash(python3 -m pytest --version)",
+      "Bash(python3 -m pytest tests/test_evaluation.py -q)"
+    ]
+  }
+}

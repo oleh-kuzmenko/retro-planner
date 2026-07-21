@@ -176,6 +176,13 @@ def canonicalize_reaction_side(smiles: str | Iterable[str] | None) -> Optional[s
 
 
 def recreate_collection(client, collection_name: str) -> None:
+    """(Re)create a Qdrant collection with Cosine-distance ANN indexing.
+
+    Cosine here is only used by Qdrant to shortlist nearby candidates
+    quickly; it is not the similarity score shown to the user or used for
+    final ranking. `retrieval.py` rescores the shortlist with an exact
+    Tanimoto coefficient over the raw fingerprint vectors, per PZ section 3.2.
+    """
     from qdrant_client.models import Distance, VectorParams
 
     collections = client.get_collections().collections

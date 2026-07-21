@@ -164,6 +164,23 @@ def generate_reaction_fingerprint(
     return vector
 
 
+def tanimoto_similarity(vector_a, vector_b) -> float:
+    """Bitwise Tanimoto similarity between two binary fingerprint vectors.
+
+    Both fingerprints produced by this module (Morgan and the XOR-based
+    reaction transform) are 0/1 vectors, so Tanimoto reduces to
+    popcount(a & b) / popcount(a | b) and can be computed directly on the
+    raw vectors without going through an RDKit ExplicitBitVect.
+    """
+    a = np.asarray(vector_a, dtype=bool)
+    b = np.asarray(vector_b, dtype=bool)
+    union = np.logical_or(a, b).sum()
+    if union == 0:
+        return 0.0
+    intersection = np.logical_and(a, b).sum()
+    return float(intersection) / float(union)
+
+
 def mol_from_smiles_without_atom_maps(smiles: str | None):
     if not smiles:
         return None

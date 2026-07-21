@@ -6,20 +6,22 @@ import streamlit as st
 from streamlit_ketcher import st_ketcher
 
 from retro_planner.chemistry import canonicalize_smiles
-from retro_planner.config import DEFAULT_TARGET_SMILES, OPTIMIZATION_OBJECTIVES
-from retro_planner.llm_providers import LLM_PROVIDER_REGISTRY, LLMProviderConfig
-from retro_planner.planning import (
-    GenerationRequest,
-    call_llm_with_rag,
-    get_retrosynthesis_plan,
+from retro_planner.config import DEFAULT_TARGET_SMILES
+from retro_planner.providers import (
+    CATEGORY_CLOUD_API,
+    CATEGORY_LABELS,
+    CATEGORY_LOCAL_RESEARCH,
+    LLM_PROVIDER_REGISTRY,
+    LLMProviderConfig,
 )
+from retro_planner.planning import GenerationRequest, StepResult, generate_single_step
 from retro_planner.rendering import generate_molecule_image
 from retro_planner.retrieval import (
     RetrievalConfig,
     create_qdrant_client,
     retrieve_reactions_for_smiles,
 )
-from retro_planner.streamlit_views import display_hybrid_retrieval, display_llm_answer
+from retro_planner.streamlit_views import display_hybrid_retrieval, display_step_result
 
 
 def configure_logging() -> None:
@@ -36,11 +38,8 @@ class SidebarSettings:
     provider_config: LLMProviderConfig
     api_key: str
     base_url: str | None
-    target_smiles_only: bool
     rag_enabled: bool
     top_k: int
-    route_count: int
-    optimization_objective: str
     model: str
 
     @property
@@ -80,9 +79,27 @@ def configure_page() -> None:
 def render_sidebar() -> SidebarSettings:
     with st.sidebar:
         st.header("⚙️ Configuration")
+        category = st.radio(
+            "Provider category",
+            options=[CATEGORY_CLOUD_API, CATEGORY_LOCAL_RESEARCH],
+            format_func=lambda key: CATEGORY_LABELS[key],
+            horizontal=True,
+        )
+        category_provider_keys = [
+            key
+            for key, config in LLM_PROVIDER_REGISTRY.items()
+            if config.category == category
+        ]
+        if category == CATEGORY_LOCAL_RESEARCH:
+            st.caption(
+                "⚠️ Local / research providers run heavy ML dependencies "
+                "(torch, transformers, peft, or llama-cpp-python) in this process. "
+                'Install them first with `pip install -e ".[local-models]"`; the '
+                "first call also loads model weights, which can take a while."
+            )
         provider_key = st.selectbox(
             "LLM provider",
-            options=list(LLM_PROVIDER_REGISTRY.keys()),
+            options=category_provider_keys,
             format_func=lambda key: LLM_PROVIDER_REGISTRY[key].label,
         )
         provider_config = LLM_PROVIDER_REGISTRY[provider_key]
@@ -119,48 +136,8 @@ def render_sidebar() -> SidebarSettings:
             base_url = base_url.strip()
 
         st.divider()
-        target_smiles_only = False
-        if provider_key == "custom_openai":
-            target_smiles_only = st.toggle(
-                "Send target SMILES only",
-                value=False,
-                help=(
-                    "Send one user message containing only the canonical target SMILES. "
-                    "No system prompt, custom prompt, RAG context, or JSON response format "
-                    "is added."
-                ),
-            )
-            if target_smiles_only:
-                st.caption(
-                    "The model response is interpreted as dot-separated reactant SMILES."
-                )
-
-        rag_enabled = st.checkbox(
-            "RAG enabled",
-            value=not target_smiles_only,
-            disabled=target_smiles_only,
-        )
-        if target_smiles_only:
-            rag_enabled = False
-        top_k = st.slider(
-            "Top-K",
-            min_value=1,
-            max_value=20,
-            value=5,
-            disabled=target_smiles_only,
-        )
-        route_count = st.slider(
-            "Route options",
-            min_value=1,
-            max_value=5,
-            value=3,
-            disabled=target_smiles_only,
-        )
-        optimization_objective = st.selectbox(
-            "Optimization objective",
-            list(OPTIMIZATION_OBJECTIVES),
-            disabled=target_smiles_only,
-        )
+        rag_enabled = st.checkbox("RAG enabled", value=True)
+        top_k = st.slider("Top-K", min_value=1, max_value=20, value=5)
         model = st.text_input(
             f"{provider_label} model",
             value=os.getenv(provider_config.model_env_var, provider_config.default_model),
@@ -171,11 +148,8 @@ def render_sidebar() -> SidebarSettings:
         provider_config=provider_config,
         api_key=api_key,
         base_url=base_url,
-        target_smiles_only=target_smiles_only,
         rag_enabled=rag_enabled,
         top_k=top_k,
-        route_count=route_count,
-        optimization_objective=optimization_objective,
         model=model,
     )
 
@@ -217,16 +191,51 @@ def _show_messages(messages: list[str], level: str) -> None:
             st.error(message)
 
 
-def generate_plan(
+def _missing_credentials_message(settings: SidebarSettings) -> str | None:
+    if settings.provider_config.api_key_required and not settings.api_key:
+        return (
+            f"Missing {settings.provider_config.api_key_env_var}. Add it in the sidebar "
+            f"or set the {settings.provider_config.api_key_env_var} environment variable."
+        )
+    if settings.provider_config.base_url_env_var and not settings.base_url:
+        return (
+            f"Missing {settings.provider_config.base_url_env_var}. Add it in the sidebar "
+            f"or set the {settings.provider_config.base_url_env_var} environment variable."
+        )
+    return None
+
+
+def _generate_step(
     canonical_input: str,
     settings: SidebarSettings,
-) -> dict:
+    reactions: list[dict],
+) -> StepResult:
     provider = settings.provider_config.create_provider(
         settings.api_key,
         settings.base_url,
     )
+    request = GenerationRequest(
+        target_smiles=canonical_input,
+        llm_provider=provider,
+        model=settings.model,
+        reactions=reactions,
+    )
+    with st.spinner(f"Generating a retrosynthesis step with {settings.provider_label}..."):
+        return generate_single_step(request)
+
+
+def generate_plan(
+    canonical_input: str,
+    settings: SidebarSettings,
+) -> dict:
+    """Run RAG retrieval (once) plus a single retrosynthetic-step generation.
+
+    Additional candidates for the same target are produced by calling
+    `_generate_step` again (see `generate_another_candidate`), reusing the
+    same retrieved reactions rather than re-querying Qdrant.
+    """
     reactions: list[dict] = []
-    warnings: list[str] = []
+    rag_warnings: list[str] = []
 
     if settings.rag_enabled:
         with st.spinner("Retrieving similar reactions from Qdrant for model context..."):
@@ -237,42 +246,39 @@ def generate_plan(
                     client=get_cached_qdrant_client(),
                 )
                 reactions = retrieval_result.reactions
-                warnings.extend(retrieval_result.warnings)
+                rag_warnings.extend(retrieval_result.warnings)
             except Exception as exc:
-                warnings.append(
+                rag_warnings.append(
                     f"Qdrant unavailable; generating without retrieved context. Details: {exc}"
                 )
 
-    request = GenerationRequest(
-        target_smiles=canonical_input,
-        llm_provider=provider,
-        model=settings.model,
-        optimization_objective=settings.optimization_objective,
-        route_count=settings.route_count,
-        reactions=reactions,
-        target_smiles_only=settings.target_smiles_only,
-    )
-    with st.spinner(f"Generating route options with {settings.provider_label}..."):
-        plan_result = (
-            call_llm_with_rag(request)
-            if settings.rag_enabled
-            else get_retrosynthesis_plan(request)
-        )
-
-    warnings.extend(plan_result.warnings)
+    step_result = _generate_step(canonical_input, settings, reactions)
     return {
         "canonical_input": canonical_input,
         "provider_key": settings.provider_key,
         "model": settings.model,
         "base_url": settings.base_url,
-        "target_smiles_only": settings.target_smiles_only,
-        "route_count": settings.route_count,
         "rag_enabled": settings.rag_enabled,
         "reactions": reactions,
-        "result": plan_result.result,
-        "warnings": warnings,
-        "errors": plan_result.errors,
+        "step_results": [step_result],
+        "rag_warnings": rag_warnings,
     }
+
+
+def generate_another_candidate(
+    canonical_input: str,
+    settings: SidebarSettings,
+    run: dict,
+) -> None:
+    """Append one more single-step candidate to an existing run in place.
+
+    This is the "several routes" affordance from the PZ target architecture:
+    not one LLM call returning several routes, but several one-step calls
+    through the same CoT pipeline, reusing the RAG context already retrieved
+    for this target.
+    """
+    step_result = _generate_step(canonical_input, settings, run.get("reactions", []))
+    run["step_results"].append(step_result)
 
 
 def render_latest_run(canonical_input: str | None, settings: SidebarSettings) -> None:
@@ -283,24 +289,36 @@ def render_latest_run(canonical_input: str | None, settings: SidebarSettings) ->
         and latest_run.get("provider_key") == settings.provider_key
         and latest_run.get("model") == settings.model
         and latest_run.get("base_url") == settings.base_url
-        and latest_run.get("target_smiles_only") == settings.target_smiles_only
-        and latest_run.get("route_count") == settings.route_count
     ):
         return
 
     st.markdown("### Canonical SMILES")
     st.code(canonical_input, language="text")
 
-    _show_messages(latest_run.get("warnings", []), "warning")
-    _show_messages(latest_run.get("errors", []), "error")
+    _show_messages(latest_run.get("rag_warnings", []), "warning")
 
     if latest_run.get("rag_enabled"):
         display_hybrid_retrieval(latest_run.get("reactions", []))
 
-    if latest_run.get("result"):
-        display_llm_answer(latest_run.get("result"), canonical_input)
-    elif not latest_run.get("errors"):
-        st.error("LLM API failure")
+    step_results: list[StepResult] = latest_run.get("step_results", [])
+    show_candidate_labels = len(step_results) > 1
+    for index, step_result in enumerate(step_results, start=1):
+        display_step_result(
+            step_result,
+            canonical_input,
+            candidate_label=f"Candidate {index}" if show_candidate_labels else None,
+        )
+        st.divider()
+
+    if step_results and st.button(
+        "🔁 Generate another candidate", width="stretch", key="generate_another_candidate"
+    ):
+        credentials_error = _missing_credentials_message(settings)
+        if credentials_error:
+            st.error(credentials_error)
+        else:
+            generate_another_candidate(canonical_input, settings, latest_run)
+            st.rerun()
 
 
 def main() -> None:
@@ -315,18 +333,10 @@ def main() -> None:
 
     with col2:
         if analyze_clicked:
-            if settings.provider_config.api_key_required and not settings.api_key:
+            credentials_error = _missing_credentials_message(settings)
+            if credentials_error:
                 st.session_state.pop("latest_retrosynthesis_run", None)
-                st.error(
-                    f"Missing {settings.provider_config.api_key_env_var}. Add it in the sidebar "
-                    f"or set the {settings.provider_config.api_key_env_var} environment variable."
-                )
-            elif settings.provider_config.base_url_env_var and not settings.base_url:
-                st.session_state.pop("latest_retrosynthesis_run", None)
-                st.error(
-                    f"Missing {settings.provider_config.base_url_env_var}. Add it in the sidebar "
-                    f"or set the {settings.provider_config.base_url_env_var} environment variable."
-                )
+                st.error(credentials_error)
             elif not canonical_input:
                 st.session_state.pop("latest_retrosynthesis_run", None)
                 st.error("Invalid SMILES")

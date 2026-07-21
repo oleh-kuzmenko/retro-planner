@@ -26,6 +26,18 @@ indexing = [
     "ord-schema",
     "tqdm",
 ]
+local-models = [
+    "torch",
+    "transformers",
+    "peft",
+    "accelerate",
+    "bitsandbytes",
+    "sentencepiece",
+    "llama-cpp-python",
+]
+test = [
+    "pytest",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

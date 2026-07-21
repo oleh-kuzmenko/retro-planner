@@ -1,0 +1,38 @@
+sequenceDiagram
+    actor Chemist as Хімік-синтетик
+    participant UI as Вебагент
+    participant Inventory as Склад реагентів
+    participant Internal as Внутрішня база реакцій
+    participant Literature as Літературний пошук
+    participant RAG as Векторна база/RAG
+    participant AI as AI-блок ретросинтезу
+    participant Validation as Валідація і фільтри
+    participant Ranker as Ранжування
+    participant LabLog as Журнал експериментів
+
+    Chemist->>UI: Задає цільову молекулу і обмеження
+    UI->>Inventory: Перевірити доступні реагенти та запаси
+    Inventory-->>UI: Список доступних/відсутніх реагентів
+
+    UI->>Internal: Знайти подібні внутрішні синтези
+    Internal-->>UI: Реакції колег, умови, виходи, невдалі спроби
+
+    UI->>Literature: Знайти подібні літературні реакції
+    Literature-->>UI: Аналоги з Reaxys/статей/патентів
+
+    UI->>RAG: Пошук схожих реакцій і трансформацій
+    RAG-->>UI: Retrieved evidence для prompt
+
+    UI->>AI: Згенерувати маршрути з урахуванням складу та evidence
+    AI-->>UI: Кандидатні маршрути ретросинтезу
+
+    UI->>Validation: Перевірити SMILES, product match, формат, практичність
+    Validation-->>UI: Валідні маршрути і попередження
+
+    UI->>Ranker: Оцінити маршрути
+    Ranker-->>UI: Рейтинг за доступністю, evidence, умовами, ризиками
+
+    UI-->>Chemist: Пропонує кілька схем синтезу
+    Chemist->>LabLog: Фіксує результат експерименту
+    LabLog->>Internal: Оновити історію підприємства
+    LabLog->>RAG: Додати новий приклад до індексу

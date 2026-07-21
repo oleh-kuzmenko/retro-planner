@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from retro_planner.chemistry import (
     generate_morgan_fingerprint,
     generate_reaction_fingerprint,
+    tanimoto_similarity,
 )
 from retro_planner.config import (
     DEFAULT_RETRIEVAL_WEIGHTS,
@@ -73,13 +74,23 @@ def query_qdrant_collection(
     collection_name: str,
     vector: list[float],
     top_k: int,
+    with_vectors: bool = False,
 ):
+    """Fetch ANN candidates from Qdrant.
+
+    Qdrant's own Cosine distance (configured at collection creation) is used
+    only to shortlist candidates quickly; it is not the similarity number
+    shown to the user. `with_vectors=True` is used by the hybrid retrieval
+    path so the caller can rescore the shortlist with an exact Tanimoto
+    coefficient, per PZ section 3.2.
+    """
     try:
         return client.search(
             collection_name=collection_name,
             query_vector=vector,
             limit=top_k,
             with_payload=True,
+            with_vectors=with_vectors,
         )
     except AttributeError:
         response = client.query_points(
@@ -87,11 +98,16 @@ def query_qdrant_collection(
             query=vector,
             limit=top_k,
             with_payload=True,
+            with_vectors=with_vectors,
         )
         return response.points
 
 
-def reaction_from_hit(hit, score_key: str) -> dict:
+def reaction_from_hit(
+    hit,
+    score_key: str,
+    query_vector: list[float] | None = None,
+) -> dict:
     payload = hit.payload or {}
     reaction = {
         "reaction_id": _payload_value(payload, "reaction_id"),
@@ -110,7 +126,11 @@ def reaction_from_hit(hit, score_key: str) -> dict:
         "yield_percent": _payload_value(payload, "yield_percent"),
         "source": _payload_value(payload, "source"),
     }
-    reaction[score_key] = float(hit.score)
+    hit_vector = getattr(hit, "vector", None)
+    if query_vector is not None and hit_vector is not None:
+        reaction[score_key] = tanimoto_similarity(query_vector, hit_vector)
+    else:
+        reaction[score_key] = float(hit.score)
     return reaction
 
 
@@ -127,8 +147,12 @@ def search_similar_reactions(
         resolved.product_collection,
         vector,
         top_k,
+        with_vectors=True,
     )
-    return [reaction_from_hit(hit, "molecule_similarity") for hit in hits]
+    return [
+        reaction_from_hit(hit, "molecule_similarity", query_vector=vector)
+        for hit in hits
+    ]
 
 
 def merge_retrieval_hits(
@@ -137,6 +161,15 @@ def merge_retrieval_hits(
     target_classes: set[str],
     weights: RetrievalWeights = DEFAULT_RETRIEVAL_WEIGHTS,
 ) -> list[dict]:
+    """Merge molecule/transform candidates and rank by the hybrid score.
+
+    Per PZ fig 3.2, the default hybrid score is exactly two Tanimoto
+    components: `weights.molecule * molecule_similarity +
+    weights.reaction * reaction_similarity`. `weights.reaction_class` blends
+    in a SMARTS-heuristic reaction-class similarity; it is an extension
+    beyond the PZ architecture and defaults to 0.0 (see
+    EXPERIMENTAL_RETRIEVAL_WEIGHTS in config.py to enable it).
+    """
     merged: dict[str, dict] = {}
 
     for reaction in molecule_hits + transform_hits:
@@ -218,23 +251,29 @@ def hybrid_retrieve_reactions_for_smiles(
         product_vector = generate_morgan_fingerprint(smiles)
         transform_vector = generate_reaction_fingerprint(smiles)
         molecule_hits = [
-            reaction_from_hit(hit, "molecule_similarity")
+            reaction_from_hit(hit, "molecule_similarity", query_vector=product_vector)
             for hit in query_qdrant_collection(
                 qdrant,
                 resolved.product_collection,
                 product_vector,
                 query_limit,
+                with_vectors=True,
             )
         ]
 
         try:
             transform_hits = [
-                reaction_from_hit(hit, "reaction_similarity")
+                reaction_from_hit(
+                    hit,
+                    "reaction_similarity",
+                    query_vector=transform_vector,
+                )
                 for hit in query_qdrant_collection(
                     qdrant,
                     resolved.transform_collection,
                     transform_vector,
                     query_limit,
+                    with_vectors=True,
                 )
             ]
         except Exception as exc:

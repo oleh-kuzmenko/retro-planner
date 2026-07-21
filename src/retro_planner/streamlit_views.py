@@ -1,5 +1,3 @@
-import re
-
 import streamlit as st
 
 from retro_planner.chemistry import (
@@ -7,11 +5,11 @@ from retro_planner.chemistry import (
     is_known_formula_smiles,
     parse_reaction_smiles,
 )
+from retro_planner.planning import StepResult
 from retro_planner.rendering import generate_reaction_image
 
 
 PLACEHOLDER_VALUES = {"", "none", "n/a", "na", "null", "unknown", "not specified"}
-NUMERIC_TEXT_RE = re.compile(r"^\s*-?\d+(?:\.\d+)?\s*$")
 
 
 def is_placeholder_value(value) -> bool:
@@ -36,42 +34,6 @@ def display_value(value, fallback: str = "N/A") -> str:
         displayed = [item for item in displayed if item]
         return ", ".join(displayed) if displayed else fallback
     return str(value)
-
-
-def display_condition_value(field: str, value, fallback: str = "N/A") -> str:
-    displayed = display_value(value, fallback=fallback)
-    if displayed == fallback:
-        return displayed
-
-    field_lower = field.lower()
-    if NUMERIC_TEXT_RE.match(displayed):
-        if field_lower == "temperature":
-            return f"{displayed} deg C"
-        if field_lower == "time":
-            return f"{displayed} h"
-        if field_lower == "yield":
-            return f"{displayed}%"
-    return displayed
-
-
-def clean_smiles_list(smiles_values) -> list[str]:
-    if not isinstance(smiles_values, list):
-        return []
-    return [
-        clean
-        for clean in (canonicalize_smiles(str(smiles)) for smiles in smiles_values)
-        if clean
-    ]
-
-
-def display_smiles_list(smiles_values) -> list[str]:
-    if not isinstance(smiles_values, list):
-        return []
-    return [
-        display_smiles(str(smiles))
-        for smiles in smiles_values
-        if not is_placeholder_value(smiles)
-    ]
 
 
 def display_hybrid_retrieval(reactions: list[dict]):
@@ -180,134 +142,37 @@ def display_hybrid_retrieval(reactions: list[dict]):
             st.warning("Could not render this retrieved reaction image.")
 
 
-def route_steps(route: dict) -> list[dict]:
-    steps = route.get("steps", [])
-    if not isinstance(steps, list):
-        return []
-    return [step for step in steps if isinstance(step, dict)][:5]
-
-
-def display_reaction_step(
-    result: dict,
+def display_step_result(
+    step_result: StepResult,
     canonical_input: str,
-    caption: str = "Retrosynthetic reaction",
-    is_final_step: bool = True,
+    candidate_label: str | None = None,
 ) -> None:
-    reaction_name = result.get("reaction_name", "Proposed reaction")
-    raw_product_smiles = result.get("product_smiles") or (
-        canonical_input if is_final_step else ""
-    )
-    product_smiles = canonicalize_smiles(str(raw_product_smiles)) or (
-        canonical_input if is_final_step else None
-    )
-    reactants = result.get("reactants", [])
-    clean_reactants = clean_smiles_list(reactants)
-    displayed_reactants = display_smiles_list(reactants)
-    displayed_product = display_smiles(str(raw_product_smiles))
+    st.subheader(candidate_label or "Generated retrosynthesis step")
 
-    st.markdown(f"**Reaction:** {reaction_name}")
+    for message in step_result.warnings:
+        st.warning(message)
+    for message in step_result.errors:
+        st.error(message)
 
+    if step_result.think:
+        with st.expander("🧠 Chemist's Reasoning", expanded=True):
+            st.markdown(step_result.think)
+
+    if not step_result.precursors:
+        st.error("The model did not return a chemically valid set of precursors.")
+        return
+
+    st.markdown("**Proposed single-step disconnection**")
     col_a, col_b = st.columns([1, 1])
     with col_a:
-        st.caption("Reactants")
-        st.code(" + ".join(displayed_reactants) if displayed_reactants else "N/A", language="text")
+        st.caption("Precursors")
+        st.code(" + ".join(step_result.precursors), language="text")
     with col_b:
-        st.caption("Product")
-        st.code(displayed_product or "N/A", language="text")
+        st.caption("Product (target)")
+        st.code(step_result.product_smiles or canonical_input, language="text")
 
-    condition_rows = {
-        "Components shown in scheme": displayed_reactants,
-        "Stoichiometry": result.get("stoichiometry"),
-        "Reagents": result.get("reagents"),
-        "Solvent": result.get("solvent"),
-        "Temperature": result.get("temperature_celsius"),
-        "Time": result.get("reaction_time"),
-        "Atmosphere": result.get("atmosphere"),
-        "Yield": result.get("expected_yield_percent"),
-        "Workup / purification": result.get("workup_purification"),
-        "Important conditions": result.get("important_conditions"),
-    }
-    st.table([
-        {"Field": key, "Value": display_condition_value(key, value)}
-        for key, value in condition_rows.items()
-    ])
-
-    if result.get("rationale"):
-        st.markdown(f"**Rationale:** {result.get('rationale')}")
-
-    if result.get("objective_fit"):
-        st.markdown(f"**Objective Fit:** {result.get('objective_fit')}")
-
-    evidence_reaction_ids = result.get("evidence_reaction_ids")
-    if evidence_reaction_ids:
-        st.markdown(f"**Evidence reactions:** {display_value(evidence_reaction_ids)}")
-
-    image = generate_reaction_image(clean_reactants, product_smiles)
-
+    image = generate_reaction_image(step_result.precursors, step_result.product_smiles)
     if image:
-        st.image(image, caption=caption, width="content")
-    elif clean_reactants or product_smiles:
+        st.image(image, caption="Proposed retrosynthetic step", width="content")
+    else:
         st.warning("Could not render reaction image. Check the returned SMILES.")
-        st.write("Raw Reactant SMILES:", reactants)
-        if displayed_reactants and not clean_reactants:
-            st.caption("All returned reactant SMILES failed RDKit parsing.")
-
-
-def display_route(route: dict, route_index: int, canonical_input: str) -> None:
-    route_name = route.get("route_name") or f"Route {route_index}"
-    with st.expander(f"Option {route_index}: {route_name}", expanded=route_index == 1):
-        summary = route.get("summary")
-        if summary:
-            st.markdown(f"**Summary:** {display_value(summary)}")
-
-        if route.get("objective_fit"):
-            st.markdown(f"**Objective Fit:** {route.get('objective_fit')}")
-
-        evidence_reaction_ids = route.get("evidence_reaction_ids")
-        if evidence_reaction_ids:
-            st.markdown(f"**Evidence reactions:** {display_value(evidence_reaction_ids)}")
-
-        steps = route_steps(route)
-        if not steps and route.get("product_smiles"):
-            steps = [route]
-        if not steps:
-            st.warning("This route did not include usable steps.")
-            return
-
-        for step_index, step in enumerate(steps, start=1):
-            if len(steps) > 1:
-                st.markdown(f"**Step {step_index}**")
-            display_reaction_step(
-                step,
-                canonical_input,
-                caption=f"Option {route_index}, step {step_index}",
-                is_final_step=step_index == len(steps),
-            )
-            if step_index < len(steps):
-                st.divider()
-
-
-def display_llm_answer(result, canonical_input: str):
-    st.subheader("Generated retrosynthesis options")
-
-    if isinstance(result, str):
-        st.markdown(result)
-        return
-
-    if not isinstance(result, dict):
-        st.error("The LLM returned an empty or unsupported response.")
-        return
-
-    routes = result.get("routes")
-    if isinstance(routes, list) and routes:
-        for route_index, route in enumerate(routes, start=1):
-            if isinstance(route, dict):
-                display_route(route, route_index, canonical_input)
-
-        if result.get("overall_recommendation"):
-            st.markdown(
-                f"**Overall recommendation:** {display_value(result.get('overall_recommendation'))}"
-            )
-        return
-
-    display_reaction_step(result, canonical_input)

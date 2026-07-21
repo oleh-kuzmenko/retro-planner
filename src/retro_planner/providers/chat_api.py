@@ -1,10 +1,18 @@
+"""Hosted OpenAI-compatible chat-API providers (Groq, OpenAI, custom endpoints).
+
+Moved out of the old llm_providers.py without behavior changes, other than
+dropping the retrosynthesis-routes JSON schema: json_mode is no longer used
+by the production pipeline (planning.py always calls generate() with
+json_mode=False; the response is now parsed from <think>/<answer> tags by
+reasoning.py), so a plain `{"type": "json_object"}` request is enough for the
+rare caller that still wants raw JSON back.
+"""
+
 import json
 import logging
 import time
-from collections.abc import Callable
-from dataclasses import dataclass
-from typing import Protocol
 
+from retro_planner.providers import LLMProviderConfig
 
 LOGGER = logging.getLogger(__name__)
 
@@ -24,92 +32,6 @@ def _response_log(content: str) -> str:
         return _json_log({"content": content})
 
 
-class LLMProvider(Protocol):
-    def generate(
-        self,
-        messages: list[dict[str, str]],
-        model: str,
-        temperature: float,
-        json_mode: bool = True,
-    ) -> str:
-        """Return raw model text for the supplied chat messages."""
-        ...
-
-
-@dataclass(frozen=True)
-class LLMProviderConfig:
-    key: str
-    label: str
-    api_key_env_var: str
-    model_env_var: str
-    default_model: str
-    create_provider: Callable[[str, str | None], LLMProvider]
-    key_url: str | None = None
-    api_key_required: bool = True
-    base_url_env_var: str | None = None
-    default_base_url: str | None = None
-
-
-REACTION_STEP_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "reaction_name": {"type": "string"},
-        "reactants": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "product_smiles": {"type": "string"},
-        "stoichiometry": {"type": "string"},
-        "reagents": {"type": "string"},
-        "solvent": {"type": "string"},
-        "temperature_celsius": {"type": "string"},
-        "reaction_time": {"type": "string"},
-        "atmosphere": {"type": "string"},
-        "workup_purification": {"type": "string"},
-        "expected_yield_percent": {"type": "string"},
-        "important_conditions": {"type": "string"},
-        "rationale": {"type": "string"},
-        "objective_fit": {"type": "string"},
-        "evidence_reaction_ids": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-    },
-    "additionalProperties": True,
-}
-
-
-RETROSYNTHESIS_RESPONSE_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "routes": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "route_name": {"type": "string"},
-                    "summary": {"type": "string"},
-                    "steps": {
-                        "type": "array",
-                        "items": REACTION_STEP_SCHEMA,
-                    },
-                    "objective_fit": {"type": "string"},
-                    "evidence_reaction_ids": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                    },
-                },
-                "required": ["steps"],
-                "additionalProperties": True,
-            },
-        },
-        "overall_recommendation": {"type": "string"},
-    },
-    "required": ["routes"],
-    "additionalProperties": True,
-}
-
-
 class GroqLLMProvider:
     def __init__(self, api_key: str):
         from groq import Groq
@@ -121,7 +43,7 @@ class GroqLLMProvider:
         messages: list[dict[str, str]],
         model: str,
         temperature: float,
-        json_mode: bool = True,
+        json_mode: bool = False,
     ) -> str:
         request = {
             "model": model,
@@ -178,7 +100,7 @@ class OpenAILLMProvider:
         messages: list[dict[str, str]],
         model: str,
         temperature: float,
-        json_mode: bool = True,
+        json_mode: bool = False,
     ) -> str:
         request = {
             "model": model,
@@ -209,7 +131,7 @@ class OpenAICompatibleLLMProvider:
         messages: list[dict[str, str]],
         model: str,
         temperature: float,
-        json_mode: bool = True,
+        json_mode: bool = False,
     ) -> str:
         request = {
             "model": model,
@@ -217,13 +139,7 @@ class OpenAICompatibleLLMProvider:
             "temperature": temperature,
         }
         if json_mode:
-            request["response_format"] = {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "retrosynthesis_plan",
-                    "schema": RETROSYNTHESIS_RESPONSE_SCHEMA,
-                },
-            }
+            request["response_format"] = {"type": "json_object"}
 
         LOGGER.info(
             "Custom OpenAI chat request started model=%s temperature=%.2f "
@@ -308,7 +224,7 @@ class OpenAICompatibleLLMProvider:
         return content
 
 
-LLM_PROVIDER_REGISTRY: dict[str, LLMProviderConfig] = {
+CHAT_API_PROVIDERS: dict[str, LLMProviderConfig] = {
     "groq": LLMProviderConfig(
         key="groq",
         label="Groq",
