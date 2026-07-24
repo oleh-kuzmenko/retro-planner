@@ -489,29 +489,64 @@ def iter_ord_files(ord_data_dir: Path) -> list[Path]:
     )
 
 
-def iter_ord_payloads(ord_data_dir: Path) -> Iterator[dict]:
+def iter_payloads_from_ord_file(file_path: Path) -> Iterator[dict]:
     from google.protobuf.json_format import MessageToDict
     from ord_schema.message_helpers import load_message
     from ord_schema.proto import dataset_pb2
     from tqdm import tqdm
 
+    LOGGER.info("Loading ORD file: %s", file_path)
+    dataset = load_message(str(file_path), dataset_pb2.Dataset)
+    for idx, reaction in enumerate(tqdm(dataset.reactions, desc=f"ORD {file_path.name}")):
+        reaction_dict = MessageToDict(
+            reaction,
+            preserving_proto_field_name=True,
+            use_integers_for_enums=False,
+        )
+        normalized = normalize_ord_reaction(reaction_dict, file_path.name, idx)
+        if normalized is not None:
+            yield normalized
+
+
+def iter_ord_payloads(ord_data_dir: Path) -> Iterator[dict]:
     files = iter_ord_files(ord_data_dir)
     LOGGER.info("Processing ORD protobuf files: %s", len(files))
 
     for file_path in files:
-        LOGGER.info("Loading ORD file: %s", file_path)
-        dataset = load_message(str(file_path), dataset_pb2.Dataset)
-        for idx, reaction in enumerate(
-            tqdm(dataset.reactions, desc=f"ORD {file_path.name}")
-        ):
-            reaction_dict = MessageToDict(
-                reaction,
-                preserving_proto_field_name=True,
-                use_integers_for_enums=False,
-            )
-            normalized = normalize_ord_reaction(reaction_dict, file_path.name, idx)
-            if normalized is not None:
-                yield normalized
+        yield from iter_payloads_from_ord_file(file_path)
+
+
+def iter_ord_payloads_streaming(
+    repo_id: str,
+    allow_patterns: list[str] | None,
+) -> Iterator[dict]:
+    """Stream ORD reactions from Hugging Face one shard at a time.
+
+    Unlike `download_ord_data` (which snapshot-downloads every matching file
+    up front), this lists the remote shard files and downloads/parses them
+    one by one. A consumer that stops iterating early -- e.g. once it has
+    collected enough evaluation targets -- never triggers the download of
+    later shards, so a small `--limit` only costs a small download instead
+    of the full multi-gigabyte ORD corpus. Each downloaded shard is still
+    cached locally by `huggingface_hub`, so a later run that needs more
+    targets resumes from where this left off instead of re-downloading.
+    """
+    from fnmatch import fnmatch
+
+    from huggingface_hub import HfApi, hf_hub_download
+
+    patterns = allow_patterns or ["data/**/*.pb.gz", "data/*.pb.gz"]
+    remote_files = HfApi().list_repo_files(repo_id=repo_id, repo_type="dataset")
+    matched = sorted(
+        path
+        for path in remote_files
+        if path.endswith(".pb.gz") and any(fnmatch(path, pattern) for pattern in patterns)
+    )
+    LOGGER.info("Found %d ORD shard(s) matching pattern on %s", len(matched), repo_id)
+
+    for filename in matched:
+        local_path = hf_hub_download(repo_id=repo_id, filename=filename, repo_type="dataset")
+        yield from iter_payloads_from_ord_file(Path(local_path))
 
 
 def index_payloads(

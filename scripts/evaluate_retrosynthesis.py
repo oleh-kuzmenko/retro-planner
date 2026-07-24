@@ -27,8 +27,8 @@ from pathlib import Path
 
 from index_uspto50k_to_qdrant import (
     ORD_DATA_REPO_ID,
-    download_ord_data,
     iter_ord_payloads,
+    iter_ord_payloads_streaming,
     normalize_row,
     require_optional_dependencies,
 )
@@ -480,8 +480,9 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Local ORD data directory or single .pb.gz file (only used with "
-            "--target-source ord). If omitted, downloads from Hugging Face, "
-            "reusing the local cache from index_uspto50k_to_qdrant.py."
+            "--target-source ord). If omitted, shards stream from Hugging "
+            "Face one at a time and stop as soon as enough unseen targets "
+            "are found for --limit, instead of downloading the full corpus."
         ),
     )
     parser.add_argument("--ord-repo-id", default=ORD_DATA_REPO_ID)
@@ -610,12 +611,11 @@ def main() -> None:
         excluded_ids, excluded_pairs = fetch_indexed_reaction_keys(
             qdrant_client, retrieval_config.product_collection
         )
-        ord_data_dir = args.ord_data_dir or download_ord_data(
-            args.ord_repo_id, args.ord_allow_pattern
-        )
-        targets = load_ord_eval_targets(
-            iter_ord_payloads(ord_data_dir), limit, excluded_ids, excluded_pairs
-        )
+        if args.ord_data_dir is not None:
+            payloads = iter_ord_payloads(args.ord_data_dir)
+        else:
+            payloads = iter_ord_payloads_streaming(args.ord_repo_id, args.ord_allow_pattern)
+        targets = load_ord_eval_targets(payloads, limit, excluded_ids, excluded_pairs)
     else:
         targets = load_test_targets(args.dataset, args.split, limit)
 
