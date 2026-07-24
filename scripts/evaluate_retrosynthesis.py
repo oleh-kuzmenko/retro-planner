@@ -20,11 +20,18 @@ import json
 import logging
 import os
 import time
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from index_uspto50k_to_qdrant import normalize_row
+from index_uspto50k_to_qdrant import (
+    ORD_DATA_REPO_ID,
+    download_ord_data,
+    iter_ord_payloads,
+    normalize_row,
+    require_optional_dependencies,
+)
 
 from retro_planner.config import QDRANT_HOST, QDRANT_PORT
 from retro_planner.evaluation import (
@@ -176,6 +183,98 @@ def load_test_targets(dataset_name: str, split: str, limit: int | None) -> list[
             break
 
     LOGGER.info("Loaded %d evaluation targets from %s/%s", len(targets), dataset_name, split)
+    return targets
+
+
+def fetch_indexed_reaction_keys(client, collection_name: str) -> tuple[set[str], set[tuple[str, str]]]:
+    """Collect every reaction_id and (product, reactants) SMILES pair already
+    indexed in a Qdrant collection.
+
+    Used to hold out genuinely unseen ORD evaluation targets: a target drawn
+    from the same ORD corpus used to build the RAG index could otherwise
+    itself be sitting in the retrieval index, making the benchmark trivially
+    "solvable" by retrieval rather than reasoning.
+    """
+    ids: set[str] = set()
+    pairs: set[tuple[str, str]] = set()
+    offset = None
+    scanned = 0
+
+    while True:
+        points, offset = client.scroll(
+            collection_name=collection_name,
+            with_payload=["reaction_id", "product_smiles", "reactants_smiles"],
+            with_vectors=False,
+            limit=1000,
+            offset=offset,
+        )
+        for point in points:
+            payload = point.payload or {}
+            reaction_id = payload.get("reaction_id")
+            product = payload.get("product_smiles")
+            reactants = payload.get("reactants_smiles")
+            if reaction_id:
+                ids.add(str(reaction_id))
+            if product and reactants:
+                pairs.add((product, reactants))
+
+        scanned += len(points)
+        if points:
+            LOGGER.info("Scanned %d indexed point(s) in %s...", scanned, collection_name)
+        if offset is None:
+            break
+
+    LOGGER.info(
+        "Collection %s holds %d reaction id(s) / %d content key(s) to exclude from evaluation",
+        collection_name,
+        len(ids),
+        len(pairs),
+    )
+    return ids, pairs
+
+
+def load_ord_eval_targets(
+    payloads: Iterable[dict],
+    limit: int | None,
+    excluded_ids: set[str],
+    excluded_pairs: set[tuple[str, str]],
+) -> list[EvalTarget]:
+    """Build eval targets from ORD reactions that are NOT already indexed in Qdrant.
+
+    Scans `payloads` (as produced by `iter_ord_payloads`) in order and skips
+    any reaction matching an already-indexed reaction_id or (product,
+    reactants) pair, so the returned targets are held out from the RAG index.
+    """
+    targets: list[EvalTarget] = []
+    skipped_indexed = 0
+
+    for payload in payloads:
+        if limit is not None and len(targets) >= limit:
+            break
+
+        reaction_id = payload["reaction_id"]
+        content_key = (payload["product_smiles"], payload["reactants_smiles"])
+        if reaction_id in excluded_ids or content_key in excluded_pairs:
+            skipped_indexed += 1
+            continue
+
+        reference = [part for part in payload["reactants_smiles"].split(".") if part]
+        if not reference:
+            continue
+
+        targets.append(
+            EvalTarget(
+                reaction_id=reaction_id,
+                product_smiles=payload["product_smiles"],
+                reference_precursors=reference,
+            )
+        )
+
+    LOGGER.info(
+        "Loaded %d ORD evaluation target(s), skipped %d already indexed in Qdrant",
+        len(targets),
+        skipped_indexed,
+    )
     return targets
 
 
@@ -361,8 +460,37 @@ def parse_args() -> argparse.Namespace:
             "USPTO-50K split (PZ section 4)."
         )
     )
+    parser.add_argument(
+        "--target-source",
+        choices=("uspto", "ord"),
+        default="uspto",
+        help=(
+            "Where to draw evaluation targets from. 'uspto' loads --dataset/--split "
+            "via the `datasets` library. 'ord' draws reactions from Open Reaction "
+            "Database protobuf files, automatically excluding any reaction already "
+            "present in the Qdrant product collection so targets are held out from "
+            "the RAG index instead of trivially retrievable."
+        ),
+    )
     parser.add_argument("--dataset", default="pingzhili/uspto-50k")
     parser.add_argument("--split", default="test")
+    parser.add_argument(
+        "--ord-data-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Local ORD data directory or single .pb.gz file (only used with "
+            "--target-source ord). If omitted, downloads from Hugging Face, "
+            "reusing the local cache from index_uspto50k_to_qdrant.py."
+        ),
+    )
+    parser.add_argument("--ord-repo-id", default=ORD_DATA_REPO_ID)
+    parser.add_argument(
+        "--ord-allow-pattern",
+        action="append",
+        default=None,
+        help="Hugging Face allow pattern for ORD files, e.g. data/4d/*.pb.gz. Repeatable.",
+    )
     parser.add_argument(
         "--limit",
         type=int,
@@ -468,20 +596,39 @@ def main() -> None:
     provider = provider_config.create_provider(api_key, base_url)
     model = args.model or os.getenv(provider_config.model_env_var) or provider_config.default_model
 
-    targets = load_test_targets(args.dataset, args.split, limit)
-    if not targets:
-        raise SystemExit("No evaluation targets loaded from the dataset.")
-
     qdrant_client = None
     retrieval_config = RetrievalConfig(host=args.qdrant_host, port=args.qdrant_port)
-    if MODE_RAG_COT in modes:
+    if MODE_RAG_COT in modes or args.target_source == "ord":
         qdrant_client = create_qdrant_client(retrieval_config)
+
+    if args.target_source == "ord":
+        require_optional_dependencies(["ord"], args.ord_data_dir)
+        LOGGER.info(
+            "Scanning Qdrant collection=%s for already-indexed reactions to hold out...",
+            retrieval_config.product_collection,
+        )
+        excluded_ids, excluded_pairs = fetch_indexed_reaction_keys(
+            qdrant_client, retrieval_config.product_collection
+        )
+        ord_data_dir = args.ord_data_dir or download_ord_data(
+            args.ord_repo_id, args.ord_allow_pattern
+        )
+        targets = load_ord_eval_targets(
+            iter_ord_payloads(ord_data_dir), limit, excluded_ids, excluded_pairs
+        )
+    else:
+        targets = load_test_targets(args.dataset, args.split, limit)
+
+    if not targets:
+        raise SystemExit("No evaluation targets loaded from the dataset.")
 
     checkpoint = Checkpoint(args.checkpoint)
     checkpoint.check_meta(
         {
+            "target_source": args.target_source,
             "dataset": args.dataset,
             "split": args.split,
+            "ord_repo_id": args.ord_repo_id,
             "provider": args.provider,
             "model": model,
         }
