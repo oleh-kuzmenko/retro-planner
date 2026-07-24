@@ -16,6 +16,7 @@ Example:
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import os
 import time
@@ -48,6 +49,71 @@ class EvalTarget:
     reaction_id: str
     product_smiles: str
     reference_precursors: list[str]
+
+
+class Checkpoint:
+    """JSONL-backed cache of per-(mode, target) generation results.
+
+    Appends one JSON record per target as soon as its candidates are
+    generated, so an interrupted run (e.g. a Groq free-tier rate limit)
+    only loses the in-flight target, not everything before it. On the next
+    run, pass the same `--checkpoint` path and completed targets are read
+    back instead of re-calling the LLM; a target checkpointed with fewer
+    candidates than the current `--k` needs is topped up rather than
+    redone from scratch.
+    """
+
+    def __init__(self, path: Path | None):
+        self.path = path
+        self.entries: dict[tuple[str, str], dict] = {}
+        self.meta: dict | None = None
+        if path is not None and path.exists():
+            self._load()
+
+    def _load(self) -> None:
+        with self.path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                line = line.strip()
+                if not line:
+                    continue
+                record = json.loads(line)
+                if record.get("_meta"):
+                    self.meta = record
+                    continue
+                self.entries[(record["mode"], record["reaction_id"])] = record
+        LOGGER.info(
+            "Loaded %d checkpointed target result(s) from %s", len(self.entries), self.path
+        )
+
+    def check_meta(self, meta: dict) -> None:
+        """Warn (not fail) if this run's config diverges from the checkpoint's."""
+        if self.path is None:
+            return
+        if self.meta is None:
+            self.meta = {"_meta": True, **meta}
+            self._append(self.meta)
+            return
+        mismatched = {k: (v, meta[k]) for k, v in self.meta.items() if k != "_meta" and meta.get(k) != v}
+        if mismatched:
+            LOGGER.warning(
+                "Checkpoint %s was created with different settings: %s. "
+                "Resumed results may not be comparable.",
+                self.path,
+                mismatched,
+            )
+
+    def get(self, mode: str, reaction_id: str) -> dict | None:
+        return self.entries.get((mode, reaction_id))
+
+    def save(self, record: dict) -> None:
+        self.entries[(record["mode"], record["reaction_id"])] = record
+        self._append(record)
+
+    def _append(self, record: dict) -> None:
+        if self.path is None:
+            return
+        with self.path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record) + "\n")
 
 
 def load_test_targets(dataset_name: str, split: str, limit: int | None) -> list[EvalTarget]:
@@ -143,6 +209,59 @@ def generate_candidates(
     return candidates, structure_predictions
 
 
+def get_or_generate_candidates(
+    target: EvalTarget,
+    mode: str,
+    provider: LLMProvider,
+    model: str,
+    temperature: float,
+    max_k: int,
+    qdrant_client,
+    retrieval_config: RetrievalConfig,
+    retrieval_top_k: int,
+    checkpoint: Checkpoint,
+) -> tuple[list[list[str]], list[str]]:
+    """Reuse a checkpointed target result if it has enough candidates, else (top up and) generate."""
+    cached = checkpoint.get(mode, target.reaction_id)
+    candidates: list[list[str]] = list(cached["candidates"]) if cached else []
+    structures: list[str] = list(cached["structure_predictions"]) if cached else []
+
+    missing = max_k - len(candidates)
+    if missing > 0:
+        new_candidates, new_structures = generate_candidates(
+            target,
+            mode,
+            provider,
+            model,
+            temperature,
+            missing,
+            qdrant_client,
+            retrieval_config,
+            retrieval_top_k,
+        )
+        candidates.extend(new_candidates)
+        structures.extend(new_structures)
+        checkpoint.save(
+            {
+                "mode": mode,
+                "reaction_id": target.reaction_id,
+                "product_smiles": target.product_smiles,
+                "reference_precursors": target.reference_precursors,
+                "candidates": candidates,
+                "structure_predictions": structures,
+            }
+        )
+    else:
+        LOGGER.info(
+            "[%s] target=%s resumed from checkpoint (%d candidates)",
+            mode,
+            target.reaction_id,
+            len(candidates),
+        )
+
+    return candidates[:max_k], structures[:max_k]
+
+
 def run_mode(
     mode: str,
     targets: list[EvalTarget],
@@ -153,6 +272,7 @@ def run_mode(
     qdrant_client,
     retrieval_config: RetrievalConfig,
     retrieval_top_k: int,
+    checkpoint: Checkpoint,
 ) -> dict[str, float]:
     max_k = max(k_values)
     predictions: list[list[list[str]]] = []
@@ -161,7 +281,7 @@ def run_mode(
 
     for i, target in enumerate(targets, start=1):
         LOGGER.info("[%s] %d/%d target=%s", mode, i, len(targets), target.reaction_id)
-        candidates, structures = generate_candidates(
+        candidates, structures = get_or_generate_candidates(
             target,
             mode,
             provider,
@@ -171,6 +291,7 @@ def run_mode(
             qdrant_client,
             retrieval_config,
             retrieval_top_k,
+            checkpoint,
         )
         predictions.append(candidates)
         references.append(target.reference_precursors)
@@ -229,6 +350,17 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Also write the markdown table to this file.",
     )
+    parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        default=None,
+        help=(
+            "Path to a JSONL file for saving per-target progress. If it already "
+            "exists, completed (mode, target) results are read back instead of "
+            "re-calling the LLM, so an interrupted run (e.g. hitting a rate "
+            "limit) can be resumed by rerunning with the same arguments."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -272,6 +404,16 @@ def main() -> None:
     if MODE_RAG_COT in modes:
         qdrant_client = create_qdrant_client(retrieval_config)
 
+    checkpoint = Checkpoint(args.checkpoint)
+    checkpoint.check_meta(
+        {
+            "dataset": args.dataset,
+            "split": args.split,
+            "provider": args.provider,
+            "model": model,
+        }
+    )
+
     results: dict[str, dict[str, float]] = {}
     for mode in modes:
         started_at = time.perf_counter()
@@ -285,6 +427,7 @@ def main() -> None:
             qdrant_client,
             retrieval_config,
             args.retrieval_top_k,
+            checkpoint,
         )
         results[MODE_LABELS[mode]] = metrics
         LOGGER.info(

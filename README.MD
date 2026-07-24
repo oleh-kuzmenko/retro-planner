@@ -281,6 +281,10 @@ pip install -e ".[indexing]"
 GROQ_API_KEY=... python scripts/evaluate_retrosynthesis.py --limit 25
 ```
 
+`evaluate_retrosynthesis.py` calls the single-step pipeline `k` times per target to build ranked candidates for Zero-shot and/or RAG+CoT mode (`--modes zero_shot,rag_cot`), scores them against the USPTO-50K reference precursors, and prints (and optionally, via `--output`, writes) a markdown results table. Useful flags: `--provider`/`--model` pick the LLM (defaults to Groq's `llama-3.3-70b-versatile`), `--limit 0` evaluates the full split instead of a sample, `--k 1,3,5` sets which top-k metrics to compute, `--modes zero_shot` skips Qdrant/RAG entirely, and `--retrieval-top-k` controls how much RAG context is retrieved per target in `rag_cot` mode.
+
+Pass `--checkpoint path/to/progress.jsonl` to save each target's generated candidates to a JSONL file as soon as they're produced. If the run is interrupted (e.g. a Groq free-tier rate limit), rerun the same command with the same `--checkpoint` path: completed `(mode, target)` results are read back instead of re-calling the LLM, and a target checkpointed with fewer candidates than the current `--k` needs is topped up rather than regenerated from scratch.
+
 For indexing changes, run a limited indexing check:
 
 ```bash
