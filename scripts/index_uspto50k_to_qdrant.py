@@ -519,6 +519,7 @@ def iter_ord_payloads(ord_data_dir: Path) -> Iterator[dict]:
 def iter_ord_payloads_streaming(
     repo_id: str,
     allow_patterns: list[str] | None,
+    skip_shards_before: str | None = None,
 ) -> Iterator[dict]:
     """Stream ORD reactions from Hugging Face one shard at a time.
 
@@ -530,6 +531,13 @@ def iter_ord_payloads_streaming(
     of the full multi-gigabyte ORD corpus. Each downloaded shard is still
     cached locally by `huggingface_hub`, so a later run that needs more
     targets resumes from where this left off instead of re-downloading.
+
+    `skip_shards_before`, if given, is a shard filename (e.g. the max
+    `source_dataset` already present in a Qdrant index): shards are consumed
+    in the same sorted order an indexing run consumes them in, so any shard
+    sorting strictly before it was already fully scanned while building that
+    index and is skipped without being downloaded. The boundary shard itself
+    is kept since an indexing run may have stopped partway through it.
     """
     from fnmatch import fnmatch
 
@@ -543,6 +551,15 @@ def iter_ord_payloads_streaming(
         if path.endswith(".pb.gz") and any(fnmatch(path, pattern) for pattern in patterns)
     )
     LOGGER.info("Found %d ORD shard(s) matching pattern on %s", len(matched), repo_id)
+
+    if skip_shards_before is not None:
+        before_count = len(matched)
+        matched = [path for path in matched if Path(path).name >= skip_shards_before]
+        LOGGER.info(
+            "Skipping %d already-indexed ORD shard(s) (up to %s)",
+            before_count - len(matched),
+            skip_shards_before,
+        )
 
     for filename in matched:
         local_path = hf_hub_download(repo_id=repo_id, filename=filename, repo_type="dataset")

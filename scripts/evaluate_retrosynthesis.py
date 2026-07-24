@@ -186,24 +186,29 @@ def load_test_targets(dataset_name: str, split: str, limit: int | None) -> list[
     return targets
 
 
-def fetch_indexed_reaction_keys(client, collection_name: str) -> tuple[set[str], set[tuple[str, str]]]:
+def fetch_indexed_reaction_keys(
+    client, collection_name: str
+) -> tuple[set[str], set[tuple[str, str]], set[str]]:
     """Collect every reaction_id and (product, reactants) SMILES pair already
-    indexed in a Qdrant collection.
+    indexed in a Qdrant collection, plus every ORD shard filename they came from.
 
     Used to hold out genuinely unseen ORD evaluation targets: a target drawn
     from the same ORD corpus used to build the RAG index could otherwise
     itself be sitting in the retrieval index, making the benchmark trivially
-    "solvable" by retrieval rather than reasoning.
+    "solvable" by retrieval rather than reasoning. The shard filenames (each
+    indexed payload's `source_dataset`) let a caller skip re-downloading ORD
+    shards that were already fully consumed while building the index.
     """
     ids: set[str] = set()
     pairs: set[tuple[str, str]] = set()
+    ord_shards: set[str] = set()
     offset = None
     scanned = 0
 
     while True:
         points, offset = client.scroll(
             collection_name=collection_name,
-            with_payload=["reaction_id", "product_smiles", "reactants_smiles"],
+            with_payload=["reaction_id", "product_smiles", "reactants_smiles", "source_dataset"],
             with_vectors=False,
             limit=1000,
             offset=offset,
@@ -213,10 +218,13 @@ def fetch_indexed_reaction_keys(client, collection_name: str) -> tuple[set[str],
             reaction_id = payload.get("reaction_id")
             product = payload.get("product_smiles")
             reactants = payload.get("reactants_smiles")
+            source_dataset = payload.get("source_dataset")
             if reaction_id:
                 ids.add(str(reaction_id))
             if product and reactants:
                 pairs.add((product, reactants))
+            if source_dataset and str(source_dataset).endswith(".pb.gz"):
+                ord_shards.add(str(source_dataset))
 
         scanned += len(points)
         if points:
@@ -225,12 +233,14 @@ def fetch_indexed_reaction_keys(client, collection_name: str) -> tuple[set[str],
             break
 
     LOGGER.info(
-        "Collection %s holds %d reaction id(s) / %d content key(s) to exclude from evaluation",
+        "Collection %s holds %d reaction id(s) / %d content key(s) across %d ORD shard(s) "
+        "to exclude from evaluation",
         collection_name,
         len(ids),
         len(pairs),
+        len(ord_shards),
     )
-    return ids, pairs
+    return ids, pairs, ord_shards
 
 
 def load_ord_eval_targets(
@@ -608,13 +618,16 @@ def main() -> None:
             "Scanning Qdrant collection=%s for already-indexed reactions to hold out...",
             retrieval_config.product_collection,
         )
-        excluded_ids, excluded_pairs = fetch_indexed_reaction_keys(
+        excluded_ids, excluded_pairs, indexed_shards = fetch_indexed_reaction_keys(
             qdrant_client, retrieval_config.product_collection
         )
         if args.ord_data_dir is not None:
             payloads = iter_ord_payloads(args.ord_data_dir)
         else:
-            payloads = iter_ord_payloads_streaming(args.ord_repo_id, args.ord_allow_pattern)
+            skip_before = max(indexed_shards) if indexed_shards else None
+            payloads = iter_ord_payloads_streaming(
+                args.ord_repo_id, args.ord_allow_pattern, skip_shards_before=skip_before
+            )
         targets = load_ord_eval_targets(payloads, limit, excluded_ids, excluded_pairs)
     else:
         targets = load_test_targets(args.dataset, args.split, limit)
