@@ -216,7 +216,16 @@ def hybrid_retrieve_reactions_for_smiles(
     top_k: int,
     client: QdrantClient | None = None,
     config: RetrievalConfig | None = None,
+    exclude_reaction_id: str | None = None,
 ) -> RetrievalResult:
+    """Retrieve the top-k most relevant reactions for a target SMILES.
+
+    `exclude_reaction_id`, when set, drops any hit with a matching
+    `reaction_id` from the merged results before ranking to top_k. Use this
+    during evaluation on a dataset that has also been indexed into Qdrant,
+    so a target doesn't retrieve itself (and thus its own ground-truth
+    precursors) as RAG context.
+    """
     resolved = config or RetrievalConfig()
     query_limit = max(top_k * 3, top_k)
     request_payload = {
@@ -232,6 +241,7 @@ def hybrid_retrieve_reactions_for_smiles(
             "reaction": resolved.weights.reaction,
             "reaction_class": resolved.weights.reaction_class,
         },
+        "exclude_reaction_id": exclude_reaction_id,
     }
     LOGGER.info(
         "RAG request started target=%s top_k=%d product_collection=%s "
@@ -305,6 +315,12 @@ def hybrid_retrieve_reactions_for_smiles(
             target_classes,
             resolved.weights,
         )
+        if exclude_reaction_id is not None:
+            reactions = [
+                reaction
+                for reaction in reactions
+                if str(reaction.get("reaction_id")) != str(exclude_reaction_id)
+            ]
         returned_reactions = reactions[:top_k]
         scores = [
             float(reaction.get("final_hybrid_score", 0.0))

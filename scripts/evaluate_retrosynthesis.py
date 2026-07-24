@@ -208,6 +208,7 @@ def generate_candidates(
                 top_k=retrieval_top_k,
                 client=qdrant_client,
                 config=retrieval_config,
+                exclude_reaction_id=target.reaction_id,
             )
             reactions = result.reactions
         except Exception as exc:
