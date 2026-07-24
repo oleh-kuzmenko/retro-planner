@@ -285,6 +285,14 @@ GROQ_API_KEY=... python scripts/evaluate_retrosynthesis.py --limit 25
 
 Pass `--checkpoint path/to/progress.jsonl` to save each target's generated candidates to a JSONL file as soon as they're produced. If the run is interrupted (e.g. a Groq free-tier rate limit), rerun the same command with the same `--checkpoint` path: completed `(mode, target)` results are read back instead of re-calling the LLM, and a target checkpointed with fewer candidates than the current `--k` needs is topped up rather than regenerated from scratch.
 
+For a full audit trail of every LLM interaction (useful for citing methodology or reproducing example transcripts in a write-up), pass `--trace-log path/to/trace.jsonl`. It appends one JSON record per generated candidate with the exact prompt(s) sent (including repair-prompt retries), the raw response(s), the RAG context retrieved for that target, and the parsed think/precursors/warnings/errors. Pass `--log-file path/to/run.log` as well to mirror the full run log (progress, retrieval scoring, and the provider's own request/response logging) to disk instead of only the console:
+
+```bash
+GROQ_API_KEY=... python scripts/evaluate_retrosynthesis.py \
+    --limit 25 --checkpoint results/progress.jsonl \
+    --trace-log results/trace.jsonl --log-file results/run.log
+```
+
 For indexing changes, run a limited indexing check:
 
 ```bash

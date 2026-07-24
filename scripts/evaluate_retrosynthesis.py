@@ -20,7 +20,8 @@ import json
 import logging
 import os
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 from index_uspto50k_to_qdrant import normalize_row
@@ -116,6 +117,25 @@ class Checkpoint:
             handle.write(json.dumps(record) + "\n")
 
 
+class TraceLogger:
+    """Write-only JSONL audit log of every LLM call: exact prompt(s) sent and raw response(s).
+
+    Separate from `--checkpoint` (which stores only the final parsed result
+    needed to resume a run): this captures the full request/response
+    round-trip -- including retrieved RAG context and repair-prompt retries
+    -- for citing methodology or reproducing example transcripts in a paper.
+    """
+
+    def __init__(self, path: Path | None):
+        self.path = path
+
+    def log(self, record: dict) -> None:
+        if self.path is None:
+            return
+        with self.path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record) + "\n")
+
+
 def load_test_targets(dataset_name: str, split: str, limit: int | None) -> list[EvalTarget]:
     """Load (product, reference precursors) pairs from a USPTO-50K split.
 
@@ -169,13 +189,16 @@ def generate_candidates(
     qdrant_client,
     retrieval_config: RetrievalConfig,
     retrieval_top_k: int,
+    trace: TraceLogger,
+    start_index: int = 0,
 ) -> tuple[list[list[str]], list[str]]:
     """Run the single-step pipeline `num_candidates` times for one target.
 
     Returns (ranked candidate precursor lists, raw structure predictions for
     Structure Success Rate). RAG context is retrieved once per target and
     reused for every candidate, matching the Streamlit "Generate another
-    candidate" behavior.
+    candidate" behavior. Every call's full prompt/response trace is appended
+    to `trace` as it completes.
     """
     reactions: list[dict] | None = None
     if mode == MODE_RAG_COT:
@@ -193,7 +216,8 @@ def generate_candidates(
 
     candidates: list[list[str]] = []
     structure_predictions: list[str] = []
-    for _ in range(num_candidates):
+    for offset in range(num_candidates):
+        call_started = time.perf_counter()
         step = generate_single_step(
             GenerationRequest(
                 target_smiles=target.product_smiles,
@@ -203,8 +227,27 @@ def generate_candidates(
                 temperature=temperature,
             )
         )
+        duration = time.perf_counter() - call_started
         candidates.append(step.precursors)
         structure_predictions.append(".".join(step.precursors) if step.precursors else "")
+        trace.log(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "mode": mode,
+                "reaction_id": target.reaction_id,
+                "product_smiles": target.product_smiles,
+                "candidate_index": start_index + offset + 1,
+                "model": model,
+                "temperature": temperature,
+                "retrieved_reactions": reactions or [],
+                "duration_seconds": round(duration, 3),
+                "attempts": [asdict(attempt) for attempt in step.attempts],
+                "think": step.think,
+                "precursors": step.precursors,
+                "warnings": step.warnings,
+                "errors": step.errors,
+            }
+        )
 
     return candidates, structure_predictions
 
@@ -220,6 +263,7 @@ def get_or_generate_candidates(
     retrieval_config: RetrievalConfig,
     retrieval_top_k: int,
     checkpoint: Checkpoint,
+    trace: TraceLogger,
 ) -> tuple[list[list[str]], list[str]]:
     """Reuse a checkpointed target result if it has enough candidates, else (top up and) generate."""
     cached = checkpoint.get(mode, target.reaction_id)
@@ -238,6 +282,8 @@ def get_or_generate_candidates(
             qdrant_client,
             retrieval_config,
             retrieval_top_k,
+            trace,
+            start_index=len(candidates),
         )
         candidates.extend(new_candidates)
         structures.extend(new_structures)
@@ -273,6 +319,7 @@ def run_mode(
     retrieval_config: RetrievalConfig,
     retrieval_top_k: int,
     checkpoint: Checkpoint,
+    trace: TraceLogger,
 ) -> dict[str, float]:
     max_k = max(k_values)
     predictions: list[list[list[str]]] = []
@@ -292,6 +339,7 @@ def run_mode(
             retrieval_config,
             retrieval_top_k,
             checkpoint,
+            trace,
         )
         predictions.append(candidates)
         references.append(target.reference_precursors)
@@ -361,12 +409,36 @@ def parse_args() -> argparse.Namespace:
             "limit) can be resumed by rerunning with the same arguments."
         ),
     )
+    parser.add_argument(
+        "--trace-log",
+        type=Path,
+        default=None,
+        help=(
+            "Path to a JSONL file recording every LLM call: exact prompt(s) sent "
+            "(including repair-prompt retries), raw response(s), retrieved RAG "
+            "context, and the parsed think/precursors/warnings/errors. One "
+            "record per generated candidate; intended for citing methodology or "
+            "reproducing example transcripts."
+        ),
+    )
+    parser.add_argument(
+        "--log-file",
+        type=Path,
+        default=None,
+        help="Also write the full run log (progress, retrieval, provider request/response payloads) to this file.",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     args = parse_args()
+
+    handlers: list[logging.Handler] = [logging.StreamHandler()]
+    if args.log_file:
+        handlers.append(logging.FileHandler(args.log_file, encoding="utf-8"))
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", handlers=handlers
+    )
 
     limit = None if args.limit == 0 else args.limit
     k_values = sorted({int(value) for value in args.k.split(",") if value.strip()})
@@ -413,6 +485,7 @@ def main() -> None:
             "model": model,
         }
     )
+    trace = TraceLogger(args.trace_log)
 
     results: dict[str, dict[str, float]] = {}
     for mode in modes:
@@ -428,6 +501,7 @@ def main() -> None:
             retrieval_config,
             args.retrieval_top_k,
             checkpoint,
+            trace,
         )
         results[MODE_LABELS[mode]] = metrics
         LOGGER.info(

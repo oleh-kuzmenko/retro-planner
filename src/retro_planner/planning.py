@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from retro_planner.chemistry import canonicalize_smiles
 from retro_planner.prompting import build_cot_prompt, build_cot_repair_prompt
@@ -22,6 +22,16 @@ class GenerationRequest:
 
 
 @dataclass(frozen=True)
+class GenerationAttempt:
+    """One prompt/response round-trip with the LLM provider (initial or repair call)."""
+
+    prompt: str
+    temperature: float
+    raw_response: str = ""
+    error: str | None = None
+
+
+@dataclass(frozen=True)
 class StepResult:
     think: str | None
     precursors: list[str]
@@ -29,6 +39,7 @@ class StepResult:
     raw_response: str
     warnings: list[str]
     errors: list[str]
+    attempts: list[GenerationAttempt] = field(default_factory=list)
 
 
 def _call_provider(
@@ -55,6 +66,7 @@ def generate_single_step(request: GenerationRequest) -> StepResult:
     canonical_target = canonicalize_smiles(request.target_smiles) or request.target_smiles
     reactions = request.reactions or []
     prompt = build_cot_prompt(canonical_target, reactions)
+    attempts: list[GenerationAttempt] = []
 
     try:
         raw_response = _call_provider(
@@ -64,6 +76,9 @@ def generate_single_step(request: GenerationRequest) -> StepResult:
             request.temperature,
         )
     except Exception as exc:
+        attempts.append(
+            GenerationAttempt(prompt=prompt, temperature=request.temperature, error=str(exc))
+        )
         return StepResult(
             think=None,
             precursors=[],
@@ -71,7 +86,12 @@ def generate_single_step(request: GenerationRequest) -> StepResult:
             raw_response="",
             warnings=[],
             errors=[f"LLM API failure: {exc}"],
+            attempts=attempts,
         )
+
+    attempts.append(
+        GenerationAttempt(prompt=prompt, temperature=request.temperature, raw_response=raw_response)
+    )
 
     reasoning = parse_reasoning_response(raw_response)
     precursors, warnings, errors = validate_precursors(
@@ -94,6 +114,9 @@ def generate_single_step(request: GenerationRequest) -> StepResult:
                 REPAIR_TEMPERATURE,
             )
         except Exception as exc:
+            attempts.append(
+                GenerationAttempt(prompt=repair_prompt, temperature=REPAIR_TEMPERATURE, error=str(exc))
+            )
             warnings.append(f"Could not repair invalid response: {exc}")
             return StepResult(
                 think=reasoning.think,
@@ -102,8 +125,14 @@ def generate_single_step(request: GenerationRequest) -> StepResult:
                 raw_response=raw_response,
                 warnings=warnings,
                 errors=errors,
+                attempts=attempts,
             )
 
+        attempts.append(
+            GenerationAttempt(
+                prompt=repair_prompt, temperature=REPAIR_TEMPERATURE, raw_response=repaired_raw
+            )
+        )
         reasoning = parse_reasoning_response(repaired_raw)
         precursors, repair_warnings, errors = validate_precursors(
             reasoning.answer_smiles,
@@ -119,4 +148,5 @@ def generate_single_step(request: GenerationRequest) -> StepResult:
         raw_response=raw_response,
         warnings=warnings,
         errors=errors,
+        attempts=attempts,
     )
