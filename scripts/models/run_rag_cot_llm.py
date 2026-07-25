@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Step 5: Qdrant hybrid RAG retrieval + Chain-of-Thought via Groq's GPT-OSS-120B.
+"""Step 5: Qdrant hybrid RAG retrieval + Chain-of-Thought via a hosted LLM API.
 
 The proposed hybrid system: Morgan + reaction-transform fingerprint retrieval
 (`retro_eval.retrieval.hybrid_retrieve_reactions_for_smiles`) feeds retrieved
 precedent reactions into the same 4-block CoT prompt/repair-retry pipeline
 the rest of the codebase uses (`retro_eval.planning.generate_single_step`),
-called through the Groq API.
+called through an OpenAI-compatible chat-completions API.
 
 If a record carries ORD condition metadata (`solvent`/`temperature_celsius`/
 `catalyst`/`yield_percent`/`reaction_id`), a SEPARATE follow-up call also asks
@@ -13,22 +13,34 @@ the model to propose reaction conditions -- logged for qualitative review,
 never scored programmatically (comparing predicted vs. reference conditions
 is not something this script attempts).
 
-Groq's free tier returns HTTP 429 once its per-minute/per-day quota is used
-up. Short rate limits (<= --rate-limit-auto-wait-seconds) are slept through
-automatically by `RetryingProvider`. Longer ones (e.g. a daily quota reset,
-which Groq may report as hours away) instead pause the whole run: progress
-already written to `results.json` is kept, a resume pointer is saved under
-`<experiments-root>/.resume/`, and the script exits so it isn't left
-blocking a terminal for hours. Re-running the exact same command later picks
-the same experiment run back up and skips every record already completed.
-Pass --fresh to ignore any saved resume pointer and start a new run.
+Free-tier hosted APIs commonly return HTTP 429 once a per-minute/per-day
+quota is used up. Short rate limits (<= --rate-limit-auto-wait-seconds) are
+slept through automatically by `RetryingProvider`. Longer ones (e.g. a daily
+quota reset, which some providers report as hours away) instead pause the
+whole run: progress already written to `results.json` is kept, a resume
+pointer is saved under `<experiments-root>/.resume/`, and the script exits so
+it isn't left blocking a terminal for hours. Re-running the exact same
+command later picks the same experiment run back up and skips every record
+already completed. Pass --fresh to ignore any saved resume pointer and start
+a new run.
+
+Talks to any OpenAI-compatible chat-completions endpoint via `--base-url`/
+`--api-key`/`--model` -- e.g. Groq, Cerebras, OpenRouter, Together, Fireworks,
+or a local Ollama/llama.cpp server. There is no baked-in default provider, so
+switching between them (e.g. when one host's free-tier quota is exhausted)
+is a matter of passing different flag values, not a code change.
 
 Example:
     pip install -e ".[eval-runner]"
     docker compose up -d qdrant
-    GROQ_API_KEY=... python scripts/models/run_rag_cot_groq.py --input data/ord_eval_targets.json --limit 10
-    # If it pauses on a Groq rate limit, just rerun the same command later:
-    GROQ_API_KEY=... python scripts/models/run_rag_cot_groq.py --input data/ord_eval_targets.json --limit 10
+    python scripts/models/run_rag_cot_llm.py --input data/ord_eval_targets.json --limit 10 \\
+        --base-url https://api.groq.com/openai/v1 --api-key $GROQ_API_KEY \\
+        --model openai/gpt-oss-120b
+    # If it pauses on a rate limit, just rerun the same command later.
+    # Or point at a different OpenAI-compatible provider instead:
+    python scripts/models/run_rag_cot_llm.py --input data/ord_eval_targets.json \\
+        --base-url https://openrouter.ai/api/v1 --api-key $OPENROUTER_API_KEY \\
+        --model openai/gpt-oss-120b
 """
 
 from __future__ import annotations
@@ -54,12 +66,12 @@ from retro_eval.harness.experiment import (
 )
 from retro_eval.harness.records import EvalRecord, load_records
 from retro_eval.planning import GenerationRequest, generate_single_step
-from retro_eval.providers.chat_api import GroqLLMProvider
+from retro_eval.providers.chat_api import OpenAICompatibleLLMProvider
 from retro_eval.providers.retrying import ProviderPaused, RetryingProvider
 from retro_eval.retrieval import RetrievalConfig, create_qdrant_client, hybrid_retrieve_reactions_for_smiles
 from tqdm import tqdm
 
-LOGGER = logging.getLogger("retro_eval.run_rag_cot_groq")
+LOGGER = logging.getLogger("retro_eval.run_rag_cot_llm")
 
 
 def format_duration(seconds: float) -> str:
@@ -113,13 +125,24 @@ Reactants (SMILES): {predicted_reactants or "unknown"}"""
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Step 5: Qdrant hybrid RAG + CoT via Groq's GPT-OSS-120B.")
+    parser = argparse.ArgumentParser(description="Step 5: Qdrant hybrid RAG + CoT via a hosted LLM API.")
     parser.add_argument("--input", type=Path, required=True, help="USPTO/ORD-format dataset JSON.")
     parser.add_argument(
         "--model-slug", default="rag_cot_gptoss120b", help="Folder name under experiments/<experiment_id>/."
     )
-    parser.add_argument("--groq-api-key", default=os.getenv("GROQ_API_KEY", ""))
-    parser.add_argument("--groq-model", default="openai/gpt-oss-120b")
+    parser.add_argument(
+        "--base-url",
+        required=True,
+        help="Any OpenAI-compatible chat-completions endpoint, e.g. "
+        "https://api.groq.com/openai/v1 (Groq), https://openrouter.ai/api/v1 (OpenRouter), "
+        "https://api.cerebras.ai/v1 (Cerebras), or a local Ollama server.",
+    )
+    parser.add_argument(
+        "--api-key",
+        default=os.getenv("LLM_API_KEY", ""),
+        help="API key for --base-url. Defaults to $LLM_API_KEY.",
+    )
+    parser.add_argument("--model", default="openai/gpt-oss-120b")
     parser.add_argument("--qdrant-host", default=QDRANT_HOST)
     parser.add_argument("--qdrant-port", type=int, default=QDRANT_PORT)
     parser.add_argument("--rag-top-k", type=int, default=3)
@@ -136,7 +159,7 @@ def parse_args() -> argparse.Namespace:
         "--rate-limit-auto-wait-seconds",
         type=float,
         default=300,
-        help="Sleep through a Groq 429 automatically if its suggested wait is at most this long.",
+        help="Sleep through a 429 automatically if its suggested wait is at most this long.",
     )
     parser.add_argument(
         "--rate-limit-default-wait-seconds",
@@ -156,8 +179,8 @@ def main() -> None:
     args = parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-    if not args.groq_api_key:
-        raise SystemExit("This script requires --groq-api-key or the GROQ_API_KEY environment variable.")
+    if not args.api_key:
+        raise SystemExit("This script requires --api-key or the LLM_API_KEY environment variable.")
 
     records = load_records(args.input)
     if args.limit is not None:
@@ -180,14 +203,14 @@ def main() -> None:
     start_run_meta(
         run_dir,
         model_slug=args.model_slug,
-        script="scripts/models/run_rag_cot_groq.py",
+        script="scripts/models/run_rag_cot_llm.py",
         cli_args=vars(args),
         input_path=args.input,
     )
     LOGGER.info("Run directory: %s", run_dir)
 
     provider = RetryingProvider(
-        GroqLLMProvider(args.groq_api_key),
+        OpenAICompatibleLLMProvider(api_key=args.api_key, base_url=args.base_url),
         max_attempts=args.max_retries,
         rate_limit_auto_wait_seconds=args.rate_limit_auto_wait_seconds,
         rate_limit_default_wait_seconds=args.rate_limit_default_wait_seconds,
@@ -212,7 +235,7 @@ def main() -> None:
 
     log = InferenceLogWriter(run_dir)
 
-    for record in tqdm(records, desc="Step 5: RAG+CoT (GPT-OSS-120B via Groq)"):
+    for record in tqdm(records, desc=f"Step 5: RAG+CoT ({args.model})"):
         entry: dict = {"index": record.index, "product_smiles": record.product_smiles}
         predicted, raw, predicted_conditions = "", "", None
         try:
@@ -229,7 +252,7 @@ def main() -> None:
                 GenerationRequest(
                     target_smiles=record.product_smiles,
                     llm_provider=provider,
-                    model=args.groq_model,
+                    model=args.model,
                     reactions=reactions,
                     temperature=args.temperature,
                 )
@@ -245,7 +268,7 @@ def main() -> None:
                 condition_prompt = build_condition_prompt(record.product_smiles, predicted, reactions)
                 condition_raw = provider.generate(
                     messages=[{"role": "user", "content": condition_prompt}],
-                    model=args.groq_model,
+                    model=args.model,
                     temperature=0.0,
                     json_mode=False,
                 )
@@ -254,7 +277,7 @@ def main() -> None:
                 predicted_conditions = condition_raw
         except ProviderPaused as exc:
             LOGGER.warning(
-                "Groq rate limit requires a long pause (~%s) at index=%d. "
+                "Rate limit requires a long pause (~%s) at index=%d. "
                 "Progress so far is saved in %s -- rerun the exact same command "
                 "later to resume (it will skip everything already completed).",
                 format_duration(exc.wait_seconds),
@@ -263,7 +286,7 @@ def main() -> None:
             )
             finish_run_meta(run_dir, record_count=len(results), status="paused_rate_limited")
             raise SystemExit(
-                f"Paused on a Groq rate limit at index={record.index}; "
+                f"Paused on a rate limit at index={record.index}; "
                 f"suggested wait ~{format_duration(exc.wait_seconds)}. "
                 "Rerun the same command later to resume."
             ) from exc

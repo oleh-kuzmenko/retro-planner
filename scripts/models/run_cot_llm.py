@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Ablation baseline: Chain-of-Thought via Groq's GPT-OSS-120B, no RAG retrieval.
+"""Ablation baseline: Chain-of-Thought via a hosted LLM API, no RAG retrieval.
 
-Same prompt template, repair-retry contract, parsing, and Groq provider as
-`run_rag_cot_groq.py` (Step 5) -- `retro_eval.planning.generate_single_step`,
+Same prompt template, repair-retry contract, parsing, and LLM provider as
+`run_rag_cot_llm.py` (Step 5) -- `retro_eval.planning.generate_single_step`,
 called with an empty `reactions` list. The only difference from Step 5 is that
 no precedent reactions are retrieved from Qdrant, so the `[Context]` block is
 omitted from the prompt entirely (see `retro_eval.prompting._context_block`).
@@ -13,11 +13,22 @@ prompt/parsing pipeline the way `run_chat_zero_shot.py` would.
 Not part of the numbered 1-6 pipeline in the README; this is an extra run for
 comparing RAG's effect, not a required stage.
 
+Talks to any OpenAI-compatible chat-completions endpoint via `--base-url`/
+`--api-key`/`--model` -- e.g. Groq, Cerebras, OpenRouter, Together, Fireworks,
+or a local Ollama/llama.cpp server. There is no baked-in default provider, so
+switching between them (e.g. when one host's free-tier quota is exhausted)
+is a matter of passing different flag values, not a code change.
+
 Example:
     pip install -e ".[eval-runner]"
-    GROQ_API_KEY=... python scripts/models/run_cot_groq.py --input data/uspto_eval_targets.json --limit 10
-    # If it pauses on a Groq rate limit, just rerun the same command later:
-    GROQ_API_KEY=... python scripts/models/run_cot_groq.py --input data/uspto_eval_targets.json --limit 10
+    python scripts/models/run_cot_llm.py --input data/uspto_eval_targets.json --limit 10 \\
+        --base-url https://api.groq.com/openai/v1 --api-key $GROQ_API_KEY \\
+        --model openai/gpt-oss-120b
+    # If it pauses on a rate limit, just rerun the same command later.
+    # Or point at a different OpenAI-compatible provider instead:
+    python scripts/models/run_cot_llm.py --input data/uspto_eval_targets.json \\
+        --base-url https://openrouter.ai/api/v1 --api-key $OPENROUTER_API_KEY \\
+        --model openai/gpt-oss-120b
 """
 
 from __future__ import annotations
@@ -42,11 +53,11 @@ from retro_eval.harness.experiment import (
 )
 from retro_eval.harness.records import EvalRecord, load_records
 from retro_eval.planning import GenerationRequest, generate_single_step
-from retro_eval.providers.chat_api import GroqLLMProvider
+from retro_eval.providers.chat_api import OpenAICompatibleLLMProvider
 from retro_eval.providers.retrying import ProviderPaused, RetryingProvider
 from tqdm import tqdm
 
-LOGGER = logging.getLogger("retro_eval.run_cot_groq")
+LOGGER = logging.getLogger("retro_eval.run_cot_llm")
 
 
 def format_duration(seconds: float) -> str:
@@ -92,14 +103,25 @@ Reactants (SMILES): {predicted_reactants or "unknown"}"""
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Ablation baseline: CoT via Groq's GPT-OSS-120B, no RAG retrieval (compare against run_rag_cot_groq.py)."
+        description="Ablation baseline: CoT via a hosted LLM API, no RAG retrieval (compare against run_rag_cot_llm.py)."
     )
     parser.add_argument("--input", type=Path, required=True, help="USPTO/ORD-format dataset JSON.")
     parser.add_argument(
         "--model-slug", default="cot_gptoss120b_no_rag", help="Folder name under experiments/<experiment_id>/."
     )
-    parser.add_argument("--groq-api-key", default=os.getenv("GROQ_API_KEY", ""))
-    parser.add_argument("--groq-model", default="openai/gpt-oss-120b")
+    parser.add_argument(
+        "--base-url",
+        required=True,
+        help="Any OpenAI-compatible chat-completions endpoint, e.g. "
+        "https://api.groq.com/openai/v1 (Groq), https://openrouter.ai/api/v1 (OpenRouter), "
+        "https://api.cerebras.ai/v1 (Cerebras), or a local Ollama server.",
+    )
+    parser.add_argument(
+        "--api-key",
+        default=os.getenv("LLM_API_KEY", ""),
+        help="API key for --base-url. Defaults to $LLM_API_KEY.",
+    )
+    parser.add_argument("--model", default="openai/gpt-oss-120b")
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--max-retries", type=int, default=5)
     parser.add_argument("--limit", type=int, default=None, help="Only process the first N records.")
@@ -113,7 +135,7 @@ def parse_args() -> argparse.Namespace:
         "--rate-limit-auto-wait-seconds",
         type=float,
         default=300,
-        help="Sleep through a Groq 429 automatically if its suggested wait is at most this long.",
+        help="Sleep through a 429 automatically if its suggested wait is at most this long.",
     )
     parser.add_argument(
         "--rate-limit-default-wait-seconds",
@@ -133,8 +155,8 @@ def main() -> None:
     args = parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-    if not args.groq_api_key:
-        raise SystemExit("This script requires --groq-api-key or the GROQ_API_KEY environment variable.")
+    if not args.api_key:
+        raise SystemExit("This script requires --api-key or the LLM_API_KEY environment variable.")
 
     records = load_records(args.input)
     if args.limit is not None:
@@ -157,14 +179,14 @@ def main() -> None:
     start_run_meta(
         run_dir,
         model_slug=args.model_slug,
-        script="scripts/models/run_cot_groq.py",
+        script="scripts/models/run_cot_llm.py",
         cli_args=vars(args),
         input_path=args.input,
     )
     LOGGER.info("Run directory: %s", run_dir)
 
     provider = RetryingProvider(
-        GroqLLMProvider(args.groq_api_key),
+        OpenAICompatibleLLMProvider(api_key=args.api_key, base_url=args.base_url),
         max_attempts=args.max_retries,
         rate_limit_auto_wait_seconds=args.rate_limit_auto_wait_seconds,
         rate_limit_default_wait_seconds=args.rate_limit_default_wait_seconds,
@@ -187,7 +209,7 @@ def main() -> None:
 
     log = InferenceLogWriter(run_dir)
 
-    for record in tqdm(records, desc="CoT, no RAG (GPT-OSS-120B via Groq)"):
+    for record in tqdm(records, desc=f"CoT, no RAG ({args.model})"):
         entry: dict = {"index": record.index, "product_smiles": record.product_smiles}
         predicted, raw, predicted_conditions = "", "", None
         try:
@@ -195,7 +217,7 @@ def main() -> None:
                 GenerationRequest(
                     target_smiles=record.product_smiles,
                     llm_provider=provider,
-                    model=args.groq_model,
+                    model=args.model,
                     reactions=None,
                     temperature=args.temperature,
                 )
@@ -211,7 +233,7 @@ def main() -> None:
                 condition_prompt = build_condition_prompt(record.product_smiles, predicted)
                 condition_raw = provider.generate(
                     messages=[{"role": "user", "content": condition_prompt}],
-                    model=args.groq_model,
+                    model=args.model,
                     temperature=0.0,
                     json_mode=False,
                 )
@@ -220,7 +242,7 @@ def main() -> None:
                 predicted_conditions = condition_raw
         except ProviderPaused as exc:
             LOGGER.warning(
-                "Groq rate limit requires a long pause (~%s) at index=%d. "
+                "Rate limit requires a long pause (~%s) at index=%d. "
                 "Progress so far is saved in %s -- rerun the exact same command "
                 "later to resume (it will skip everything already completed).",
                 format_duration(exc.wait_seconds),
@@ -229,7 +251,7 @@ def main() -> None:
             )
             finish_run_meta(run_dir, record_count=len(results), status="paused_rate_limited")
             raise SystemExit(
-                f"Paused on a Groq rate limit at index={record.index}; "
+                f"Paused on a rate limit at index={record.index}; "
                 f"suggested wait ~{format_duration(exc.wait_seconds)}. "
                 "Rerun the same command later to resume."
             ) from exc

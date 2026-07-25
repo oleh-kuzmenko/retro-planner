@@ -1,16 +1,16 @@
-"""Retry wrapper for network-backed `LLMProvider`s (Ollama connection errors, Groq rate limits).
+"""Retry wrapper for network-backed `LLMProvider`s (Ollama connection errors, hosted-API rate limits).
 
 `tenacity` is imported lazily inside `generate()`, not at module scope, so
 importing this module (and anything that imports it) never requires
 `tenacity` to be installed unless a retrying call is actually made.
 
-Free-tier Groq 429s can demand waits far longer than a normal exponential
-backoff (minutes for per-minute limits, hours for daily token/request
-limits) -- long enough that blocking a script's process isn't always the
-right call. `RetryingProvider` handles the short end of that itself (sleep
-and retry transparently); once the required wait crosses
+Free-tier hosted APIs (e.g. Groq) can return 429s demanding waits far longer
+than a normal exponential backoff (minutes for per-minute limits, hours for
+daily token/request limits) -- long enough that blocking a script's process
+isn't always the right call. `RetryingProvider` handles the short end of that
+itself (sleep and retry transparently); once the required wait crosses
 `rate_limit_auto_wait_seconds` it raises `ProviderPaused` instead, so a
-caller that can persist progress (`scripts/models/run_rag_cot_groq.py`) can
+caller that can persist progress (`scripts/models/run_rag_cot_llm.py`) can
 save state and let the user resume later rather than blocking indefinitely.
 """
 
@@ -53,7 +53,7 @@ def _parse_retry_after_seconds(exc: BaseException) -> float | None:
     """Best-effort extraction of a suggested wait time from a 429 response.
 
     Tries the standard `Retry-After` header first, then falls back to
-    parsing Groq/OpenAI-style messages like "Please try again in 2m59.56s".
+    parsing OpenAI-style messages like "Please try again in 2m59.56s".
     Returns `None` if neither is present/parseable.
     """
     response = getattr(exc, "response", None)

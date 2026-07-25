@@ -22,9 +22,10 @@ hardcoded model list) to build a single comparison CSV.
 4. `scripts/models/run_qwen_lora_peft.py` -- Qwen2.5-7B-Instruct + this project's own
    trained retrosynthesis LoRA adapter, local HF `peft`. Runs in
    `colab/04_qwen_lora.ipynb` (`--device cuda`) or locally on CPU.
-5. `scripts/models/run_rag_cot_groq.py` -- Qdrant hybrid RAG retrieval + Chain-of-Thought
-   via Groq's Llama-3.3-70B, the proposed hybrid system. Runs locally (needs a running
-   Qdrant + `GROQ_API_KEY`).
+5. `scripts/models/run_rag_cot_llm.py` -- Qdrant hybrid RAG retrieval + Chain-of-Thought
+   via a hosted LLM API (GPT-OSS-120B by default), the proposed hybrid system. Runs locally
+   (needs a running Qdrant + an API key/base URL for whichever OpenAI-compatible provider
+   is passed via `--base-url`/`--api-key`).
 6. `scripts/aggregate_results.py` -- combines every model run under one `--experiment-id`
    into `final_aggregated_results.csv`.
 
@@ -64,7 +65,7 @@ collections from USPTO-50K/ORD, excluding whatever step 1 already wrote to
   `scripts/index_ord_to_qdrant.py` — populate the two Qdrant collections, excluding step
   1's held-out targets.
 - `scripts/models/run_reactiont5.py`, `run_chemllm.py`, `run_qwen_lora_peft.py`,
-  `run_rag_cot_groq.py`, `run_chat_zero_shot.py` — the model-comparison scripts (steps 2-5).
+  `run_rag_cot_llm.py`, `run_chat_zero_shot.py` — the model-comparison scripts (steps 2-5).
 - `scripts/aggregate_results.py` — step 6.
 - `colab/` — GPU notebooks for steps 2-4: clone this repo, install extras, upload the step
   1 JSON, run the matching `scripts/models/run_*.py`, zip+download `experiments/`.
@@ -86,12 +87,15 @@ collections from USPTO-50K/ORD, excluding whatever step 1 already wrote to
 
 Use Python 3.10+. See README.MD for the exact `pip install -e ".[...]"` commands per extra
 (`indexing`, `local-models`, `eval-runner`, `test`). Do not hard-code API keys:
-`run_rag_cot_groq.py` accepts `--groq-api-key` and falls back to `GROQ_API_KEY`; the
-Ollama-backed `run_chat_zero_shot.py` needs no API key.
+`run_rag_cot_llm.py`/`run_cot_llm.py` talk to any OpenAI-compatible chat-completions
+endpoint via `--base-url`/`--api-key`/`--model`. There is no baked-in default provider --
+`--base-url` is required -- so pointing at Groq, Cerebras, OpenRouter, Together, Fireworks,
+or a local Ollama/llama.cpp server is a flag change, not a code change. The Ollama-backed
+`run_chat_zero_shot.py` needs no API key.
 
 Useful environment variables:
 
-- `GROQ_API_KEY` — used by `run_rag_cot_groq.py` if `--groq-api-key` isn't passed.
+- `LLM_API_KEY` — fallback default for `--api-key` on `run_rag_cot_llm.py`/`run_cot_llm.py`.
 - `QDRANT_HOST` / `QDRANT_PORT` — default `localhost` / `6333`.
 
 ## Development Guidance
@@ -124,7 +128,7 @@ Useful environment variables:
 - When changing prompts for the CoT contract, keep the `<think>`/`<reason>` + `<answer>`
   tag contract intact: `retro_eval/reasoning.py` parses `<answer>` as dot-separated reactant
   SMILES, and `retro_eval/planning.py` (`generate_single_step`, used by
-  `run_rag_cot_groq.py`) relies on that shape.
+  `run_rag_cot_llm.py`) relies on that shape.
 - One LLM call produces exactly one retrosynthetic step. Multiple candidate disconnections
   would come from calling the same script's pipeline again (a different temperature or RAG
   context), not from asking the LLM for multiple routes in one response.

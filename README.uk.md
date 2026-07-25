@@ -19,12 +19,30 @@ LoRA та GPT-OSS-120B + Qdrant RAG + Chain-of-Thought. Кожен етап за
 2. **ReactionT5v2** -- `colab/02_reactiont5v2.ipynb` (GPU, завантажте JSON з кроку 1, скачайте `experiments.zip`)
 3. **ChemLLM-20B-Chat-SFT** (GGUF) -- `colab/03_chemllm.ipynb`, той самий підхід
 4. **Qwen2.5-7B + LoRA** (власний навчений адаптер проєкту) -- `colab/04_qwen_lora.ipynb`, той самий підхід
-5. **GPT-OSS-120B + Qdrant RAG + CoT** -- запускається локально (потрібні RAG-індекс і ключ Groq API):
+5. **GPT-OSS-120B + Qdrant RAG + CoT** -- запускається локально (потрібні RAG-індекс і ключ
+   до будь-якого OpenAI-сумісного хоста LLM):
    ```bash
    docker compose up -d qdrant
    python scripts/index_uspto_to_qdrant.py     # автоматично виключає цілі з кроку 1
    pip install -e ".[eval-runner]"
-   GROQ_API_KEY=... python scripts/models/run_rag_cot_groq.py --input data/uspto_eval_targets.json
+   python scripts/models/run_rag_cot_llm.py --input data/uspto_eval_targets.json \
+       --base-url https://api.groq.com/openai/v1 --api-key $GROQ_API_KEY \
+       --model openai/gpt-oss-120b
+   ```
+   `run_rag_cot_llm.py`/`run_cot_llm.py` працюють з будь-яким OpenAI-сумісним ендпоінтом
+   через `--base-url`/`--api-key`/`--model` -- вбудованого дефолтного провайдера немає,
+   тож впираєтесь у ліміт одного хоста? Просто вкажіть інший:
+   ```bash
+   python scripts/models/run_rag_cot_llm.py --input data/uspto_eval_targets.json \
+       --base-url https://openrouter.ai/api/v1 --api-key $OPENROUTER_API_KEY \
+       --model openai/gpt-oss-120b
+   ```
+   `run_cot_llm.py` пропускає RAG повністю (ті самі прапорці, Qdrant/індекс не потрібні) --
+   напр. на наборі цілей ORD через Cerebras:
+   ```bash
+   python scripts/models/run_cot_llm.py --input data/ord_eval_targets.json \
+       --base-url https://api.cerebras.ai/v1 --api-key $CEREBRAS_API_KEY \
+       --model gpt-oss-120b
    ```
 6. **Агрегація**: розпакуйте кожен завантажений `experiments.zip` у локальну `experiments/<experiment-id>/`, потім:
    ```bash

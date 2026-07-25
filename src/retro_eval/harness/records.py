@@ -2,7 +2,7 @@
 
 Both formats carry `product_smiles`/`reactants_smiles`; ORD records
 additionally carry `reaction_id`/`solvent`/`temperature_celsius`/`catalyst`/
-`yield_percent`, used by `run_rag_cot_groq.py` to also ask for reaction
+`yield_percent`, used by `run_rag_cot_llm.py` to also ask for reaction
 conditions (never scored programmatically, only logged for qualitative
 review).
 """

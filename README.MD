@@ -19,12 +19,30 @@ notebook (downloaded and unzipped) and a local run combine into one CSV.
 2. **ReactionT5v2** -- `colab/02_reactiont5v2.ipynb` (GPU, upload the JSON from step 1, download `experiments.zip`)
 3. **ChemLLM-20B-Chat-SFT** (GGUF) -- `colab/03_chemllm.ipynb`, same pattern
 4. **Qwen2.5-7B + LoRA** (this project's trained adapter) -- `colab/04_qwen_lora.ipynb`, same pattern
-5. **GPT-OSS-120B + Qdrant RAG + CoT** -- run locally (needs the RAG index and a Groq API key):
+5. **GPT-OSS-120B + Qdrant RAG + CoT** -- run locally (needs the RAG index and an API key for
+   any OpenAI-compatible LLM host):
    ```bash
    docker compose up -d qdrant
    python scripts/index_uspto_to_qdrant.py     # excludes step 1's targets automatically
    pip install -e ".[eval-runner]"
-   GROQ_API_KEY=... python scripts/models/run_rag_cot_groq.py --input data/uspto_eval_targets.json
+   python scripts/models/run_rag_cot_llm.py --input data/uspto_eval_targets.json \
+       --base-url https://api.groq.com/openai/v1 --api-key $GROQ_API_KEY \
+       --model openai/gpt-oss-120b
+   ```
+   `run_rag_cot_llm.py`/`run_cot_llm.py` talk to any OpenAI-compatible chat-completions
+   endpoint via `--base-url`/`--api-key`/`--model` -- there's no baked-in default provider,
+   so rate-limited on one host's free tier? Just point at another:
+   ```bash
+   python scripts/models/run_rag_cot_llm.py --input data/uspto_eval_targets.json \
+       --base-url https://openrouter.ai/api/v1 --api-key $OPENROUTER_API_KEY \
+       --model openai/gpt-oss-120b
+   ```
+   Skip RAG entirely with `run_cot_llm.py` (same flags, no Qdrant/index step needed) -- e.g.
+   against the ORD target set on Cerebras:
+   ```bash
+   python scripts/models/run_cot_llm.py --input data/ord_eval_targets.json \
+       --base-url https://api.cerebras.ai/v1 --api-key $CEREBRAS_API_KEY \
+       --model gpt-oss-120b
    ```
 6. **Aggregate**: unzip every downloaded `experiments.zip` into your local `experiments/<experiment-id>/`, then:
    ```bash

@@ -5,11 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "retro-eval"
 version = "0.1.0"
-description = "CLI research toolkit for comparing retrosynthesis-prediction approaches: ReactionT5v2, ChemLLM, a trained Qwen2.5-7B+LoRA, and Qdrant RAG + Groq CoT."
+description = "CLI research toolkit for comparing retrosynthesis-prediction approaches: ReactionT5v2, ChemLLM, a trained Qwen2.5-7B+LoRA, and Qdrant RAG + LLM-API CoT."
 readme = "README.MD"
 requires-python = ">=3.10"
 dependencies = [
-    "groq",
     "numpy",
     "openai",
     "qdrant-client",
