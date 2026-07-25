@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 5: Qdrant hybrid RAG retrieval + Chain-of-Thought via Groq's Llama-3.3-70B.
+"""Step 5: Qdrant hybrid RAG retrieval + Chain-of-Thought via Groq's GPT-OSS-120B.
 
 The proposed hybrid system: Morgan + reaction-transform fingerprint retrieval
 (`retro_eval.retrieval.hybrid_retrieve_reactions_for_smiles`) feeds retrieved
@@ -113,13 +113,13 @@ Reactants (SMILES): {predicted_reactants or "unknown"}"""
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Step 5: Qdrant hybrid RAG + CoT via Groq's Llama-3.3-70B.")
+    parser = argparse.ArgumentParser(description="Step 5: Qdrant hybrid RAG + CoT via Groq's GPT-OSS-120B.")
     parser.add_argument("--input", type=Path, required=True, help="USPTO/ORD-format dataset JSON.")
     parser.add_argument(
-        "--model-slug", default="rag_cot_llama70b", help="Folder name under experiments/<experiment_id>/."
+        "--model-slug", default="rag_cot_gptoss120b", help="Folder name under experiments/<experiment_id>/."
     )
     parser.add_argument("--groq-api-key", default=os.getenv("GROQ_API_KEY", ""))
-    parser.add_argument("--groq-model", default="llama-3.3-70b-versatile")
+    parser.add_argument("--groq-model", default="openai/gpt-oss-120b")
     parser.add_argument("--qdrant-host", default=QDRANT_HOST)
     parser.add_argument("--qdrant-port", type=int, default=QDRANT_PORT)
     parser.add_argument("--rag-top-k", type=int, default=3)
@@ -212,7 +212,7 @@ def main() -> None:
 
     log = InferenceLogWriter(run_dir)
 
-    for record in tqdm(records, desc="Step 5: RAG+CoT (Llama-3.3-70B via Groq)"):
+    for record in tqdm(records, desc="Step 5: RAG+CoT (GPT-OSS-120B via Groq)"):
         entry: dict = {"index": record.index, "product_smiles": record.product_smiles}
         predicted, raw, predicted_conditions = "", "", None
         try:

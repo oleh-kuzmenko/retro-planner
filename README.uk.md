@@ -4,7 +4,7 @@
 
 Порівнює 4 підходи до передбачення ретросинтезу на одному фіксованому наборі
 з 100 реакцій: ReactionT5v2, ChemLLM-20B, власну навчену модель Qwen2.5-7B +
-LoRA та Llama-3.3-70B + Qdrant RAG + Chain-of-Thought. Кожен етап записує
+LoRA та GPT-OSS-120B + Qdrant RAG + Chain-of-Thought. Кожен етап записує
 самоописову теку прогону в `experiments/`, тож результати з GPU-ноутбука
 (завантажені й розпаковані) та локального прогону об'єднуються в один CSV.
 
@@ -19,7 +19,7 @@ LoRA та Llama-3.3-70B + Qdrant RAG + Chain-of-Thought. Кожен етап з�
 2. **ReactionT5v2** -- `colab/02_reactiont5v2.ipynb` (GPU, завантажте JSON з кроку 1, скачайте `experiments.zip`)
 3. **ChemLLM-20B-Chat-SFT** (GGUF) -- `colab/03_chemllm.ipynb`, той самий підхід
 4. **Qwen2.5-7B + LoRA** (власний навчений адаптер проєкту) -- `colab/04_qwen_lora.ipynb`, той самий підхід
-5. **Llama-3.3-70B + Qdrant RAG + CoT** -- запускається локально (потрібні RAG-індекс і ключ Groq API):
+5. **GPT-OSS-120B + Qdrant RAG + CoT** -- запускається локально (потрібні RAG-індекс і ключ Groq API):
    ```bash
    docker compose up -d qdrant
    python scripts/index_uspto_to_qdrant.py     # автоматично виключає цілі з кроку 1

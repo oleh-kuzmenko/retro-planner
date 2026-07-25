@@ -4,7 +4,7 @@
 
 Compares 4 retrosynthesis-prediction approaches on the same fixed 100-reaction
 test set: ReactionT5v2, ChemLLM-20B, this project's own trained Qwen2.5-7B +
-LoRA, and Llama-3.3-70B + Qdrant RAG + Chain-of-Thought. Every stage writes a
+LoRA, and GPT-OSS-120B + Qdrant RAG + Chain-of-Thought. Every stage writes a
 self-describing run folder under `experiments/`, so results from a GPU
 notebook (downloaded and unzipped) and a local run combine into one CSV.
 
@@ -19,7 +19,7 @@ notebook (downloaded and unzipped) and a local run combine into one CSV.
 2. **ReactionT5v2** -- `colab/02_reactiont5v2.ipynb` (GPU, upload the JSON from step 1, download `experiments.zip`)
 3. **ChemLLM-20B-Chat-SFT** (GGUF) -- `colab/03_chemllm.ipynb`, same pattern
 4. **Qwen2.5-7B + LoRA** (this project's trained adapter) -- `colab/04_qwen_lora.ipynb`, same pattern
-5. **Llama-3.3-70B + Qdrant RAG + CoT** -- run locally (needs the RAG index and a Groq API key):
+5. **GPT-OSS-120B + Qdrant RAG + CoT** -- run locally (needs the RAG index and a Groq API key):
    ```bash
    docker compose up -d qdrant
    python scripts/index_uspto_to_qdrant.py     # excludes step 1's targets automatically
