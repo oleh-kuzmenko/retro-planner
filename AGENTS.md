@@ -2,27 +2,37 @@
 
 ## Project Overview
 
-This is a CLI-only Python research toolkit for comparing retrosynthesis-prediction
-approaches on a CPU-only, 16GB-RAM laptop, for a bachelor's thesis
-(`research/thesis/ПЗ_Кузьменко.pdf`, referenced in code comments as "PZ"). There is no
-web app: each approach (currently 4, extensible) runs as its own standalone script under
-`scripts/models/`, so only one model is ever resident in memory at a time. Every run writes
-into a dated, self-describing `experiments/<experiment_id>/<model_slug>/` folder, and
-`scripts/aggregate_results.py` discovers every model run under one experiment id (no
+CLI research toolkit comparing 4 retrosynthesis-prediction approaches on the same fixed
+100-reaction test set, for a bachelor's thesis. No web app: each approach runs as its own
+standalone script, so only one model is ever resident in memory at a time. Every run
+writes into a dated, self-describing `experiments/<experiment_id>/<model_slug>/` folder,
+and `scripts/aggregate_results.py` discovers every model run under one experiment id (no
 hardcoded model list) to build a single comparison CSV.
 
-The 4 current approaches:
+## Pipeline (see README.MD for full commands)
 
-1. **ReactionT5v2** (`run_reactiont5.py`) — local HF seq2seq, beam search, no reasoning trace.
-2. **A quantized chat LLM** (e.g. ChemLLM GGUF) served via Ollama, zero-shot CoT
-   (`run_chat_zero_shot.py`).
-3. **Qwen2.5-7B-Instruct + a retrosynthesis LoRA adapter** — local HF `peft` on CPU
-   (`run_qwen_lora_peft.py`), or the same adapter merged/quantized and served via Ollama
-   (`run_chat_zero_shot.py --response-format json`).
-4. **Qdrant hybrid RAG retrieval + Chain-of-Thought via Groq's Llama-3.3-70B**
-   (`run_rag_cot_groq.py`) — the proposed hybrid system.
+1. `scripts/build_eval_targets_uspto.py` / `build_eval_targets_ord.py` -- write a fixed
+   100-target JSON test set (no Qdrant, no GPU). Every later stage runs against this same
+   file.
+2. `scripts/models/run_reactiont5.py` -- ReactionT5v2, local HF seq2seq, beam search, no
+   reasoning trace. Runs in `colab/02_reactiont5v2.ipynb` (`--device cuda`) or locally on
+   CPU.
+3. `scripts/models/run_chemllm.py` -- ChemLLM-20B-Chat-SFT GGUF via `llama-cpp-python`,
+   zero-shot CoT. Runs in `colab/03_chemllm.ipynb`.
+4. `scripts/models/run_qwen_lora_peft.py` -- Qwen2.5-7B-Instruct + this project's own
+   trained retrosynthesis LoRA adapter, local HF `peft`. Runs in
+   `colab/04_qwen_lora.ipynb` (`--device cuda`) or locally on CPU.
+5. `scripts/models/run_rag_cot_groq.py` -- Qdrant hybrid RAG retrieval + Chain-of-Thought
+   via Groq's Llama-3.3-70B, the proposed hybrid system. Runs locally (needs a running
+   Qdrant + `GROQ_API_KEY`).
+6. `scripts/aggregate_results.py` -- combines every model run under one `--experiment-id`
+   into `final_aggregated_results.csv`.
 
-RAG uses hybrid retrieval from two Qdrant collections:
+`scripts/models/run_chat_zero_shot.py` is a generic OpenAI-compatible chat client (Ollama,
+llama.cpp server, ...), usable as a CPU-only alternative to steps 3/4 if a merged/quantized
+checkpoint is served locally instead of run in Colab.
+
+RAG (step 5) uses hybrid retrieval from two Qdrant collections:
 
 - `reactions_morgan` - 2048-bit Morgan fingerprints of reaction products.
 - `reaction_transforms` - 2048-bit MVP reaction transform fingerprints computed as
@@ -34,8 +44,8 @@ with an exact Tanimoto coefficient and merged/reranked in `retrieval.py` with
 (`reaction_class` similarity is an opt-in extension, weight 0.0 unless
 `EXPERIMENTAL_RETRIEVAL_WEIGHTS` is used) before being passed to the LLM as CoT context.
 `scripts/index_uspto_to_qdrant.py`/`scripts/index_ord_to_qdrant.py` populate both
-collections from USPTO-50K and Open Reaction Database (ORD) reactions, holding out ~100
-target molecules per source for evaluation.
+collections from USPTO-50K/ORD, excluding whatever step 1 already wrote to
+`data/*_eval_targets.json` so those targets stay unseen by the RAG index.
 
 ## Repository Layout
 
@@ -47,22 +57,26 @@ target molecules per source for evaluation.
   infrastructure (`harness/`: `records.py` dataset loading, `experiment.py` dated-run-folder
   + crash-safe I/O, `stage_runner.py` the generic per-record inference loop, `parsing.py`
   the CoT/JSON response contracts, `aggregate.py` the run-discovery + CSV-join logic).
+- `scripts/sources_uspto.py`, `scripts/sources_ord.py` — per-source parsing/normalization,
+  shared by that source's `build_eval_targets_*.py` and `index_*_to_qdrant.py`.
+- `scripts/build_eval_targets_uspto.py`, `scripts/build_eval_targets_ord.py` — step 1.
 - `scripts/indexing_common.py`, `scripts/index_uspto_to_qdrant.py`,
-  `scripts/index_ord_to_qdrant.py` — populate the two Qdrant collections from USPTO-50K/ORD.
-- `scripts/models/run_reactiont5.py`, `run_chat_zero_shot.py`, `run_qwen_lora_peft.py`,
-  `run_rag_cot_groq.py` — the 4 model-comparison scripts.
-- `scripts/aggregate_results.py` — combines every model run under one `--experiment-id`
-  into `final_aggregated_results.csv`.
+  `scripts/index_ord_to_qdrant.py` — populate the two Qdrant collections, excluding step
+  1's held-out targets.
+- `scripts/models/run_reactiont5.py`, `run_chemllm.py`, `run_qwen_lora_peft.py`,
+  `run_rag_cot_groq.py`, `run_chat_zero_shot.py` — the model-comparison scripts (steps 2-5).
+- `scripts/aggregate_results.py` — step 6.
+- `colab/` — GPU notebooks for steps 2-4: clone this repo, install extras, upload the step
+  1 JSON, run the matching `scripts/models/run_*.py`, zip+download `experiments/`.
 - `tests/` — Pytest suite covering `reasoning`, `prompting`, `retrieval` scoring,
   `evaluation`, and `harness.parsing`/`harness.records` (no network/Qdrant/GPU required).
 - `pyproject.toml` — Packaging metadata, dependencies, and `[indexing]`, `[local-models]`,
   `[eval-runner]`, `[test]` extras.
 - `docker-compose.yml` — Qdrant service for RAG retrieval; the only container this repo
   needs (no app to containerize).
-- `research/` — prior research artifacts kept for methodology citation: the thesis
-  (`research/thesis/`), a manual/qualitative eval journal (`research/eval.md`), and the
-  fine-tuning notebooks/data for the Qwen LoRA adapters (`research/fine-tune/`,
-  `research/base_models_res/`). Not required to run anything above.
+- `research/fine-tune/v2/` — the notebooks that trained this project's Qwen2.5-7B LoRA
+  adapters (data prep, QLoRA training, eval, inference demo). Not required to run anything
+  above; kept for methodology citation.
 - `experiments/` — gitignored, generated per-run output (see README.MD).
 - `README.MD` — setup and usage instructions.
 - `venv/` — local virtual environment may exist in the workspace; do not edit or rely on
@@ -70,85 +84,15 @@ target molecules per source for evaluation.
 
 ## Setup
 
-Use Python 3.10+.
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -e .
-```
-
-The indexing scripts have extra dependencies (Hugging Face dataset/download helpers,
-`ord-schema` for ORD protobuf parsing):
-
-```bash
-pip install -e ".[indexing]"
-```
-
-Every `scripts/models/run_*.py` script needs `tenacity`/`tqdm`:
-
-```bash
-pip install -e ".[eval-runner]"
-```
-
-`run_reactiont5.py` and `run_qwen_lora_peft.py` additionally need heavy ML dependencies:
-
-```bash
-pip install -e ".[local-models]"
-```
-
-Test dependencies (`pytest`):
-
-```bash
-pip install -e ".[test]"
-```
-
-Do not hard-code API keys. `run_rag_cot_groq.py` accepts `--groq-api-key` and falls back to
-`GROQ_API_KEY`; the Ollama-backed scripts (`run_chat_zero_shot.py`, and
-`run_qwen_lora_peft.py`'s merged/GGUF alternative) need no API key.
+Use Python 3.10+. See README.MD for the exact `pip install -e ".[...]"` commands per extra
+(`indexing`, `local-models`, `eval-runner`, `test`). Do not hard-code API keys:
+`run_rag_cot_groq.py` accepts `--groq-api-key` and falls back to `GROQ_API_KEY`; the
+Ollama-backed `run_chat_zero_shot.py` needs no API key.
 
 Useful environment variables:
 
 - `GROQ_API_KEY` — used by `run_rag_cot_groq.py` if `--groq-api-key` isn't passed.
-- `QDRANT_HOST` - Qdrant host, currently `localhost` if unset.
-- `QDRANT_PORT` - Qdrant port, currently `6333` if unset.
-
-## Common Commands
-
-Start Qdrant:
-
-```bash
-docker compose up -d qdrant
-```
-
-Index a small sample from USPTO-50K first:
-
-```bash
-python scripts/index_uspto_to_qdrant.py --limit 100 --recreate
-```
-
-Or from ORD:
-
-```bash
-python scripts/index_ord_to_qdrant.py --limit 100 --recreate
-```
-
-Run one model-comparison stage (see README.MD for all 4 + aggregation):
-
-```bash
-python scripts/models/run_reactiont5.py --input data/uspto_eval_targets.json --limit 10
-python scripts/aggregate_results.py --input data/uspto_eval_targets.json
-```
-
-Each indexing script always drops and recreates both collections for its own source;
-`--recreate` is accepted for backwards compatibility. Since both scripts default to the
-same `reactions_morgan`/`reaction_transforms` collection names, running one after the other
-replaces rather than merges data — point `--collection`/`--transform-collection` at
-different names if you need both sources queryable at once. Use `--limit 0` for all
-remaining reactions, `--ord-data-dir /path/to/ord-data` and
-`--ord-allow-pattern "data/4d/*.pb.gz"` for narrower ORD dev runs, and
-`--eval-targets-count`/`--eval-targets-file` to control how many target molecules are set
-aside (default 100) instead of indexed, so they stay unseen for evaluation.
+- `QDRANT_HOST` / `QDRANT_PORT` — default `localhost` / `6333`.
 
 ## Development Guidance
 
@@ -161,17 +105,20 @@ aside (default 100) instead of indexed, so they stay unseen for evaluation.
   `src/retro_eval/chemistry.py` and `scripts/indexing_common.py`.
 - Each indexer normalizes its source into a full in-memory record, but only a
   source-specific field subset is actually stored on the Qdrant point
-  (`USPTO_PAYLOAD_FIELDS` / `ORD_PAYLOAD_FIELDS`, via `index_payloads(...,
-  payload_fields=...)`) and written to `--eval-targets-file` (via `write_eval_targets(...,
-  fields=...)`): USPTO keeps only `product_smiles`/`reactants_smiles` (its conditions are
-  always unknown); ORD additionally keeps `reaction_id`, `solvent`, `temperature_celsius`,
-  `catalyst`, and `yield_percent` since those are real ORD data.
+  (`USPTO_PAYLOAD_FIELDS` in `sources_uspto.py` / `ORD_PAYLOAD_FIELDS` in `sources_ord.py`,
+  via `index_payloads(..., payload_fields=...)`) and written by `build_eval_targets_*.py`
+  (via `write_eval_targets(..., fields=...)`): USPTO keeps only
+  `product_smiles`/`reactants_smiles` (its conditions are always unknown); ORD additionally
+  keeps `reaction_id`, `solvent`, `temperature_celsius`, `catalyst`, and `yield_percent`
+  since those are real ORD data.
 - USPTO-50K records generally have unknown conditions. ORD records should extract available
   solvents, temperature, catalysts, and yields from protobuf messages, while tolerating
   incomplete or inconsistent records.
-- Both indexers set aside the first `--eval-targets-count` (default 100) target molecules
-  into `--eval-targets-file` instead of indexing them, so those molecules stay unseen and
-  can be used as evaluation targets without leaking into the RAG index.
+- `index_uspto_to_qdrant.py`/`index_ord_to_qdrant.py` exclude by `product_smiles` against
+  `--eval-targets-file` (default `data/uspto_eval_targets.json` / `data/ord_eval_targets.json`,
+  produced by step 1). Pass `--no-exclude-eval-targets` to index everything regardless. If
+  the eval-targets file doesn't exist yet, indexing proceeds with a warning instead of
+  failing.
 - Treat model output as untrusted. Validate/clean SMILES with RDKit
   (`retro_eval.evaluation.is_valid_smiles`/`is_exact_match_smiles`) before scoring it.
 - When changing prompts for the CoT contract, keep the `<think>`/`<reason>` + `<answer>`
@@ -181,11 +128,10 @@ aside (default 100) instead of indexed, so they stay unseen for evaluation.
 - One LLM call produces exactly one retrosynthetic step. Multiple candidate disconnections
   would come from calling the same script's pipeline again (a different temperature or RAG
   context), not from asking the LLM for multiple routes in one response.
-- Adding a 5th/6th model to compare: if it's servable over an OpenAI-compatible endpoint
-  (Ollama, llama.cpp server, ...), that's a new `run_chat_zero_shot.py --model-slug ...`
-  invocation, not a new script. Only add a new `scripts/models/run_*.py` file when the model
-  needs bespoke in-process loading code (like `run_reactiont5.py`/`run_qwen_lora_peft.py`
-  do).
+- Adding a model to compare: if it's servable over an OpenAI-compatible endpoint (Ollama,
+  llama.cpp server, ...), that's a new `run_chat_zero_shot.py` invocation, not a new script.
+  Only add a new `scripts/models/run_*.py` file when the model needs bespoke in-process
+  loading code (like `run_reactiont5.py`/`run_chemllm.py`/`run_qwen_lora_peft.py` do).
 - When changing molecule handling, prefer RDKit APIs over manual SMILES parsing. Existing
   abbreviation replacement in `clean_and_canonicalize` is intentionally small and heuristic.
 - Avoid adding secrets, downloaded datasets, Qdrant storage, virtual environments, or
@@ -212,13 +158,12 @@ run_meta.json}` are written and well-formed, then run `scripts/aggregate_results
 that experiment id and confirm the CSV is produced (including when only some model runs
 exist — it should warn about missing ones, not crash).
 
-For indexing changes, verify against a small limit before a full run (pass
-`--eval-targets-count 0` so a tiny `--limit` isn't entirely consumed by the hold-out):
+For indexing changes, verify against a small limit before a full run:
 
 ```bash
 docker compose up -d qdrant
-python scripts/index_uspto_to_qdrant.py --limit 10 --eval-targets-count 0 --recreate
-python scripts/index_ord_to_qdrant.py --limit 10 --eval-targets-count 0 --recreate
+python scripts/index_uspto_to_qdrant.py --limit 10
+python scripts/index_ord_to_qdrant.py --limit 10
 ```
 
 The uncapped USPTO-50K + ORD load requires network access to Hugging Face and a running
@@ -231,5 +176,6 @@ smaller, repeatable development checks.
 - Prefer explicit error handling around external services and data parsers: LLM providers
   (Groq, Ollama/OpenAI-compatible), Hugging Face datasets/downloads, Qdrant, ORD protobuf
   parsing, and RDKit parsing.
-- Keep files ASCII unless there is a clear reason to preserve existing non-ASCII copy (the
-  `research/` materials are in Ukrainian; that's expected).
+- Keep files ASCII unless there is a clear reason to preserve existing non-ASCII copy.
+- No comments that restate what the code already says; only comment a non-obvious why
+  (hidden constraint, workaround, invariant).

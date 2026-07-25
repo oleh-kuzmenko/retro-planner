@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "retro-eval"
 version = "0.1.0"
-description = "CLI research toolkit for comparing retrosynthesis-prediction approaches (local HF models, Ollama-served chat models, Qdrant RAG + Groq) on a CPU-only laptop."
+description = "CLI research toolkit for comparing retrosynthesis-prediction approaches: ReactionT5v2, ChemLLM, a trained Qwen2.5-7B+LoRA, and Qdrant RAG + Groq CoT."
 readme = "README.MD"
 requires-python = ">=3.10"
 dependencies = [

@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Stage 3: Qwen2.5-7B-Instruct + a retrosynthesis LoRA adapter, local HF `peft` on CPU.
+"""Step 4: Qwen2.5-7B-Instruct + a retrosynthesis LoRA adapter, local HF `peft`.
 
-No bitsandbytes/4-bit quantization -- CPU-only bnb support is unreliable, so
-this loads the base model directly in `--dtype` (float32/bfloat16/float16;
-bfloat16 by default needs ~15GB RAM for weights alone, float32 ~28GB).
-Greedy decoding (deterministic, reproducible).
+Defaults to CPU with no bitsandbytes/4-bit quantization -- CPU-only bnb
+support is unreliable, so the base model loads directly in `--dtype`
+(float32/bfloat16/float16; bfloat16 by default needs ~15GB for weights
+alone, float32 ~28GB). Pass `--device cuda` for the Colab GPU notebook
+(`colab/`), where bfloat16 comfortably fits a 15GB GPU. Greedy decoding
+(deterministic, reproducible).
 
 Two `--prompt-style`s:
   - "json" (default): the JSON-in/JSON-out contract this project's own
@@ -56,7 +58,7 @@ Do not include conditions or explanations."""
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Stage 3: Qwen2.5-7B + LoRA, local HF peft (CPU).")
+    parser = argparse.ArgumentParser(description="Step 4: Qwen2.5-7B + LoRA, local HF peft.")
     parser.add_argument("--input", type=Path, required=True, help="USPTO/ORD-format dataset JSON.")
     parser.add_argument(
         "--model-slug", default="qwen25_7b_lora_peft", help="Folder name under experiments/<experiment_id>/."
@@ -66,6 +68,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dtype", choices=("float32", "bfloat16", "float16"), default="bfloat16")
     parser.add_argument("--prompt-style", choices=("json", "cot"), default="json")
     parser.add_argument("--max-new-tokens", type=int, default=320)
+    parser.add_argument("--device", default="cpu", help="e.g. cpu, cuda, cuda:0.")
     parser.add_argument("--limit", type=int, default=None, help="Only process the first N records.")
     parser.add_argument("--experiment-id", default=None, help="Defaults to today's date (YYYY-MM-DD).")
     parser.add_argument("--experiments-root", type=Path, default=DEFAULT_EXPERIMENTS_ROOT)
@@ -102,11 +105,11 @@ def main() -> None:
     dtype_map = {"float32": torch.float32, "bfloat16": torch.bfloat16, "float16": torch.float16}
     dtype = dtype_map[args.dtype]
     LOGGER.info(
-        "Loading base=%s + LoRA adapter=%s dtype=%s on CPU (needs ~%s RAM for weights alone; "
-        "expect this to be slow). See the module docstring for an Ollama/GGUF alternative.",
+        "Loading base=%s + LoRA adapter=%s dtype=%s on device=%s (needs ~%s for weights alone).",
         args.base_model,
         args.lora_adapter,
         args.dtype,
+        args.device,
         "~28GB" if dtype is torch.float32 else "~15GB",
     )
     tokenizer = AutoTokenizer.from_pretrained(args.base_model, trust_remote_code=True)
@@ -114,6 +117,7 @@ def main() -> None:
         tokenizer.pad_token = tokenizer.eos_token
     base_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=dtype, trust_remote_code=True)
     model = PeftModel.from_pretrained(base_model, args.lora_adapter)
+    model.to(args.device)
     model.eval()
 
     def build_request(record: EvalRecord) -> list[dict]:
@@ -132,7 +136,7 @@ def main() -> None:
 
     def call_model(messages: list[dict]) -> str:
         prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        inputs = tokenizer([prompt], return_tensors="pt")
+        inputs = tokenizer([prompt], return_tensors="pt").to(args.device)
         with torch.no_grad():
             output_ids = model.generate(
                 **inputs,
@@ -151,7 +155,7 @@ def main() -> None:
         return parse_cot_answer(raw, record.product_smiles)
 
     results = run_model_over_records(
-        records, run_dir, f"Stage 3: Qwen2.5-7B + LoRA ({args.prompt_style})", build_request, call_model, parse_response
+        records, run_dir, f"Step 4: Qwen2.5-7B + LoRA ({args.prompt_style})", build_request, call_model, parse_response
     )
 
     del model, base_model, tokenizer

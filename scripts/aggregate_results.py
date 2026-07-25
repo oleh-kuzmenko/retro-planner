@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage 5: aggregate every discovered model run under one experiment id.
+"""Step 6: aggregate every discovered model run under one experiment id.
 
 Reads `experiments/<experiment_id>/<model_slug>/{run_meta.json,results.json}`
 for every model_slug found (no hardcoded model list -- add a 5th/6th model

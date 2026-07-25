@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage 4: Qdrant hybrid RAG retrieval + Chain-of-Thought via Groq's Llama-3.3-70B.
+"""Step 5: Qdrant hybrid RAG retrieval + Chain-of-Thought via Groq's Llama-3.3-70B.
 
 The proposed hybrid system: Morgan + reaction-transform fingerprint retrieval
 (`retro_eval.retrieval.hybrid_retrieve_reactions_for_smiles`) feeds retrieved
@@ -66,7 +66,7 @@ Reactants (SMILES): {predicted_reactants or "unknown"}"""
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Stage 4: Qdrant hybrid RAG + CoT via Groq's Llama-3.3-70B.")
+    parser = argparse.ArgumentParser(description="Step 5: Qdrant hybrid RAG + CoT via Groq's Llama-3.3-70B.")
     parser.add_argument("--input", type=Path, required=True, help="USPTO/ORD-format dataset JSON.")
     parser.add_argument(
         "--model-slug", default="rag_cot_llama70b", help="Folder name under experiments/<experiment_id>/."
@@ -115,7 +115,7 @@ def main() -> None:
     log = InferenceLogWriter(run_dir)
     results_path = run_dir / RESULTS_FILENAME
 
-    for record in tqdm(records, desc="Stage 4: RAG+CoT (Llama-3.3-70B via Groq)"):
+    for record in tqdm(records, desc="Step 5: RAG+CoT (Llama-3.3-70B via Groq)"):
         entry: dict = {"index": record.index, "product_smiles": record.product_smiles}
         predicted, raw, predicted_conditions = "", "", None
         try:
@@ -156,7 +156,7 @@ def main() -> None:
                 entry["condition_raw_response"] = condition_raw
                 predicted_conditions = condition_raw
         except Exception as exc:
-            LOGGER.exception("Stage 4 inference failed for index=%d", record.index)
+            LOGGER.exception("Step 5 inference failed for index=%d", record.index)
             entry["error"] = str(exc)
 
         results.append(

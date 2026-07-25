@@ -3,10 +3,10 @@
 
 `index_uspto_to_qdrant.py` and `index_ord_to_qdrant.py` each build the same
 two Qdrant collections (product Morgan fingerprints + reaction-transform
-fingerprints) from one dataset. This module holds the logic that does not
-depend on which source is being read: optional-dependency checks, collection
-management, batched upserts, and holding out a slice of target molecules for
-evaluation instead of indexing them.
+fingerprints) from one dataset, excluding whatever reactions are listed in an
+eval-targets file (produced separately by `build_eval_targets_uspto.py` /
+`build_eval_targets_ord.py`) so those held-out targets stay unseen. This
+module holds the logic that does not depend on which source is being read.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ import importlib.util
 import json
 import logging
 import uuid
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Optional
 
@@ -24,7 +24,8 @@ from retro_eval.chemistry import morgan_vector, reaction_transform_vector
 
 
 LOGGER = logging.getLogger("retro_eval.indexer")
-DEFAULT_EVAL_TARGETS_COUNT = 100
+
+DEFAULT_EVAL_TARGET_FIELDS = ("product_smiles", "reactants_smiles")
 
 
 def optional_dependency_available(module: str) -> bool:
@@ -58,7 +59,7 @@ def suppress_rdkit_warnings() -> None:
 
 
 def recreate_collection(client, collection_name: str) -> None:
-    """(Re)create a Qdrant collection with Cosine-distance ANN indexing.
+    """Drop and recreate a Qdrant collection with Cosine-distance ANN indexing.
 
     Cosine here is only used by Qdrant to shortlist nearby candidates
     quickly; it is not the similarity score shown to the user or used for
@@ -113,26 +114,32 @@ def index_payloads(
     limit: Optional[int],
     source_name: str,
     payload_fields: Optional[Iterable[str]] = None,
+    exclude_product_smiles: Optional[set[str]] = None,
 ) -> tuple[int, int]:
     """Batch-embed and upsert `payloads` into both Qdrant collections.
 
     `payload_fields`, if given, restricts what gets stored on each Qdrant
     point to that key subset (e.g. just `product_smiles`/`reactants_smiles`
-    for USPTO) instead of the full normalized record, so fields the app
-    never reads aren't persisted alongside the vectors. `product_smiles`
-    and `reactants_smiles` are still required on every payload to compute
-    the fingerprints, regardless of what gets stored.
+    for USPTO) instead of the full normalized record. `exclude_product_smiles`,
+    if given, skips any payload whose (already-canonicalized) `product_smiles`
+    is in that set, so held-out evaluation targets never enter the RAG index.
     """
     from qdrant_client.models import PointStruct
 
+    exclude = exclude_product_smiles or set()
     indexed = 0
     skipped = 0
+    excluded = 0
     product_points: list[PointStruct] = []
     transform_points: list[PointStruct] = []
 
     for payload in payloads:
         if limit is not None and indexed >= limit:
             break
+
+        if payload["product_smiles"] in exclude:
+            excluded += 1
+            continue
 
         product_vector = morgan_vector(payload["product_smiles"])
         transform_vector = reaction_transform_vector(
@@ -165,7 +172,9 @@ def index_payloads(
                 product_points,
                 transform_points,
             )
-            LOGGER.info("%s indexed=%s skipped=%s", source_name, indexed, skipped)
+            LOGGER.info(
+                "%s indexed=%s skipped=%s excluded=%s", source_name, indexed, skipped, excluded
+            )
 
     indexed += flush_batch(
         client,
@@ -174,31 +183,10 @@ def index_payloads(
         product_points,
         transform_points,
     )
-    LOGGER.info("%s complete: indexed=%s skipped=%s", source_name, indexed, skipped)
+    LOGGER.info(
+        "%s complete: indexed=%s skipped=%s excluded=%s", source_name, indexed, skipped, excluded
+    )
     return indexed, skipped
-
-
-def split_eval_targets(
-    payloads: Iterator[dict], count: int
-) -> tuple[list[dict], Iterator[dict]]:
-    """Peel the first `count` payloads off `payloads` as a held-out eval set.
-
-    The returned list is consumed eagerly (so it can be written to disk
-    before indexing starts); the returned iterator resumes exactly where the
-    hold-out left off, so those payloads are never passed to `index_payloads`
-    and can't leak into the RAG index they're meant to be evaluated against.
-    """
-    iterator = iter(payloads)
-    held_out: list[dict] = []
-    for _ in range(max(count, 0)):
-        try:
-            held_out.append(next(iterator))
-        except StopIteration:
-            break
-    return held_out, iterator
-
-
-DEFAULT_EVAL_TARGET_FIELDS = ("product_smiles", "reactants_smiles")
 
 
 def write_eval_targets(
@@ -206,19 +194,36 @@ def write_eval_targets(
     targets: list[dict],
     fields: Iterable[str] = DEFAULT_EVAL_TARGET_FIELDS,
 ) -> None:
-    """Write held-out targets, keeping only `fields` from each record.
-
-    Mirrors the `payload_fields` filtering `index_payloads` applies to
-    Qdrant points, so the eval-target file only carries what's actually
-    used for testing instead of the full indexing payload.
-    """
+    """Write held-out eval targets, keeping only `fields` from each record."""
     minimal_targets = [
         {key: target[key] for key in fields if key in target} for target in targets
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
         json.dump(minimal_targets, handle, indent=2, ensure_ascii=False)
-    LOGGER.info("Wrote %d held-out evaluation target(s) to %s", len(minimal_targets), path)
+    LOGGER.info("Wrote %d evaluation target(s) to %s", len(minimal_targets), path)
+
+
+def load_excluded_product_smiles(path: Path) -> set[str]:
+    """Load `product_smiles` from an eval-targets file so indexing can skip them.
+
+    Returns an empty set (with a warning) if `path` doesn't exist yet -- the
+    eval-targets file is optional input, produced by a separate
+    `build_eval_targets_*.py` run that may not have happened.
+    """
+    if not path.exists():
+        LOGGER.warning(
+            "Eval-targets file %s not found; indexing will not exclude any "
+            "held-out targets. Run build_eval_targets_uspto.py/build_eval_targets_ord.py "
+            "first if you want them excluded.",
+            path,
+        )
+        return set()
+
+    targets = json.loads(path.read_text(encoding="utf-8"))
+    excluded = {target["product_smiles"] for target in targets if target.get("product_smiles")}
+    LOGGER.info("Loaded %d product(s) to exclude from indexing, from %s", len(excluded), path)
+    return excluded
 
 
 def add_common_index_args(
@@ -238,30 +243,20 @@ def add_common_index_args(
         "--limit",
         type=int,
         default=default_limit,
-        help=(
-            "Indexed reaction limit, counted after the --eval-targets-count "
-            "hold-out has been set aside. Use --limit 0 to index all remaining "
-            "reactions."
-        ),
-    )
-    parser.add_argument(
-        "--recreate",
-        action="store_true",
-        help="Accepted for backwards compatibility; collections are always recreated.",
-    )
-    parser.add_argument(
-        "--eval-targets-count",
-        type=int,
-        default=DEFAULT_EVAL_TARGETS_COUNT,
-        help=(
-            "Number of target molecules to set aside into --eval-targets-file "
-            "instead of indexing them, so they stay unseen for evaluation. "
-            "Use 0 to disable (index everything up to --limit)."
-        ),
+        help="Indexed reaction limit. Use --limit 0 to index all remaining reactions.",
     )
     parser.add_argument(
         "--eval-targets-file",
         type=Path,
         default=Path(default_eval_targets_file),
-        help="Where to write the held-out evaluation targets as JSON.",
+        help=(
+            "Eval-targets JSON produced by build_eval_targets_*.py. Any reaction whose "
+            "product_smiles appears here is excluded from indexing. Pass --no-exclude-"
+            "eval-targets to index everything regardless."
+        ),
+    )
+    parser.add_argument(
+        "--no-exclude-eval-targets",
+        action="store_true",
+        help="Index every reaction, ignoring --eval-targets-file entirely.",
     )

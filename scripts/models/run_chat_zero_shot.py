@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """Zero-shot retrosynthesis against any OpenAI-compatible chat endpoint.
 
-Covers Stage 2 (a quantized chat LLM such as ChemLLM served locally via
-Ollama) and the Ollama/GGUF alternative for Stage 3 (a merged + quantized
-Qwen+LoRA checkpoint) -- both are "POST chat messages to an OpenAI-compatible
-endpoint, zero-shot, parse the response," differing only in the response
-contract (`--response-format`). Adding a future model server this way is a
-new invocation, not a new script.
+An Ollama-served alternative to `run_chemllm.py` (Step 3) and
+`run_qwen_lora_peft.py` (Step 4) for machines without a usable GPU: both are
+"POST chat messages to an OpenAI-compatible endpoint, zero-shot, parse the
+response," differing only in the response contract (`--response-format`).
+Adding a future model server this way is a new invocation, not a new script.
 
 Example (ChemLLM via Ollama, CoT tags):
     pip install -e ".[eval-runner]"
