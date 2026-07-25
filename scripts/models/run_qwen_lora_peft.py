@@ -5,8 +5,10 @@ Defaults to CPU with no bitsandbytes/4-bit quantization -- CPU-only bnb
 support is unreliable, so the base model loads directly in `--dtype`
 (float32/bfloat16/float16; bfloat16 by default needs ~15GB for weights
 alone, float32 ~28GB). Pass `--device cuda` for the Colab GPU notebook
-(`colab/`), where bfloat16 comfortably fits a 15GB GPU. Greedy decoding
-(deterministic, reproducible).
+(`colab/`); on GPUs too small for ~15GB of bfloat16 weights (e.g. a Colab
+T4, ~14.5GB usable), also pass `--load-in-4bit` to load nf4-quantized via
+bitsandbytes, matching this adapter's QLoRA training recipe. Greedy
+decoding (deterministic, reproducible).
 
 Two `--prompt-style`s:
   - "json" (default): the JSON-in/JSON-out contract this project's own
@@ -69,6 +71,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--prompt-style", choices=("json", "cot"), default="json")
     parser.add_argument("--max-new-tokens", type=int, default=320)
     parser.add_argument("--device", default="cpu", help="e.g. cpu, cuda, cuda:0.")
+    parser.add_argument(
+        "--load-in-4bit",
+        action="store_true",
+        help=(
+            "Load the base model 4-bit-quantized via bitsandbytes (nf4, matching this "
+            "adapter's QLoRA training recipe). Needed on GPUs that can't fit ~15GB of "
+            "bfloat16 weights, e.g. a Colab T4 (~14.5GB usable). Requires --device cuda."
+        ),
+    )
     parser.add_argument("--limit", type=int, default=None, help="Only process the first N records.")
     parser.add_argument("--experiment-id", default=None, help="Defaults to today's date (YYYY-MM-DD).")
     parser.add_argument("--experiments-root", type=Path, default=DEFAULT_EXPERIMENTS_ROOT)
@@ -79,12 +90,17 @@ def main() -> None:
     args = parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-    require_modules(("torch", "transformers", "peft"), "local-models")
+    required = ("torch", "transformers", "peft")
+    if args.load_in_4bit:
+        if args.device == "cpu":
+            raise SystemExit("--load-in-4bit requires --device cuda (CPU-only bnb is unreliable).")
+        required += ("bitsandbytes",)
+    require_modules(required, "local-models")
     import json as json_module
 
     import torch
     from peft import PeftModel
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
     records = load_records(args.input)
     if args.limit is not None:
@@ -115,9 +131,19 @@ def main() -> None:
     tokenizer = AutoTokenizer.from_pretrained(args.base_model, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    base_model = AutoModelForCausalLM.from_pretrained(args.base_model, dtype=dtype, trust_remote_code=True)
+    model_kwargs = {"dtype": dtype, "trust_remote_code": True}
+    if args.load_in_4bit:
+        model_kwargs["quantization_config"] = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=dtype,
+            bnb_4bit_use_double_quant=True,
+        )
+        model_kwargs["device_map"] = {"": args.device}
+    base_model = AutoModelForCausalLM.from_pretrained(args.base_model, **model_kwargs)
     model = PeftModel.from_pretrained(base_model, args.lora_adapter)
-    model.to(args.device)
+    if not args.load_in_4bit:
+        model.to(args.device)
     model.eval()
 
     def build_request(record: EvalRecord) -> list[dict]:
