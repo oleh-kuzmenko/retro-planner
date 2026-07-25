@@ -3,6 +3,8 @@
 Two contracts are in play across `scripts/models/run_*.py`:
 - `<think>/<answer>` CoT tags (`parse_cot_answer`), reusing the same
   `reasoning.py` parser/validator the RAG+CoT pipeline (`planning.py`) uses.
+- A final `Answer: <dot-separated SMILES>` line (`parse_chemllm_answer`) for
+  ChemLLM, which otherwise tends to return explanatory prose.
 - A compact JSON object (`parse_json_reactants_response`), matching the
   fine-tuned Qwen LoRA adapter's `{"reactants": [...], "reaction_class": ...}`
   training contract.
@@ -33,6 +35,28 @@ def parse_cot_answer(raw: str, product_smiles: str) -> tuple[str, dict]:
     precursors, warnings, errors = validate_precursors(reasoning.answer_smiles, product_smiles)
     predicted = ".".join(precursors) if precursors else ".".join(reasoning.answer_smiles)
     return predicted, {"think": reasoning.think, "warnings": warnings, "errors": errors}
+
+
+def parse_chemllm_answer(raw: str, product_smiles: str) -> tuple[str, dict]:
+    """Parse ChemLLM's final ``Answer:`` line without treating prose as SMILES."""
+    match = re.search(r"(?im)^\s*(?:final\s+)?answer\s*:\s*(.+?)\s*$", raw or "")
+    if match is None:
+        return "", {
+            "think": None,
+            "candidate_answer": "",
+            "warnings": [],
+            "errors": ["ChemLLM response did not contain a final 'Answer: <SMILES>' line."],
+        }
+
+    answer = match.group(1).strip().strip("`")
+    answer_smiles = [fragment for fragment in answer.split(".") if fragment]
+    precursors, warnings, errors = validate_precursors(answer_smiles, product_smiles)
+    return ".".join(precursors or []), {
+        "think": None,
+        "candidate_answer": answer,
+        "warnings": warnings,
+        "errors": errors,
+    }
 
 
 def parse_json_reactants_response(raw: str) -> tuple[str, dict]:

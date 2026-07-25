@@ -2,6 +2,7 @@ import pytest
 
 from retro_eval.harness.parsing import (
     extract_json_object,
+    parse_chemllm_answer,
     parse_cot_answer,
     parse_json_reactants_response,
 )
@@ -40,6 +41,20 @@ def test_parse_cot_answer_reports_errors_for_invalid_fragment():
     predicted, extra = parse_cot_answer(raw, TARGET_SMILES)
     assert predicted == "not-a-smiles"
     assert extra["errors"]
+
+
+def test_parse_chemllm_answer_extracts_only_final_answer_line():
+    raw = "Think: Disconnect the ester.\nAnswer: CCO.CC(=O)Cl"
+    predicted, extra = parse_chemllm_answer(raw, TARGET_SMILES)
+    assert predicted == "CCO.CC(=O)Cl"
+    assert extra["candidate_answer"] == "CCO.CC(=O)Cl"
+    assert extra["errors"] == []
+
+
+def test_parse_chemllm_answer_does_not_treat_prose_as_smiles():
+    predicted, extra = parse_chemllm_answer("Think: Disconnect the ester.", TARGET_SMILES)
+    assert predicted == ""
+    assert "did not contain" in extra["errors"][0]
 
 
 def test_parse_json_reactants_response_canonicalizes_and_reports_reaction_class():

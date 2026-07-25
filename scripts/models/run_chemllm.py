@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Step 3: ChemLLM-20B-Chat-SFT (GGUF, quantized), zero-shot CoT.
+"""Step 3: ChemLLM-20B-Chat-SFT (GGUF, quantized), zero-shot retrosynthesis.
 
 Bespoke `llama-cpp-python` in-process load -- the GGUF quantization brings
 20B params comfortably under a 15GB Colab GPU (`--n-gpu-layers -1` offloads
-every layer). Same `<think>/<answer>` CoT contract as every other zero-shot
-stage (`build_cot_prompt`/`parse_cot_answer`), via `create_chat_completion`.
+every layer). ChemLLM follows its native concise `Answer: <SMILES>` contract;
+prose without that final line is never scored as a SMILES prediction.
 
 Example:
     pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu122
@@ -25,26 +25,34 @@ from retro_eval.harness.experiment import (
     finish_run_meta,
     start_run_meta,
 )
-from retro_eval.harness.parsing import parse_cot_answer
+from retro_eval.harness.parsing import parse_chemllm_answer
 from retro_eval.harness.records import EvalRecord, load_records
 from retro_eval.harness.stage_runner import require_modules, run_model_over_records
-from retro_eval.prompting import build_cot_prompt
 
 LOGGER = logging.getLogger("retro_eval.run_chemllm")
 
 REPO_ID = "mradermacher/ChemLLM-20B-Chat-SFT-i1-GGUF"
 FILENAME = "ChemLLM-20B-Chat-SFT.i1-Q4_K_M.gguf"
 
+SYSTEM_PROMPT = """You are an expert organic chemist performing one single-step retrosynthesis prediction.
+Return exactly one final line in this format:
+Answer: <reactant_1_SMILES>.<reactant_2_SMILES>
+Return only the reactant SMILES needed immediately before the target. Do not include reagents, solvents, explanations, Markdown, atom maps, or any text after the Answer line."""
+
+
+def build_chemllm_prompt(product_smiles: str) -> str:
+    return f"Target product (canonical SMILES): {product_smiles}\nReturn the required final Answer line now."
+
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Step 3: ChemLLM-20B-Chat-SFT GGUF, zero-shot CoT.")
+    parser = argparse.ArgumentParser(description="Step 3: ChemLLM-20B-Chat-SFT GGUF, zero-shot retrosynthesis.")
     parser.add_argument("--input", type=Path, required=True, help="USPTO/ORD-format dataset JSON.")
     parser.add_argument("--model-slug", default="chemllm_20b_gguf", help="Folder name under experiments/<experiment_id>/.")
     parser.add_argument("--repo-id", default=REPO_ID)
     parser.add_argument("--filename", default=FILENAME)
     parser.add_argument("--n-ctx", type=int, default=2048)
     parser.add_argument("--n-gpu-layers", type=int, default=-1, help="-1 offloads every layer to the GPU.")
-    parser.add_argument("--max-tokens", type=int, default=512)
+    parser.add_argument("--max-tokens", type=int, default=160)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--limit", type=int, default=None, help="Only process the first N records.")
     parser.add_argument("--experiment-id", default=None, help="Defaults to today's date (YYYY-MM-DD).")
@@ -85,7 +93,10 @@ def main() -> None:
     )
 
     def build_request(record: EvalRecord) -> list[dict]:
-        return [{"role": "user", "content": build_cot_prompt(record.product_smiles, None)}]
+        return [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": build_chemllm_prompt(record.product_smiles)},
+        ]
 
     def call_model(messages: list[dict]) -> str:
         output = llm.create_chat_completion(
@@ -94,10 +105,10 @@ def main() -> None:
         return output["choices"][0]["message"]["content"].strip()
 
     def parse_response(raw: str, record: EvalRecord) -> tuple[str, dict]:
-        return parse_cot_answer(raw, record.product_smiles)
+        return parse_chemllm_answer(raw, record.product_smiles)
 
     results = run_model_over_records(
-        records, run_dir, "Step 3: ChemLLM-20B-Chat-SFT (GGUF)", build_request, call_model, parse_response
+        records, run_dir, "Step 3: ChemLLM-20B-Chat-SFT (GGUF, Answer-line contract)", build_request, call_model, parse_response
     )
 
     del llm

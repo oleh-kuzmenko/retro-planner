@@ -224,12 +224,15 @@ def extract_ord_conditions(reaction: dict) -> dict:
     }
 
 
+NON_REACTANT_ROLES = ("SOLVENT", "CATALYST", "REAGENT", "WORKUP", "INTERNAL_STANDARD", "AUTHENTIC_STANDARD")
+
+
 def normalize_ord_reaction(reaction: dict, dataset_name: str, idx: int) -> Optional[dict]:
     reactants: list[str] = []
 
     for compound in iter_input_compounds(reaction):
         role = compound.get("reaction_role")
-        if role_matches(role, ("SOLVENT", "CATALYST")):
+        if role_matches(role, NON_REACTANT_ROLES):
             continue
         smiles = compound_smiles(compound)
         canonical = canonicalize_smiles(smiles)
