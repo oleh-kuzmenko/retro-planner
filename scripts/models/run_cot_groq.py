@@ -4,11 +4,11 @@
 Same prompt template, repair-retry contract, parsing, and Groq provider as
 `run_rag_cot_groq.py` (Step 5) -- `retro_eval.planning.generate_single_step`,
 called with an empty `reactions` list. The only difference from Step 5 is that
-no precedent reactions are retrieved from Qdrant, so `[Context]` in the prompt
-always reads "No similar reaction precedents were found." This isolates RAG as
-the only variable when comparing the two runs' `results.json`/aggregated CSV,
-rather than also swapping in a different prompt/parsing pipeline the way
-`run_chat_zero_shot.py` would.
+no precedent reactions are retrieved from Qdrant, so the `[Context]` block is
+omitted from the prompt entirely (see `retro_eval.prompting._context_block`).
+This isolates RAG as the only variable when comparing the two runs'
+`results.json`/aggregated CSV, rather than also swapping in a different
+prompt/parsing pipeline the way `run_chat_zero_shot.py` would.
 
 Not part of the numbered 1-6 pipeline in the README; this is an extra run for
 comparing RAG's effect, not a required stage.

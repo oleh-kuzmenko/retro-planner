@@ -41,7 +41,9 @@ def test_build_cot_prompt_mentions_think_and_answer_tags():
 def test_build_cot_prompt_handles_no_rag_examples():
     prompt = build_cot_prompt(TARGET_SMILES, [])
 
-    assert "No similar reaction precedents were found." in prompt
+    assert "[Context]" not in prompt
+    assert "[System]" in prompt
+    assert "[Instruction]" in prompt
 
 
 def test_build_cot_repair_prompt_includes_issues():
