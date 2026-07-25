@@ -16,7 +16,7 @@
 - `src/retro_planner/reasoning.py` - парсинг `<think>/<reason>` + `<answer>` тегів і хімічна валідація прекурсорів (RDKit, mass-balance).
 - `src/retro_planner/providers/` - реєстр `LLMProvider`: `chat_api.py` (Groq/OpenAI/custom OpenAI-compatible) плюс `local_seq2seq.py`, `local_causal.py`, `local_gguf.py` для дослідницьких моделей поза чат-API.
 - `src/retro_planner/rendering.py` і `streamlit_views.py` - візуалізація молекул, реакцій і "Chemist's Reasoning" блоку.
-- `scripts/index_uspto50k_to_qdrant.py` - побудова векторної бази з USPTO-50K та ORD.
+- `scripts/index_uspto_to_qdrant.py` та `scripts/index_ord_to_qdrant.py` - побудова векторної бази з USPTO-50K та ORD відповідно (спільні хелпери в `scripts/indexing_common.py`); кожен скрипт відкладає перші `--eval-targets-count` цільових молекул в окремий файл замість індексації.
 - `scripts/evaluate_retrosynthesis.py` та `src/retro_planner/evaluation.py` - автоматизоване Top-k/Structure Success Rate оцінювання на USPTO-50K.
 
 ## 1. Контекстна схема системи

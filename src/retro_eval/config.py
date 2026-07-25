@@ -7,7 +7,6 @@ TRANSFORM_COLLECTION_NAME = "reaction_transforms"
 QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
 QDRANT_PORT = int(os.getenv("QDRANT_PORT", "6333"))
 VECTOR_SIZE = 2048
-DEFAULT_TARGET_SMILES = "O1C(C(=O)OC)=CC=C1S(F)(=O)=O"
 
 
 @dataclass(frozen=True)

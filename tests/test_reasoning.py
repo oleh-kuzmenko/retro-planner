@@ -1,4 +1,4 @@
-from retro_planner.reasoning import parse_reasoning_response, validate_precursors
+from retro_eval.reasoning import parse_reasoning_response, validate_precursors
 
 
 def test_parse_reasoning_response_extracts_think_and_answer():

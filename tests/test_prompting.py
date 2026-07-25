@@ -1,7 +1,7 @@
 import re
 
-from retro_planner import prompting
-from retro_planner.prompting import build_cot_prompt, build_cot_repair_prompt
+from retro_eval import prompting
+from retro_eval.prompting import build_cot_prompt, build_cot_repair_prompt
 
 
 CYRILLIC_RE = re.compile(r"[Ѐ-ӿ]")

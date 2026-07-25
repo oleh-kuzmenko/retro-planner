@@ -3,221 +3,60 @@
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import logging
-import uuid
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, Optional
 
-from retro_planner.chemistry import (
-    canonicalize_smiles,
-    morgan_vector,
-    reaction_transform_vector,
+from indexing_common import (
+    LOGGER,
+    add_common_index_args,
+    index_payloads,
+    recreate_collection,
+    require_modules,
+    split_eval_targets,
+    suppress_rdkit_warnings,
+    write_eval_targets,
 )
-from retro_planner.config import (
-    PRODUCT_COLLECTION_NAME,
-    TRANSFORM_COLLECTION_NAME,
-    VECTOR_SIZE,
-)
-from retro_planner.reaction_classes import normalize_reaction_class
+
+from retro_eval.chemistry import canonicalize_smiles
+from retro_eval.config import PRODUCT_COLLECTION_NAME, TRANSFORM_COLLECTION_NAME
 
 
-LOGGER = logging.getLogger("retro_planner.indexer")
 COLLECTION_NAME = PRODUCT_COLLECTION_NAME
 DEFAULT_INDEX_LIMIT = 500_000
 ORD_DATA_REPO_ID = "Open-Reaction-Database/ord-data"
-UNKNOWN_CONDITIONS = {
-    "solvents": [],
-    "temperature_celsius": None,
-    "catalysts": [],
-}
 
-OPTIONAL_DEPENDENCIES = {
-    "datasets": "datasets",
-    "huggingface_hub": "huggingface_hub",
-    "ord_schema": "ord-schema",
-    "google.protobuf": "protobuf",
-    "tqdm": "tqdm",
-}
-
-
-def optional_dependency_available(module: str) -> bool:
-    try:
-        return importlib.util.find_spec(module) is not None
-    except ModuleNotFoundError:
-        return False
+# Unlike USPTO-50K, ORD protobuf records genuinely carry reaction conditions
+# and a native reaction id, so those are kept (in Qdrant and in
+# --eval-targets-file) alongside product/reactants. Fields ORD never
+# populates (reaction_class, pressure_atm, reaction_time_hours) and pure
+# indexing bookkeeping (split, source, source_dataset, the legacy singular
+# `reactant_smiles` duplicate, the derivable `reaction_smiles`) are left out.
+ORD_PAYLOAD_FIELDS = (
+    "reaction_id",
+    "product_smiles",
+    "reactants_smiles",
+    "solvent",
+    "temperature_celsius",
+    "catalyst",
+    "yield_percent",
+)
 
 
-def require_optional_dependencies(
-    sources: Iterable[str],
-    ord_data_dir: Path | None,
-) -> None:
-    required_modules: set[str] = {"tqdm"}
-    source_set = set(sources)
-
-    if "uspto" in source_set:
-        required_modules.add("datasets")
-    if "ord" in source_set:
-        required_modules.update({"ord_schema", "google.protobuf"})
-        if ord_data_dir is None:
-            required_modules.add("huggingface_hub")
-
-    missing = sorted(
-        module
-        for module in required_modules
-        if not optional_dependency_available(module)
+def require_ord_dependencies(ord_data_dir: Path | None) -> None:
+    required_modules = {"tqdm", "ord_schema", "google.protobuf"}
+    if ord_data_dir is None:
+        required_modules.add("huggingface_hub")
+    require_modules(
+        required_modules,
+        {
+            "tqdm": "tqdm",
+            "ord_schema": "ord-schema",
+            "google.protobuf": "protobuf",
+            "huggingface_hub": "huggingface_hub",
+        },
     )
-    if not missing:
-        return
-
-    packages = sorted({OPTIONAL_DEPENDENCIES[module] for module in missing})
-    missing_modules = ", ".join(missing)
-    missing_packages = ", ".join(packages)
-    raise SystemExit(
-        "Missing optional indexing dependencies: "
-        f"{missing_modules}. Install them with `pip install -e \".[indexing]\"` "
-        f"or install the package(s) directly: {missing_packages}."
-    )
-
-
-def suppress_rdkit_warnings() -> None:
-    from rdkit import RDLogger
-
-    RDLogger.DisableLog("rdApp.warning")
-
-
-def normalize_row(row: dict, split: str, idx: int) -> Optional[dict]:
-    """
-    Normalize a USPTO-50K row into the shared Qdrant payload schema.
-
-    Supported source schemas include:
-    - reaction_smiles / reaction / rxn_smiles
-    - reactants / product
-    - reactants_smiles / product_smiles
-    """
-    reaction_smiles = (
-        row.get("reaction_smiles")
-        or row.get("reaction")
-        or row.get("rxn_smiles")
-    )
-
-    reactants = (
-        row.get("reactants_smiles")
-        or row.get("reactants")
-        or row.get("source")
-    )
-
-    product = (
-        row.get("product_smiles")
-        or row.get("product")
-        or row.get("target")
-    )
-
-    if reaction_smiles and ">>" in reaction_smiles:
-        left, right = reaction_smiles.split(">>", maxsplit=1)
-        reactants = reactants or left
-        product = product or right
-
-    if not product or not reactants:
-        return None
-
-    product_canonical = canonicalize_smiles(product)
-    if not product_canonical:
-        return None
-
-    reactants_canonical = canonicalize_reaction_side(reactants) or str(reactants)
-    reaction_id = (
-        row.get("reaction_id")
-        or row.get("id")
-        or f"uspto50k_{split}_{idx}"
-    )
-
-    reaction_class = (
-        row.get("class")
-        or row.get("reaction_class")
-        or row.get("label")
-    )
-
-    return {
-        "reaction_id": str(reaction_id),
-        "split": split,
-        "reaction_class": str(reaction_class) if reaction_class is not None else None,
-        "reaction_class_normalized": normalize_reaction_class(reaction_class),
-        "reactants_smiles": reactants_canonical,
-        "reactant_smiles": reactants_canonical,
-        "product_smiles": product_canonical,
-        "reaction_smiles": reaction_smiles or f"{reactants_canonical}>>{product_canonical}",
-        "conditions": UNKNOWN_CONDITIONS.copy(),
-        "source": "USPTO",
-        "source_dataset": "pingzhili/uspto-50k",
-        "solvent": None,
-        "temperature_celsius": None,
-        "pressure_atm": None,
-        "reaction_time_hours": None,
-        "yield_percent": None,
-    }
-
-
-def canonicalize_reaction_side(smiles: str | Iterable[str] | None) -> Optional[str]:
-    if smiles is None:
-        return None
-
-    parts = smiles.split(".") if isinstance(smiles, str) else list(smiles)
-    canonical_parts = []
-    for part in parts:
-        canonical = canonicalize_smiles(str(part).strip())
-        if canonical:
-            canonical_parts.append(canonical)
-
-    if not canonical_parts:
-        return None
-    return ".".join(canonical_parts)
-
-
-def recreate_collection(client, collection_name: str) -> None:
-    """(Re)create a Qdrant collection with Cosine-distance ANN indexing.
-
-    Cosine here is only used by Qdrant to shortlist nearby candidates
-    quickly; it is not the similarity score shown to the user or used for
-    final ranking. `retrieval.py` rescores the shortlist with an exact
-    Tanimoto coefficient over the raw fingerprint vectors, per PZ section 3.2.
-    """
-    from qdrant_client.models import Distance, VectorParams
-
-    collections = client.get_collections().collections
-    exists = any(collection.name == collection_name for collection in collections)
-
-    if exists:
-        LOGGER.info("Dropping existing Qdrant collection: %s", collection_name)
-        client.delete_collection(collection_name)
-
-    LOGGER.info("Creating Qdrant collection: %s", collection_name)
-    client.create_collection(
-        collection_name=collection_name,
-        vectors_config=VectorParams(
-            size=VECTOR_SIZE,
-            distance=Distance.COSINE,
-        ),
-    )
-
-
-def flush_batch(
-    client,
-    product_collection: str,
-    transform_collection: str,
-    product_points: list,
-    transform_points: list,
-) -> int:
-    if not product_points:
-        return 0
-
-    client.upsert(collection_name=product_collection, points=product_points)
-    client.upsert(collection_name=transform_collection, points=transform_points)
-    flushed = len(product_points)
-    product_points.clear()
-    transform_points.clear()
-    return flushed
 
 
 def find_first_value(data: Any, keys: set[str]) -> Any:
@@ -454,21 +293,6 @@ def normalize_ord_reaction(reaction: dict, dataset_name: str, idx: int) -> Optio
     }
 
 
-def iter_uspto_payloads(dataset_name: str) -> Iterator[dict]:
-    from datasets import load_dataset
-    from tqdm import tqdm
-
-    LOGGER.info("Loading USPTO-50K dataset: %s", dataset_name)
-    dataset = load_dataset(dataset_name)
-
-    for split_name, split_data in dataset.items():
-        LOGGER.info("Processing USPTO split=%s rows=%s", split_name, len(split_data))
-        for idx, row in enumerate(tqdm(split_data, desc=f"USPTO {split_name}")):
-            normalized = normalize_row(row, split_name, idx)
-            if normalized is not None:
-                yield normalized
-
-
 def download_ord_data(repo_id: str, allow_patterns: list[str] | None) -> Path:
     from huggingface_hub import snapshot_download
 
@@ -566,100 +390,16 @@ def iter_ord_payloads_streaming(
         yield from iter_payloads_from_ord_file(Path(local_path))
 
 
-def index_payloads(
-    client,
-    payloads: Iterable[dict],
-    product_collection: str,
-    transform_collection: str,
-    batch_size: int,
-    limit: int | None,
-    source_name: str,
-) -> tuple[int, int]:
-    from qdrant_client.models import PointStruct
-
-    indexed = 0
-    skipped = 0
-    product_points: list[PointStruct] = []
-    transform_points: list[PointStruct] = []
-
-    for payload in payloads:
-        if limit is not None and indexed >= limit:
-            break
-
-        product_vector = morgan_vector(payload["product_smiles"])
-        transform_vector = reaction_transform_vector(
-            payload["product_smiles"],
-            payload["reactants_smiles"],
-        )
-        if product_vector is None or transform_vector is None:
-            skipped += 1
-            continue
-
-        point_id = str(uuid.uuid4())
-        product_points.append(
-            PointStruct(id=point_id, vector=product_vector, payload=payload)
-        )
-        transform_points.append(
-            PointStruct(id=point_id, vector=transform_vector, payload=payload)
-        )
-
-        if len(product_points) >= batch_size:
-            indexed += flush_batch(
-                client,
-                product_collection,
-                transform_collection,
-                product_points,
-                transform_points,
-            )
-            LOGGER.info("%s indexed=%s skipped=%s", source_name, indexed, skipped)
-
-    indexed += flush_batch(
-        client,
-        product_collection,
-        transform_collection,
-        product_points,
-        transform_points,
-    )
-    LOGGER.info("%s complete: indexed=%s skipped=%s", source_name, indexed, skipped)
-    return indexed, skipped
-
-
-def remaining_index_limit(limit: int | None, indexed_total: int) -> int | None:
-    if limit is None:
-        return None
-    return max(limit - indexed_total, 0)
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Build Qdrant RAG collections from USPTO-50K and ORD."
+        description="Build Qdrant RAG collections from Open Reaction Database (ORD) reactions."
     )
-    parser.add_argument("--dataset", default="pingzhili/uspto-50k")
-    parser.add_argument("--collection", default=COLLECTION_NAME)
-    parser.add_argument("--transform-collection", default=TRANSFORM_COLLECTION_NAME)
-    parser.add_argument("--host", default="localhost")
-    parser.add_argument("--port", type=int, default=6333)
-    parser.add_argument("--batch-size", type=int, default=256)
-    parser.add_argument(
-        "--limit",
-        type=int,
-        default=DEFAULT_INDEX_LIMIT,
-        help=(
-            "Total indexed reaction limit across selected sources. "
-            "Use --limit 0 to process all available reactions."
-        ),
-    )
-    parser.add_argument(
-        "--recreate",
-        action="store_true",
-        help="Accepted for backwards compatibility; collections are always recreated.",
-    )
-    parser.add_argument(
-        "--sources",
-        nargs="+",
-        choices=("uspto", "ord"),
-        default=["uspto", "ord"],
-        help="Data sources to index.",
+    add_common_index_args(
+        parser,
+        default_collection=COLLECTION_NAME,
+        default_transform_collection=TRANSFORM_COLLECTION_NAME,
+        default_limit=DEFAULT_INDEX_LIMIT,
+        default_eval_targets_file="data/ord_eval_targets.json",
     )
     parser.add_argument(
         "--ord-data-dir",
@@ -689,7 +429,7 @@ def main() -> None:
     )
 
     args = parse_args()
-    require_optional_dependencies(args.sources, args.ord_data_dir)
+    require_ord_dependencies(args.ord_data_dir)
     suppress_rdkit_warnings()
 
     client = QdrantClient(host=args.host, port=args.port)
@@ -697,46 +437,34 @@ def main() -> None:
     recreate_collection(client, args.collection)
     recreate_collection(client, args.transform_collection)
 
-    totals = {"indexed": 0, "skipped": 0}
+    ord_data_dir = args.ord_data_dir or download_ord_data(args.ord_repo_id, args.ord_allow_pattern)
 
-    if "uspto" in args.sources:
-        remaining_limit = remaining_index_limit(args.limit, totals["indexed"])
-        indexed, skipped = index_payloads(
-            client=client,
-            payloads=iter_uspto_payloads(args.dataset),
-            product_collection=args.collection,
-            transform_collection=args.transform_collection,
-            batch_size=args.batch_size,
-            limit=remaining_limit,
-            source_name="USPTO",
+    eval_targets, remaining_payloads = split_eval_targets(
+        iter_ord_payloads(ord_data_dir), args.eval_targets_count
+    )
+    if eval_targets:
+        write_eval_targets(args.eval_targets_file, eval_targets, fields=ORD_PAYLOAD_FIELDS)
+    else:
+        LOGGER.info(
+            "No evaluation targets held out (--eval-targets-count=%s).",
+            args.eval_targets_count,
         )
-        totals["indexed"] += indexed
-        totals["skipped"] += skipped
 
-    if (
-        "ord" in args.sources
-        and remaining_index_limit(args.limit, totals["indexed"]) != 0
-    ):
-        ord_data_dir = args.ord_data_dir or download_ord_data(
-            args.ord_repo_id,
-            args.ord_allow_pattern,
-        )
-        remaining_limit = remaining_index_limit(args.limit, totals["indexed"])
-        indexed, skipped = index_payloads(
-            client=client,
-            payloads=iter_ord_payloads(ord_data_dir),
-            product_collection=args.collection,
-            transform_collection=args.transform_collection,
-            batch_size=args.batch_size,
-            limit=remaining_limit,
-            source_name="ORD",
-        )
-        totals["indexed"] += indexed
-        totals["skipped"] += skipped
+    indexed, skipped = index_payloads(
+        client=client,
+        payloads=remaining_payloads,
+        product_collection=args.collection,
+        transform_collection=args.transform_collection,
+        batch_size=args.batch_size,
+        limit=args.limit,
+        source_name="ORD",
+        payload_fields=ORD_PAYLOAD_FIELDS,
+    )
 
     LOGGER.info("Done.")
-    LOGGER.info("Indexed total: %s", totals["indexed"])
-    LOGGER.info("Skipped total: %s", totals["skipped"])
+    LOGGER.info("Indexed: %s", indexed)
+    LOGGER.info("Skipped: %s", skipped)
+    LOGGER.info("Held out for evaluation: %s -> %s", len(eval_targets), args.eval_targets_file)
     LOGGER.info("Product collection: %s", args.collection)
     LOGGER.info("Transform collection: %s", args.transform_collection)
 

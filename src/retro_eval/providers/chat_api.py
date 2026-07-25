@@ -1,18 +1,14 @@
-"""Hosted OpenAI-compatible chat-API providers (Groq, OpenAI, custom endpoints).
+"""Hosted OpenAI-compatible chat-API providers: Groq, and any OpenAI-compatible
+endpoint (Ollama, llama.cpp server, OpenAI itself via `--base-url`).
 
-Moved out of the old llm_providers.py without behavior changes, other than
-dropping the retrosynthesis-routes JSON schema: json_mode is no longer used
-by the production pipeline (planning.py always calls generate() with
-json_mode=False; the response is now parsed from <think>/<answer> tags by
-reasoning.py), so a plain `{"type": "json_object"}` request is enough for the
-rare caller that still wants raw JSON back.
+Used directly by `scripts/models/run_rag_cot_groq.py` (`GroqLLMProvider`) and
+`scripts/models/run_chat_zero_shot.py`/`run_qwen_lora_peft.py`'s Ollama backend
+(`OpenAICompatibleLLMProvider`).
 """
 
 import json
 import logging
 import time
-
-from retro_planner.providers import LLMProviderConfig
 
 LOGGER = logging.getLogger(__name__)
 
@@ -87,31 +83,6 @@ class GroqLLMProvider:
         )
         LOGGER.info("Groq response payload:\n%s", _response_log(content))
         return content
-
-
-class OpenAILLMProvider:
-    def __init__(self, api_key: str):
-        from openai import OpenAI
-
-        self.client = OpenAI(api_key=api_key)
-
-    def generate(
-        self,
-        messages: list[dict[str, str]],
-        model: str,
-        temperature: float,
-        json_mode: bool = False,
-    ) -> str:
-        request = {
-            "model": model,
-            "messages": messages,
-            "temperature": temperature,
-        }
-        if json_mode:
-            request["response_format"] = {"type": "json_object"}
-
-        completion = self.client.chat.completions.create(**request)
-        return completion.choices[0].message.content or ""
 
 
 class OpenAICompatibleLLMProvider:
@@ -222,36 +193,3 @@ class OpenAICompatibleLLMProvider:
         )
         LOGGER.info("Custom OpenAI completion model response:\n%s", content)
         return content
-
-
-CHAT_API_PROVIDERS: dict[str, LLMProviderConfig] = {
-    "groq": LLMProviderConfig(
-        key="groq",
-        label="Groq",
-        api_key_env_var="GROQ_API_KEY",
-        model_env_var="GROQ_MODEL",
-        default_model="llama-3.3-70b-versatile",
-        create_provider=lambda api_key, _base_url: GroqLLMProvider(api_key),
-        key_url="https://console.groq.com/keys",
-    ),
-    "openai": LLMProviderConfig(
-        key="openai",
-        label="OpenAI",
-        api_key_env_var="OPENAI_API_KEY",
-        model_env_var="OPENAI_MODEL",
-        default_model="gpt-4.1",
-        create_provider=lambda api_key, _base_url: OpenAILLMProvider(api_key),
-        key_url="https://platform.openai.com/api-keys",
-    ),
-    "custom_openai": LLMProviderConfig(
-        key="custom_openai",
-        label="Custom / OpenAI-compatible",
-        api_key_env_var="CUSTOM_LLM_API_KEY",
-        model_env_var="CUSTOM_LLM_MODEL",
-        default_model="llama3.1",
-        create_provider=OpenAICompatibleLLMProvider,
-        api_key_required=False,
-        base_url_env_var="CUSTOM_LLM_BASE_URL",
-        default_base_url="http://localhost:11434/v1",
-    ),
-}

@@ -6,12 +6,12 @@ import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from retro_planner.chemistry import (
+from retro_eval.chemistry import (
     generate_morgan_fingerprint,
     generate_reaction_fingerprint,
     tanimoto_similarity,
 )
-from retro_planner.config import (
+from retro_eval.config import (
     DEFAULT_RETRIEVAL_WEIGHTS,
     PRODUCT_COLLECTION_NAME,
     QDRANT_HOST,
@@ -19,7 +19,7 @@ from retro_planner.config import (
     TRANSFORM_COLLECTION_NAME,
     RetrievalWeights,
 )
-from retro_planner.reaction_classes import (
+from retro_eval.reaction_classes import (
     infer_target_reaction_classes,
     reaction_class_similarity,
 )
@@ -109,11 +109,16 @@ def reaction_from_hit(
     query_vector: list[float] | None = None,
 ) -> dict:
     payload = hit.payload or {}
+    reactants_smiles = _payload_value(payload, "reactants_smiles")
+    product_smiles = _payload_value(payload, "product_smiles")
+    reaction_smiles = _payload_value(payload, "reaction_smiles") or (
+        f"{reactants_smiles}>>{product_smiles}" if reactants_smiles and product_smiles else None
+    )
     reaction = {
         "reaction_id": _payload_value(payload, "reaction_id"),
-        "reactants_smiles": _payload_value(payload, "reactants_smiles"),
-        "product_smiles": _payload_value(payload, "product_smiles"),
-        "reaction_smiles": _payload_value(payload, "reaction_smiles"),
+        "reactants_smiles": reactants_smiles,
+        "product_smiles": product_smiles,
+        "reaction_smiles": reaction_smiles,
         "reaction_class": _payload_value(payload, "reaction_class"),
         "reaction_class_normalized": _payload_value(
             payload,
@@ -294,7 +299,8 @@ def hybrid_retrieve_reactions_for_smiles(
             ):
                 warnings.append(
                     "Hybrid transform retrieval is not indexed yet, so the app is using molecule retrieval only. "
-                    "Run `python scripts/index_uspto50k_to_qdrant.py --recreate` to rebuild the Qdrant RAG collections."
+                    "Run `python scripts/index_uspto_to_qdrant.py --recreate` and/or "
+                    "`python scripts/index_ord_to_qdrant.py --recreate` to rebuild the Qdrant RAG collections."
                 )
             else:
                 warnings.append(

@@ -10,6 +10,9 @@ __pycache__/
 build/
 dist/
 .agents/
-fine-tune/v2/01/content/
-fine-tune/v2/02/*.jsonl
+research/fine-tune/v2/01/content/
+research/fine-tune/v2/02/*.jsonl
 .claude/settings.local.json
+/data/
+/experiments/
+.claude

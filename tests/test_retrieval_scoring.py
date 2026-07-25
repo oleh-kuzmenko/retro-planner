@@ -1,8 +1,8 @@
 import pytest
 
-from retro_planner.chemistry import tanimoto_similarity
-from retro_planner.config import DEFAULT_RETRIEVAL_WEIGHTS, EXPERIMENTAL_RETRIEVAL_WEIGHTS
-from retro_planner.retrieval import merge_retrieval_hits
+from retro_eval.chemistry import tanimoto_similarity
+from retro_eval.config import DEFAULT_RETRIEVAL_WEIGHTS, EXPERIMENTAL_RETRIEVAL_WEIGHTS
+from retro_eval.retrieval import merge_retrieval_hits
 
 
 def test_tanimoto_similarity_identical_vectors():

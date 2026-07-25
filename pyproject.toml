@@ -3,20 +3,17 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "retro-planner"
+name = "retro-eval"
 version = "0.1.0"
-description = "Streamlit retrosynthesis planner with RDKit, Groq/OpenAI/custom LLMs, and optional Qdrant RAG."
+description = "CLI research toolkit for comparing retrosynthesis-prediction approaches (local HF models, Ollama-served chat models, Qdrant RAG + Groq) on a CPU-only laptop."
 readme = "README.MD"
 requires-python = ">=3.10"
 dependencies = [
     "groq",
     "numpy",
     "openai",
-    "Pillow",
     "qdrant-client",
     "rdkit",
-    "streamlit",
-    "streamlit-ketcher",
 ]
 
 [project.optional-dependencies]
@@ -34,6 +31,10 @@ local-models = [
     "bitsandbytes",
     "sentencepiece",
     "llama-cpp-python",
+]
+eval-runner = [
+    "tenacity",
+    "tqdm",
 ]
 test = [
     "pytest",

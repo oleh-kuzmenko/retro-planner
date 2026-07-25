@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 from rdkit import Chem, rdBase
 
-from retro_planner.chemistry import canonicalize_smiles
+from retro_eval.chemistry import canonicalize_smiles
 
 LOGGER = logging.getLogger(__name__)
 

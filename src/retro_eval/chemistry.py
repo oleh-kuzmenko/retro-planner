@@ -4,7 +4,7 @@ import numpy as np
 from rdkit import Chem, rdBase
 from rdkit.Chem import rdFingerprintGenerator
 
-from retro_planner.config import VECTOR_SIZE
+from retro_eval.config import VECTOR_SIZE
 
 
 MORGAN_GENERATOR = rdFingerprintGenerator.GetMorganGenerator(
@@ -58,7 +58,7 @@ def is_known_formula_smiles(smiles: str | None) -> bool:
 
 
 def canonicalize_smiles(smiles: str | None) -> Optional[str]:
-    """Return canonical RDKit SMILES after a small Ketcher abbreviation cleanup."""
+    """Return canonical RDKit SMILES after a small structure-editor abbreviation cleanup."""
     if not smiles:
         return None
 

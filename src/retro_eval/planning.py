@@ -1,10 +1,10 @@
 import logging
 from dataclasses import dataclass, field
 
-from retro_planner.chemistry import canonicalize_smiles
-from retro_planner.prompting import build_cot_prompt, build_cot_repair_prompt
-from retro_planner.providers import LLMProvider
-from retro_planner.reasoning import parse_reasoning_response, validate_precursors
+from retro_eval.chemistry import canonicalize_smiles
+from retro_eval.prompting import build_cot_prompt, build_cot_repair_prompt
+from retro_eval.providers import LLMProvider
+from retro_eval.reasoning import parse_reasoning_response, validate_precursors
 
 LOGGER = logging.getLogger(__name__)
 
