@@ -62,6 +62,17 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Hugging Face allow pattern for ORD files, e.g. data/4d/*.pb.gz. Repeatable.",
     )
+    parser.add_argument(
+        "--max-per-source",
+        type=int,
+        default=None,
+        help=(
+            "Cap reactions read from any single ORD source file before moving to "
+            "the next one, so --limit doesn't just land on whichever large file(s) "
+            "sort first. Unset means no cap (read every file in full, subject to "
+            "--limit)."
+        ),
+    )
     args = parser.parse_args()
     if args.limit is not None and args.limit <= 0:
         args.limit = None
@@ -91,7 +102,7 @@ def main() -> None:
 
     indexed, skipped = index_payloads(
         client=client,
-        payloads=iter_ord_payloads(ord_data_dir),
+        payloads=iter_ord_payloads(ord_data_dir, max_per_source=args.max_per_source),
         product_collection=args.collection,
         transform_collection=args.transform_collection,
         batch_size=args.batch_size,

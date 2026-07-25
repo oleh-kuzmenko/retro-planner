@@ -321,12 +321,36 @@ def iter_payloads_from_ord_file(file_path: Path) -> Iterator[dict]:
             yield normalized
 
 
-def iter_ord_payloads(ord_data_dir: Path) -> Iterator[dict]:
+def iter_ord_payloads(
+    ord_data_dir: Path, max_per_source: int | None = None
+) -> Iterator[dict]:
+    """Yield normalized ORD reactions, one file at a time.
+
+    `max_per_source`, if given, stops reading a file once it has yielded that
+    many reactions from it and moves on to the next one. ORD source files
+    vary hugely in size (a few reactions to 50k+ in the current snapshot), so
+    an unbounded read -- or a plain global `--limit` applied afterwards --
+    lets whichever large file(s) happen to sort first dominate the result.
+    Capping per file keeps every contributed source represented. This is a
+    cheap first-N-per-file cap, not a random sample of each file: it skips
+    the expensive per-reaction normalization once a file's cap is hit
+    instead of reading the file in full like `stratified_reservoir_sample`
+    would need to for a uniform-random pick.
+    """
     files = iter_ord_files(ord_data_dir)
     LOGGER.info("Processing ORD protobuf files: %s", len(files))
 
     for file_path in files:
-        yield from iter_payloads_from_ord_file(file_path)
+        if max_per_source is None:
+            yield from iter_payloads_from_ord_file(file_path)
+            continue
+
+        count = 0
+        for payload in iter_payloads_from_ord_file(file_path):
+            if count >= max_per_source:
+                break
+            count += 1
+            yield payload
 
 
 def resolve_ord_data_dir(

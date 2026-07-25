@@ -66,6 +66,18 @@ python scripts/index_uspto_to_qdrant.py                 # full USPTO-50K (500k c
 python scripts/index_ord_to_qdrant.py --ord-data-dir /path/to/ord-data
 ```
 
+ORD (2.4M+ reactions across 550 source files in the current snapshot) is too large to
+index in full for routine runs. `--max-per-source N` caps how many reactions are read
+from any single source file before moving to the next one, keeping every contributed
+dataset represented instead of letting whichever large file(s) sort first dominate --
+the same imbalance `build_eval_targets_ord.py` already guards against for eval targets.
+`--max-per-source 100` yields ~54k reactions (parity with USPTO-50K) in well under a
+minute, instead of the ~40+ minutes a full unbounded read takes:
+
+```bash
+python scripts/index_ord_to_qdrant.py --max-per-source 100
+```
+
 ## Development
 
 ```bash
