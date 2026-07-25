@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from retro_eval.chemistry import canonicalize_smiles
 from retro_eval.prompting import build_cot_prompt, build_cot_repair_prompt
 from retro_eval.providers import LLMProvider
+from retro_eval.providers.retrying import ProviderPaused
 from retro_eval.reasoning import parse_reasoning_response, validate_precursors
 
 LOGGER = logging.getLogger(__name__)
@@ -75,6 +76,8 @@ def generate_single_step(request: GenerationRequest) -> StepResult:
             request.model,
             request.temperature,
         )
+    except ProviderPaused:
+        raise
     except Exception as exc:
         attempts.append(
             GenerationAttempt(prompt=prompt, temperature=request.temperature, error=str(exc))
@@ -113,6 +116,8 @@ def generate_single_step(request: GenerationRequest) -> StepResult:
                 request.model,
                 REPAIR_TEMPERATURE,
             )
+        except ProviderPaused:
+            raise
         except Exception as exc:
             attempts.append(
                 GenerationAttempt(prompt=repair_prompt, temperature=REPAIR_TEMPERATURE, error=str(exc))
