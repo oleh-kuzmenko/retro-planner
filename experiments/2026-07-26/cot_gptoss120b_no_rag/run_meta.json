@@ -1,0 +1,25 @@
+{
+  "model_slug": "cot_gptoss120b_no_rag",
+  "script": "scripts/models/run_cot_llm.py",
+  "cli_args": {
+    "input": "data/ord_eval_targets.json",
+    "model_slug": "cot_gptoss120b_no_rag",
+    "base_url": "https://api.cerebras.ai/v1",
+    "api_key": "***redacted***",
+    "model": "gpt-oss-120b",
+    "temperature": 0.0,
+    "max_retries": 5,
+    "limit": null,
+    "experiment_id": null,
+    "experiments_root": "experiments",
+    "rate_limit_auto_wait_seconds": 300,
+    "rate_limit_default_wait_seconds": 3600,
+    "fresh": false
+  },
+  "input_path": "data/ord_eval_targets.json",
+  "input_sha256": "e4437032c553b4f24fc9507087b92d5f53373997c86d6e956f587a82a9b340c2",
+  "record_count": 100,
+  "status": "completed",
+  "started_at": "2026-07-25T20:18:20.147373+00:00",
+  "finished_at": "2026-07-25T21:14:11.523245+00:00"
+}
