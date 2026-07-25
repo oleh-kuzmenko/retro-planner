@@ -16,7 +16,7 @@ import importlib.util
 import json
 import logging
 import uuid
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 from typing import Optional
 
@@ -187,6 +187,27 @@ def index_payloads(
         "%s complete: indexed=%s skipped=%s excluded=%s", source_name, indexed, skipped, excluded
     )
     return indexed, skipped
+
+
+def take_unique_by_product(payloads: Iterator[dict], count: int) -> list[dict]:
+    """Collect up to `count` payloads with distinct `product_smiles`.
+
+    `product_smiles` repeats across reactions (the same product made via
+    different reactants/conditions), so a plain prefix of the source
+    iterator can yield duplicate targets in the eval set. This keeps the
+    first occurrence of each product instead, preserving source order.
+    """
+    seen: set[str] = set()
+    targets: list[dict] = []
+    for payload in payloads:
+        product = payload.get("product_smiles")
+        if not product or product in seen:
+            continue
+        seen.add(product)
+        targets.append(payload)
+        if len(targets) >= count:
+            break
+    return targets
 
 
 def write_eval_targets(

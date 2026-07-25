@@ -13,11 +13,10 @@ Example:
 from __future__ import annotations
 
 import argparse
-import itertools
 import logging
 from pathlib import Path
 
-from indexing_common import suppress_rdkit_warnings, write_eval_targets
+from indexing_common import suppress_rdkit_warnings, take_unique_by_product, write_eval_targets
 from sources_ord import (
     DEFAULT_ORD_REPO_ID,
     ORD_PAYLOAD_FIELDS,
@@ -59,7 +58,7 @@ def main() -> None:
     suppress_rdkit_warnings()
 
     ord_data_dir = resolve_ord_data_dir(args.ord_data_dir, args.ord_repo_id, args.ord_allow_pattern)
-    targets = list(itertools.islice(iter_ord_payloads(ord_data_dir), args.count))
+    targets = take_unique_by_product(iter_ord_payloads(ord_data_dir), args.count)
     if len(targets) < args.count:
         LOGGER.warning("Only found %d target(s); requested %d.", len(targets), args.count)
 

@@ -13,11 +13,10 @@ Example:
 from __future__ import annotations
 
 import argparse
-import itertools
 import logging
 from pathlib import Path
 
-from indexing_common import suppress_rdkit_warnings, write_eval_targets
+from indexing_common import suppress_rdkit_warnings, take_unique_by_product, write_eval_targets
 from sources_uspto import (
     DEFAULT_DATASET,
     USPTO_PAYLOAD_FIELDS,
@@ -45,7 +44,7 @@ def main() -> None:
     require_uspto_dependencies()
     suppress_rdkit_warnings()
 
-    targets = list(itertools.islice(iter_uspto_payloads(args.dataset), args.count))
+    targets = take_unique_by_product(iter_uspto_payloads(args.dataset), args.count)
     if len(targets) < args.count:
         LOGGER.warning("Only found %d target(s); requested %d.", len(targets), args.count)
 
