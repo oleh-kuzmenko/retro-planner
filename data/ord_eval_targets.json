@@ -1,0 +1,902 @@
+[
+  {
+    "reaction_id": "ord-95b0801eb1af422b91d722b853fc31cf",
+    "product_smiles": "CCOC(=O)C1CSCCN1C(=O)Nc1ccc(Cl)cc1F",
+    "reactants_smiles": "CCOC(=O)C1CSCCN1.O=C=Nc1ccc(Cl)cc1F",
+    "solvent": "CCCCCC, CCOCC",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 87.7
+  },
+  {
+    "reaction_id": "ord-f1cf9bc3fd474c30955c3a68aeedc778",
+    "product_smiles": "CCN(CC)c1ccc(C2(c3ccc(N(C)C)cc3N(C)C)OC(=O)c3ccccc32)c(C)c1",
+    "reactants_smiles": "CC(=O)OC(C)=O.CCN(CC)c1ccc(C(=O)c2ccccc2C(=O)O)c(C)c1.CN(C)c1cccc(N(C)C)c1.[Na+].[OH-]",
+    "solvent": "Cl",
+    "temperature_celsius": 95.0,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-7b74a27dcc2940b5b3a704ddbd2de98d",
+    "product_smiles": "COc1c(NC2CCC(=NOCc3ccccc3)CC2)ccnc1C",
+    "reactants_smiles": "CCOC(C)=O.CO.COc1c(NC2CCC(=O)CC2)ccnc1C.NOCc1ccccc1.O",
+    "solvent": "C1(=CC=CC=C1)C",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-fa9291b9544d4ee1a39d7a61a3b0ea03",
+    "product_smiles": "O=C(N[C@@H](Cc1ccc([N+](=O)[O-])cc1)C(=O)O)c1c(Cl)cccc1Cl",
+    "reactants_smiles": "N[C@@H](Cc1ccc([N+](=O)[O-])cc1)C(=O)O.O=C(Cl)c1c(Cl)cccc1Cl.[Na+].[OH-]",
+    "solvent": "CC(=O)C",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-1ddaf75f0e214d078ad914f5880ab475",
+    "product_smiles": "Cc1ccc(-c2ccc(C)c(CO)c2)cc1",
+    "reactants_smiles": "CCOC(=O)c1cc(-c2ccc(C)cc2)ccc1C.O=S(=O)([O-])[O-].[Na+].[Na+].[Al+3].[H-].[H-].[H-].[H-].[Li+]",
+    "solvent": "CCOCC",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-d1c2a84a75f940b4858cb02ecc076c17",
+    "product_smiles": "CN(C)c1ccc(C(=O)c2ccccc2C(=O)O)c(N(C)C)c1",
+    "reactants_smiles": "CN(C)c1cccc(N(C)C)c1.Clc1ccccc1.O=C1OC(=O)c2ccccc21",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": "[Cl-].[Zn+2].[Cl-]",
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-e1a179c48aa24e148150009a12a9ba8b",
+    "product_smiles": "O=C(NOCCO)c1cc(CN2CCCCC2=O)c(F)c(F)c1Nc1ccc(I)cc1F",
+    "reactants_smiles": "COC(=O)CCCCN.Cl.O=Cc1cc(C(=O)NOCCO)c(Nc2ccc(I)cc2F)c(F)c1F.[BH3-]C#N.[Na+]",
+    "solvent": "O1CCCC1",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 37.0
+  },
+  {
+    "reaction_id": "ord-268b5629ab3849f890d911d8df2bb683",
+    "product_smiles": "COc1cc(OC)cc(OC)c1",
+    "reactants_smiles": "C1=C\\CC/C=C\\CC/1.C1=C\\CC/C=C\\CC/1.[Ni].C=Cc1ccccc1.O=S(=O)(Oc1ccccc1)C(F)(F)F",
+    "solvent": "Cc1ccccc1",
+    "temperature_celsius": 85.0,
+    "catalyst": "FC(F)(F)c1ccc(N2CP(c3ccccc3)CN(c3ccc(C(F)(F)F)cc3)CP(c3ccccc3)C2)cc1",
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-ea2e0597cfc34b5fb0309e1466c6a737",
+    "product_smiles": "Cc1ccc(C23CCCN2CCC3)cn1.Cl.Cl",
+    "reactants_smiles": "Cc1ccc(C23CCCN2CCC3)cn1.Cl",
+    "solvent": "CCOCC",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-b9c00dc8d1a34343af3d8217341c83e0",
+    "product_smiles": "COC(=O)C(CN1CC[C@H](NC(=O)OC(C)(C)C)[C@H](OC)C1)c1c(F)cnc2ccc(OC)nc12",
+    "reactants_smiles": "C=C(C(=O)OC)c1c(F)cnc2ccc(OC)nc12.CO[C@@H]1CNCC[C@@H]1N(C(=O)[O-])C(C)(C)C",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 71.0
+  },
+  {
+    "reaction_id": "ord-703c2a2b287b493ebc27b295a0de91ac",
+    "product_smiles": "O=[N+]([O-])c1cccc(Nc2cc(Cl)ccn2)c1",
+    "reactants_smiles": "Clc1ccnc(Cl)c1.Nc1cccc([N+](=O)[O-])c1",
+    "solvent": "C1COCCO1",
+    "temperature_celsius": 100.0,
+    "catalyst": "CC(=O)O.CC(=O)O.[Pd], CC1(C2=C(C(=CC=C2)P(C3=CC=CC=C3)C4=CC=CC=C4)OC5=C1C=CC=C5P(C6=CC=CC=C6)C7=CC=CC=C7)C",
+    "yield_percent": 47.82
+  },
+  {
+    "reaction_id": "ord-527b983b5852440c80ee5f7d8ac1e9b7",
+    "product_smiles": "COC(=O)[C@H](CN)NC(=O)OCc1ccccc1",
+    "reactants_smiles": "CO.NC[C@H](NC(=O)OCc1ccccc1)C(=O)O.O=S(=O)(O)O",
+    "solvent": "C(C)OCC",
+    "temperature_celsius": 60.0,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-be3efbcf3dc141dc81dfa55a22b25b70",
+    "product_smiles": "O=C1CCCN1C1CCCCC1",
+    "reactants_smiles": "O=C([O-])C1=NN(c2ccc(S(=O)(=O)[O-])cc2)C(=O)C1N=Nc1ccc(S(=O)(=O)[O-])cc1.[Na+].[Na+].[Na+]",
+    "solvent": "O",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-ce3b6cc6c0d44d898ee55cbe4e28ea20",
+    "product_smiles": "CC(C)OC(=O)NCCCCSc1cccc2nccn12",
+    "reactants_smiles": "CC(C)OC(=O)Cl.CCN(CC)CC.NCCCCSc1cccc2nccn12",
+    "solvent": "C(Cl)Cl",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 41.8
+  },
+  {
+    "reaction_id": "ord-04f489d6f4b84e0caced2494d503c25d",
+    "product_smiles": "COC(=O)c1ccc(OCC2CO2)cc1O",
+    "reactants_smiles": "COC(=O)c1ccc(O)cc1O.ClCC1CO1.O=C([O-])[O-].[K+].[K+]",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-1c7274b96f0b47aa88e9a7f1d1e0c0ba",
+    "product_smiles": "COc1cc2oc(=O)c3c(c2cc1OCCCCCN1CCC(c2ccccc2)CC1)CCC3",
+    "reactants_smiles": "COc1cc2oc(=O)c3c(c2cc1OCCCCCBr)CCC3.O=C([O-])/C=C/C(=O)[O-].c1ccc(C2CCNCC2)cc1",
+    "solvent": "C(C)(C)O, CC(C)(C)OC",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 37.0
+  },
+  {
+    "reaction_id": "ord-a0aa244ac0f34a23886d9e4b9c227fa6",
+    "product_smiles": "CC(=O)Nc1cc(Nc2cc(Nc3cn(C)cn3)n3ncc(C#N)c3n2)ccc1C",
+    "reactants_smiles": "CC(=O)Nc1cc(N)ccc1C.Cn1cnc(Nc2cc(Cl)nc3c(C#N)cnn23)c1",
+    "solvent": "CC(=O)N(C)C",
+    "temperature_celsius": 100.0,
+    "catalyst": "C1=CC=C(C=C1)/C=C/C(=O)/C=C/C2=CC=CC=C2.C1=CC=C(C=C1)/C=C/C(=O)/C=C/C2=CC=CC=C2.C1=CC=C(C=C1)/C=C/C(=O)/C=C/C2=CC=CC=C2.[Pd].[Pd], CC(C)C1=CC(=C(C(=C1)C(C)C)C2=CC=CC=C2P(C3CCCCC3)C4CCCCC4)C(C)C",
+    "yield_percent": 12.78
+  },
+  {
+    "reaction_id": "ord-4989e442257741608604060c6d816c83",
+    "product_smiles": "N#CCc1ccccc1CCCO",
+    "reactants_smiles": "CCOC(=O)CCc1ccccc1CC#N.CCOC(C)=O.COCC[O][Al+][O]CCOC.[H-].[H-].[Na+]",
+    "solvent": "C1=CC=CC=C1",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-33f7d48ca5fb4896af7983cbb4253f72",
+    "product_smiles": "O[C@@H]1[C@H](O)[C@@H](COC2CC2)O[C@H]1n1cnc2c(NC3CCCC3)nc(Cl)nc21",
+    "reactants_smiles": "CC(=O)O[C@@H]1[C@H](OC(C)=O)[C@@H](COC2CC2)O[C@H]1n1cnc2c(Cl)nc(Cl)nc21.NC1CCCC1",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-a9db451ed9c34a17965ac9e79daed3a9",
+    "product_smiles": "CC(C)(C)OC(=O)CCNCCC12CC3CC(CC(C3)C1)C2.Cl",
+    "reactants_smiles": "C=CC(=O)OC(C)(C)C.CCN(CC)CC.CCOC(C)=O.Cl.Cl.NCCC12CC3CC(CC(C3)C1)C2",
+    "solvent": "C(C)O",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 23.0
+  },
+  {
+    "reaction_id": "ord-a207e32502304f06a21da6f82ecce891",
+    "product_smiles": "ON=CC12CCCN(CCC1)C2",
+    "reactants_smiles": "CO.C[O-].[Na+].CS(C)=O.C[O-].[Na+].Cl.NO.O=C(Cl)C(=O)Cl.OCC12CCCN(CCC1)C2",
+    "solvent": "C(C)N(CC)CC, C(Cl)Cl",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 60.0
+  },
+  {
+    "reaction_id": "ord-f245225b407842029f8a857b573e11cc",
+    "product_smiles": "CN(C)c1ccc(C2(c3ccc(N(C)C)cc3)Oc3ccccc3-c3[nH]c4ccccc4c32)cc1",
+    "reactants_smiles": "CN(C)c1ccc(C(=O)c2ccc(N(C)C)cc2)cc1.O=P(Cl)(Cl)Cl.Oc1ccccc1-c1cc2ccccc2[nH]1.[Na+].[OH-]",
+    "solvent": "C(Cl)(Cl)Cl",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 30.4
+  },
+  {
+    "reaction_id": "ord-355d452942e54325bec58b0626c5dd9e",
+    "product_smiles": "O=C(Cc1cccc(Cl)n1)c1ccc(F)cc1",
+    "reactants_smiles": "CCOC(=O)c1ccc(F)cc1.C[Si](C)(C)[N-][Si](C)(C)C.[Li+].Cc1cccc(Cl)n1",
+    "solvent": "O1CCCC1",
+    "temperature_celsius": 45.0,
+    "catalyst": null,
+    "yield_percent": 66.0
+  },
+  {
+    "reaction_id": "ord-ff81df212f994bafbf6c7bfe90e1cc54",
+    "product_smiles": "COc1ccc2cc(C(C)C(=O)Oc3ccc(N=C=S)cc3)ccc2c1",
+    "reactants_smiles": "C(=NC1CCCCC1)=NC1CCCCC1.COc1ccc2cc([C@H](C)C(=O)O)ccc2c1.Oc1ccc(-c2cc(=S)ss2)cc1.Oc1cccc2[nH]nnc12",
+    "solvent": "C(C)(=O)OCC, CN(C=O)C",
+    "temperature_celsius": 0.0,
+    "catalyst": null,
+    "yield_percent": 21.0
+  },
+  {
+    "reaction_id": "ord-b3248921defb4c6a8d30d19c0d84be8d",
+    "product_smiles": "CCOP(=O)(CNC(CCc1ccccc1)c1cc(C(C)(C)C)c(OC)c(C(C)(C)C)c1)OCC",
+    "reactants_smiles": "C1CCOC1.CCOP([O-])OCC.COc1c(C(C)(C)C)cc(C=O)cc1C(C)(C)C.NCCCc1ccccc1",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 37.0
+  },
+  {
+    "reaction_id": "ord-599d75b7d02443e5b36146fca1375b02",
+    "product_smiles": "O=C1C2CCCCN2C(=O)N1c1c(F)cc(Cl)c2nc(Cl)sc12",
+    "reactants_smiles": "CCOC(=O)C1CCCCN1.O=C=Nc1c(F)cc(Cl)c2nc(Cl)sc12",
+    "solvent": "O1CCCC1",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-1207b74cfa9b4156ad1030636a632b67",
+    "product_smiles": "Oc1ccc2ncsc2c1",
+    "reactants_smiles": "Nc1ccc2ncsc2c1.O=N[O-].[Na+].[Na+].[OH-]",
+    "solvent": "O, OS(=O)(=O)O",
+    "temperature_celsius": 160.0,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-9654ff91796547b1bc485f42a54b4c55",
+    "product_smiles": "CCOC(=O)C1CSCCN1C(=O)Nc1ccc(Cl)cc1",
+    "reactants_smiles": "CCOC(=O)C1CSCCN1.O=C=Nc1ccc(Cl)cc1",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": "C(C)N(CC)CC, hexanes",
+    "yield_percent": 30.5
+  },
+  {
+    "reaction_id": "ord-a7be1f2431724a97bf5efa5c8c526b27",
+    "product_smiles": "CC(C)NCC(O)c1ccc2c(c1)OCO2",
+    "reactants_smiles": "CC(C)NCC(O)c1ccc2c(c1)OCO2.Cl.[Na+].[OH-]",
+    "solvent": "O",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-e62f6bd06dca4c37ae3106c593afc6b0",
+    "product_smiles": "CSc1nc(C(N)=O)c2n1-c1ccc(Cl)cc1C(c1ccccc1Cl)=NC2",
+    "reactants_smiles": "COC(=O)c1nc(SC)n2c1CN=C(c1ccccc1Cl)c1cc(Cl)ccc1-2.N.[Br-].[K+]",
+    "solvent": "CO",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-4cb02cb743724486a8de82132d38307c",
+    "product_smiles": "CN1CCN(C2=Nc3ccccc3-n3ccc4cc(Cl)cc2c43)CC1",
+    "reactants_smiles": "CN1CCN(C2=Nc3ccccc3N3CCc4cc(Cl)cc2c43)CC1",
+    "solvent": "C(Cl)(Cl)Cl",
+    "temperature_celsius": null,
+    "catalyst": "[O-2].[O-2].[Mn+4]",
+    "yield_percent": 63.0
+  },
+  {
+    "reaction_id": "ord-7107d45708c94d15882a5699664f3c58",
+    "product_smiles": "O=C1NC(=O)C(Cc2ccc(OCCc3nc(-c4ccccc4)oc3CBr)cc2)S1",
+    "reactants_smiles": "CC(C)(C#N)N=NC(C)(C)C#N.Cc1oc(-c2ccccc2)nc1CCOc1ccc(CC2SC(=O)NC2=O)cc1.O=C1CCC(=O)N1Br",
+    "solvent": "C(Cl)(Cl)(Cl)Cl",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-47f7fab3590a4b288fe5c9f9e0c471c5",
+    "product_smiles": "CCOC(=O)C(=O)[O-].[K+]",
+    "reactants_smiles": "CCOC(=O)C(=O)OCC.C[Si](C)(C)[O-].[K+]",
+    "solvent": "CCOCC",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 79.0
+  },
+  {
+    "reaction_id": "ord-fae8d767f9e949d2abdb4e613181892b",
+    "product_smiles": "N#CCc1ccc(OCc2c(F)cccc2F)cc1",
+    "reactants_smiles": "Fc1cccc(F)c1CBr.N#CCc1ccc(O)cc1.O=C([O-])[O-].[K+].[K+]",
+    "solvent": "CN(C)C=O",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-88f1c7f6b57844e986bccee8cc951f43",
+    "product_smiles": "Cc1nc2c(OCc3ccccc3)cccn2c1NC(C)(C)CC(C)(C)C",
+    "reactants_smiles": "CC=O.Nc1ncccc1OCc1ccccc1.[C-]#[N+]C(C)(C)CC(C)(C)C",
+    "solvent": "Cl(=O)(=O)(=O)O",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-dd0ca6057de441808d4ef09f4c6f81e1",
+    "product_smiles": "CC1CCN(C2CCN(C(=O)OCc3ccccc3)CC2)C(=O)N1",
+    "reactants_smiles": "Br.CC(N)CCBr.CC(C)(C)[O-].[K+].CCN(CC)CC.O=C=NC1CCN(C(=O)OCc2ccccc2)CC1",
+    "solvent": "C(C)#N, C1CCOC1",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 45.0
+  },
+  {
+    "reaction_id": "ord-47fa71e0b53046b79ce413a9ccedfaaf",
+    "product_smiles": "CCOC(=O)CCc1cccc(NN)c1",
+    "reactants_smiles": "CCOC(=O)CCc1cccc(N)c1.O.O.[Cl][Sn][Cl].O=N[O-].[Na+]",
+    "solvent": "Cl",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-370e9da63cad4d6da5cf2183f76d801c",
+    "product_smiles": "Cc1ccc2c(c1)C(=O)N(C)CC(=O)N2",
+    "reactants_smiles": "Cc1ccc2c(c1)C(=O)N1CCC[C@H]1C(=O)N2.O=C(O)[C@@H]1CCCN1",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-717bfbb6b90c4d1aae73fb1d40032188",
+    "product_smiles": "O=C1C2=CSCCN2C(=O)N1c1ccc(Cl)cc1F",
+    "reactants_smiles": "CCCCCC.CCOC(=O)C1=NCCSC1.O=C=Nc1ccc(Cl)cc1F",
+    "solvent": "CCOCC",
+    "temperature_celsius": null,
+    "catalyst": "C(C)N(CC)CC",
+    "yield_percent": 66.8
+  },
+  {
+    "reaction_id": "ord-f064d3df4da644fe9118044c211883d6",
+    "product_smiles": "CN(C)c1ccc(C2(c3ccc(N(C)C)cc3N(C)C)OC(=O)c3ccccc32)cc1",
+    "reactants_smiles": "CC(=O)OC(C)=O.CN(C)c1ccc(C(=O)c2ccccc2C(=O)O)cc1.CN(C)c1cccc(N(C)C)c1.Cl",
+    "solvent": null,
+    "temperature_celsius": 95.0,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-4dabd8acaf6f44008abf1131372dba24",
+    "product_smiles": "CNC(=O)Nc1cc(C)ns1",
+    "reactants_smiles": "CN=C=O.Cc1cc(N)sn1",
+    "solvent": "O1CCCC1",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 54.5
+  },
+  {
+    "reaction_id": "ord-7f10f021005f4af18df8b64a1ea0e211",
+    "product_smiles": "COC(=O)c1ccc(OCC(O)CN(Cc2ccccc2)C(C)COc2ccc(O)c(C(N)=O)c2)cc1O",
+    "reactants_smiles": "CC(COc1ccc(O)c(C(N)=O)c1)NCc1ccccc1.COC(=O)c1ccc(OCC2CO2)cc1O",
+    "solvent": "C(C)(C)O",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-bdea85ef300d4da788573db5b896a3b8",
+    "product_smiles": "O[C@@H]1CCC[C@H](OCc2coc(-c3ccc(F)cc3)n2)C1",
+    "reactants_smiles": "CC(=O)OC(C)=O.CC(=O)OC1CCCC(OCc2coc(-c3ccc(F)cc3)n2)C1.O=C([O-])CCCC(=O)OC1CCCC(OCc2ccccc2)C1.OC1CCCC(OCc2ccccc2)C1",
+    "solvent": "COCCOC, P(=O)([O-])([O-])[O-]",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-b11fe237dcff4b788461ffd92d003266",
+    "product_smiles": "CCCN(C(=O)Nc1ccc(I)cc1)N(C(=O)OC(C)(C)C)c1cccc(C#N)c1",
+    "reactants_smiles": "CCCNN(C(=O)OC(C)(C)C)c1cccc(C#N)c1.O=C=Nc1ccc(I)cc1",
+    "solvent": "N1=CC=CC=C1",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 84.7
+  },
+  {
+    "reaction_id": "ord-689b4b2ef67943d4b073104bea7fe4b7",
+    "product_smiles": "Cl.Cl.NCCCNc1cccc2nccn12",
+    "reactants_smiles": "CC(C)(C)OC(=O)NCCCNc1cccc2nccn12.CO.Cl",
+    "solvent": "C(Cl)Cl",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 83.0
+  },
+  {
+    "reaction_id": "ord-ff349a1b204b4c2aab891a575c293bf5",
+    "product_smiles": "C#CCOCc1c(C)nc2c(OCc3ccccc3C)cccn12",
+    "reactants_smiles": "Cc1ccccc1COc1cccn2c(C[N+](C)(C)C)c(C)nc12.[I-].[H-].[Na+]",
+    "solvent": "C(C#C)O",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 110.8
+  },
+  {
+    "reaction_id": "ord-171d418044a4472297102e1e9fd895e3",
+    "product_smiles": "O=C1C=C(c2ccccc2)CCC1",
+    "reactants_smiles": "CCOC1=CC(=O)CCC1.Cl.[Br][Mg][c]1ccccc1",
+    "solvent": "C1CCOC1",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-9600c6ed7d34494ea7830c4d033097e3",
+    "product_smiles": "Cc1cc(Br)ccc1C(=O)NC(C)(C)C",
+    "reactants_smiles": "CC(C)(C)N.Cc1cc(Br)ccc1C(=O)O",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-debcfc619058433586f7c8474defe7c9",
+    "product_smiles": "CSC(=S)NCCCNC(=O)c1ccccc1.I",
+    "reactants_smiles": "CI.NCCCNC(=O)c1ccccc1.S=C=S",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-8aaa4720a16b49f8bea42b285509376e",
+    "product_smiles": "CCOC(=O)N1CCC(N(C(=O)Cc2ccccc2)c2ccc(Cl)cc2)CC1",
+    "reactants_smiles": "CCOC(=O)N1CCC(Nc2ccc(Cl)cc2)CC1.O=C(Cl)Cc1ccccc1",
+    "solvent": "C1=CC=CC=C1",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-d0512d6367704fadb75940a278af6036",
+    "product_smiles": "CN(C)C(=O)c1cc(C2CCCN2c2ccc(F)cc2)c2oc(N3CCOCC3)cc(=O)c2c1",
+    "reactants_smiles": "CN(C)C(=O)c1cc(C2CCCN2)c2oc(N3CCOCC3)cc(=O)c2c1.Fc1ccc(Br)cc1",
+    "solvent": "C1COCCO1",
+    "temperature_celsius": 100.0,
+    "catalyst": "CC(=O)O.CC(=O)O.[Pd], CC1(C2=C(C(=CC=C2)P(C3=CC=CC=C3)C4=CC=CC=C4)OC5=C1C=CC=C5P(C6=CC=CC=C6)C7=CC=CC=C7)C",
+    "yield_percent": 15.0
+  },
+  {
+    "reaction_id": "ord-eba583eb36cf40e597f1d8a3b26c7756",
+    "product_smiles": "Clc1cc(Nc2ccc(N3CCOCC3)cn2)c2nccn2c1",
+    "reactants_smiles": "Clc1cc(Br)c2nccn2c1.Nc1ccc(N2CCOCC2)cn1",
+    "solvent": "CC1=CC=CC=C1",
+    "temperature_celsius": 105.0,
+    "catalyst": "C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=C(C4=CC=CC=C4C=C3)C5=C(C=CC6=CC=CC=C65)P(C7=CC=CC=C7)C8=CC=CC=C8, CC(=O)O.CC(=O)O.[Pd]",
+    "yield_percent": 65.27
+  },
+  {
+    "reaction_id": "ord-c74e5d1bd3d1410aad5b7c2a1b5f362a",
+    "product_smiles": "O=C1Nc2ccccc2/C1=C(/Nc1ccc(C(=O)O)cc1)c1ccccc1",
+    "reactants_smiles": "CCOC(=O)c1ccc(N/C(=C2\\C(=O)Nc3ccccc32)c2ccccc2)cc1.[Na+].[OH-]",
+    "solvent": "C(C)O",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-3307e69c593d48d58dc8fbd52835b144",
+    "product_smiles": "CC(C)CC(C(=O)O)N1Cc2ccccc2CC(NC(=O)C(S)Cc2ccccc2)C1=O",
+    "reactants_smiles": "CC(C)CC(C(=O)O)N1Cc2ccccc2CC(NC(=O)C(Cc2ccccc2)SC(=O)c2ccccc2)C1=O.Cl",
+    "solvent": "CO",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 80.8
+  },
+  {
+    "reaction_id": "ord-15613520ef9b4d099659a0a3ac545228",
+    "product_smiles": "OC1CCN(c2ccncc2)C1",
+    "reactants_smiles": "Brc1ccncc1.OC1CCNC1",
+    "solvent": "C1CCOC1",
+    "temperature_celsius": 65.0,
+    "catalyst": "C1=CC=C(C=C1)/C=C/C(=O)/C=C/C2=CC=CC=C2.C1=CC=C(C=C1)/C=C/C(=O)/C=C/C2=CC=CC=C2.C1=CC=C(C=C1)/C=C/C(=O)/C=C/C2=CC=CC=C2.[Pd].[Pd], CN(C)C1=CC=CC=C1C2=CC=CC=C2P(C3CCCCC3)C4CCCCC4",
+    "yield_percent": 43.01
+  },
+  {
+    "reaction_id": "ord-f680c87b1bd94a1fb587e8c844f25a45",
+    "product_smiles": "COC(=O)c1cccc(CNC(=O)C2CC2)c1C(=O)OC",
+    "reactants_smiles": "CCN(CC)CC.COC(=O)c1cccc(CN)c1C(=O)OC.Cl.O=C(Cl)C1CC1",
+    "solvent": "ClCCl",
+    "temperature_celsius": 4.0,
+    "catalyst": null,
+    "yield_percent": 93.0
+  },
+  {
+    "reaction_id": "ord-79ee1b74b31a41bdac5b200a71352fcd",
+    "product_smiles": "c1ccc(CNCCOCCOCCNCc2ccccc2)cc1",
+    "reactants_smiles": "ClCCOCCOCCCl.NCc1ccccc1",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-7070a2403dc04cfaa55f901c61e6fa83",
+    "product_smiles": "COc1ccc(C=O)c(OC)c1-c1cc2ccccc2s1",
+    "reactants_smiles": "CI.COc1ccc(C=O)c(O)c1-c1cc2ccccc2s1.O=C([O-])[O-].[K+].[K+]",
+    "solvent": "CC(=O)C",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 97.0
+  },
+  {
+    "reaction_id": "ord-ba03a2d2c49b4236818932f4fa781473",
+    "product_smiles": "COC(=O)COc1ccc(C(=O)C(C)(C)N2CCN(c3ccncc3)CC2)cc1",
+    "reactants_smiles": "COC(=O)COc1ccc(C(=O)C(C)(C)Br)cc1.c1cc(N2CCNCC2)ccn1",
+    "solvent": "C(C)#N",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-fac347d6f8b34305bb034a27a9abc60b",
+    "product_smiles": "COc1ccccc1C1CC(C)CCC1=O",
+    "reactants_smiles": "CC1CCC(=O)CC1.COc1ccccc1Cl.N.[NH2-].[Na+]",
+    "solvent": "O1CCCC1",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-11b483655b194597ac2e93597b6914d4",
+    "product_smiles": "COc1cccc(N2CCC(C#N)CC2)c1",
+    "reactants_smiles": "COc1cccc(Br)c1.N#CC1CCNCC1",
+    "solvent": "CC1=CC=CC=C1",
+    "temperature_celsius": 100.0,
+    "catalyst": "CC(=O)O.CC(=O)O.[Pd], CC(C)CN1CCN2CCN(P1N(CC2)CC(C)C)CC(C)C",
+    "yield_percent": 28.45
+  },
+  {
+    "reaction_id": "ord-a75ed1ad0e7c4cabb7785476d93cfc86",
+    "product_smiles": "Clc1cccnc1NC1CCC1",
+    "reactants_smiles": "Clc1cccnc1Br.NC1CCC1",
+    "solvent": "CC1=CC=CC=C1",
+    "temperature_celsius": 115.0,
+    "catalyst": "C1=CC=C(C=C1)/C=C/C(=O)/C=C/C2=CC=CC=C2.C1=CC=C(C=C1)/C=C/C(=O)/C=C/C2=CC=CC=C2.C1=CC=C(C=C1)/C=C/C(=O)/C=C/C2=CC=CC=C2.[Pd].[Pd], C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=C(C4=CC=CC=C4C=C3)C5=C(C=CC6=CC=CC=C65)P(C7=CC=CC=C7)C8=CC=CC=C8",
+    "yield_percent": 25.02
+  },
+  {
+    "reaction_id": "ord-f0f4f088cd0d48ca83f5762cc569ed4f",
+    "product_smiles": "Cc1cc(C(=O)N2Cc3cccn3Cc3ccccc32)ccc1NC(=O)c1ccc(Cl)cc1Cl",
+    "reactants_smiles": "CCN(C(C)C)C(C)C.Cc1cc(C(=O)N2Cc3cccn3Cc3ccccc32)ccc1N.O=C(Cl)c1ccc(Cl)cc1Cl",
+    "solvent": "ClCCl",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 84.1
+  },
+  {
+    "reaction_id": "ord-b25a8f120a90430d9a460f8222478dff",
+    "product_smiles": "Cc1cc([C@@H]2CCCN2C(=O)OCc2ccccc2)on1",
+    "reactants_smiles": "CC(C=C[C@@H]1CCCN1C(=O)OCc1ccccc1)=NO.O=C([O-])O.[Na+]",
+    "solvent": "C1CCOC1, O, OS(=O)[O-].[Na+]",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 60.4
+  },
+  {
+    "reaction_id": "ord-5fc624fd97b7430eafbe8dcc049d170b",
+    "product_smiles": "Cc1ccc(Oc2ccnc(Nc3ccc(S(N)(=O)=O)cc3)c2)c(C)n1",
+    "reactants_smiles": "Cc1ccc(Oc2ccnc(Cl)c2)c(C)n1.Nc1ccc(S(N)(=O)=O)cc1",
+    "solvent": "CC(=O)N(C)C",
+    "temperature_celsius": 150.0,
+    "catalyst": "CC(=O)O.CC(=O)O.[Pd], CC1(C2=C(C(=CC=C2)P(C3=CC=CC=C3)C4=CC=CC=C4)OC5=C1C=CC=C5P(C6=CC=CC=C6)C7=CC=CC=C7)C",
+    "yield_percent": 46.32
+  },
+  {
+    "reaction_id": "ord-5676a3bcc4df4c039dcca17382f31a6c",
+    "product_smiles": "C=Cc1ccccc1CC(N=C(S(C)(=O)=O)S(C)(=O)=O)C(=O)N1C2CC3CCC2(CS1(=O)=O)C3(C)C",
+    "reactants_smiles": "C=Cc1ccccc1CI.CC1(C)C2CCC13CS(=O)(=O)N(C(=O)CN=C(S(C)(=O)=O)S(C)(=O)=O)C3C2",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-3d0d762737d34c2080eeda70e521dbc7",
+    "product_smiles": "O=c1ccc2cc(OC3O[C@H](CO)[C@@H](O)[C@H](O)[C@H]3O)c(OCc3ccccc3)cc2o1",
+    "reactants_smiles": "C1COCCOCCOCCOCCOCCO1.ClCc1ccccc1.O=C([O-])[O-].[K+].[K+].O=c1ccc2cc(O[C@@H]3O[C@H](CO)[C@@H](O)[C@H](O)[C@H]3O)c(O)cc2o1.[I-].[K+]",
+    "solvent": "CN(C=O)C",
+    "temperature_celsius": 60.0,
+    "catalyst": null,
+    "yield_percent": 86.4
+  },
+  {
+    "reaction_id": "ord-27f5598901a84909a3b45c27115d5a04",
+    "product_smiles": "O=C1c2ccccc2C(=O)N1CCCCCCSc1cccc2nccn12",
+    "reactants_smiles": "CCN(CC)CC.O=C1c2ccccc2C(=O)N1CCCCCCBr.Sc1cccc2nccn12",
+    "solvent": "C(C)O",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 75.5
+  },
+  {
+    "reaction_id": "ord-c99ae1ee287f4b08a46c2ffa7a5697e7",
+    "product_smiles": "C[C@H]1CNCCN1S(=O)(=O)c1cccc(-c2ccnc(NCCc3cccc(F)c3)n2)c1",
+    "reactants_smiles": "C[C@H]1CN(C(=O)OC(C)(C)C)CCN1S(=O)(=O)c1cccc(-c2ccnc(Cl)n2)c1.NCCc1cccc(F)c1",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-f89ec35a77d24dec965a72076856b42d",
+    "product_smiles": "Clc1ccc(Nc2nnc(NCCCOc3cccc(CN4CCCCC4)c3)o2)cc1",
+    "reactants_smiles": "O=C(NCCCOc1cccc(CN2CCCCC2)c1)NNC(=O)Nc1ccc(Cl)cc1.O=P(Cl)(Cl)Cl",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-c7add3cb537741d8851d853240637af1",
+    "product_smiles": "O=C1C2CCC(CC2)C(=O)N1CCCCN1CCN(c2ncccn2)CC1",
+    "reactants_smiles": "NCCCCN1CCN(c2ncccn2)CC1.O=C1OC(=O)C2CCC1CC2",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 6.0
+  },
+  {
+    "reaction_id": "ord-72bdb0e1565e47cbbca78c02ea5bd9c4",
+    "product_smiles": "CCNC(=O)NNC(=S)NCCCOc1cccc(CN2CCCCC2)c1",
+    "reactants_smiles": "CCN=C=O.NNC(=S)NCCCOc1cccc(CN2CCCCC2)c1",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-46661896143e47e7a8d7bd3da3304edb",
+    "product_smiles": "CC(=O)OCC(CO)CCn1cnc2cnc(N)nc21",
+    "reactants_smiles": "CC(=O)OCC(CCn1cnc2cnc(N)nc21)COC(C)=O.O=C([O-])[O-].[K+].[K+]",
+    "solvent": "CO",
+    "temperature_celsius": null,
+    "catalyst": "C(C)(=O)O",
+    "yield_percent": 30.0
+  },
+  {
+    "reaction_id": "ord-9e5bc21144d9447e8d3929769ecbd73f",
+    "product_smiles": "Cc1ccc(CSC2=N[C@@H](c3ccccc3)[C@@H](c3ccccc3)N2)cc1.Cl",
+    "reactants_smiles": "Cc1ccc(CCl)cc1.S=C1N[C@H](c2ccccc2)[C@H](c2ccccc2)N1",
+    "solvent": "CCO",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 64.1
+  },
+  {
+    "reaction_id": "ord-75bad0bdb18843a0926daf2d162608bf",
+    "product_smiles": "C[Si](C)(C)CCOCn1nc(-c2ccnc(C3CC3)n2)cc(-c2nc3ccccc3n2COCC[Si](C)(C)C)c1=O",
+    "reactants_smiles": "C[Si](C)(C)CCOCn1nc(-c2ccnc(Cl)n2)cc(-c2nc3ccccc3n2COCC[Si](C)(C)C)c1=O.O=P([O-])([O-])[O-].[K+].[K+].[K+].OB(O)C1CC1",
+    "solvent": "C1(=CC=CC=C1)C, O",
+    "temperature_celsius": 100.0,
+    "catalyst": "C1=CC=C(C=C1)P([C-]2C=CC=C2)C3=CC=CC=C3.C1=CC=C(C=C1)P([C-]2C=CC=C2)C3=CC=CC=C3.Cl[Pd]Cl.[Fe+2]",
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-713806fd865b4bfbb75c2e6c2756ef9c",
+    "product_smiles": "Nc1nc(Sc2ccccc2)ccc1[N+](=O)[O-]",
+    "reactants_smiles": "Nc1nc(Cl)ccc1[N+](=O)[O-].[Na+].[S-]c1ccccc1",
+    "solvent": "CC(C)O, O",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 95.0
+  },
+  {
+    "reaction_id": "ord-87571bf49b2c43568c8a92beb534f448",
+    "product_smiles": "O=[N+]([O-])c1c(F)cc(Cl)c2nc(Cl)sc12",
+    "reactants_smiles": "Fc1cc(Cl)c2nc(Cl)sc2c1.O=[N+]([O-])O",
+    "solvent": "S(O)(O)(=O)=O",
+    "temperature_celsius": 0.0,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-b4cbb9aa494e49f7b3f195512e6252b9",
+    "product_smiles": "CC(=O)Nc1cc([N+](=O)[O-])c(Cl)cc1F",
+    "reactants_smiles": "CC(=O)Nc1ccc(Cl)cc1F.O=[N+]([O-])O",
+    "solvent": "S(O)(O)(=O)=O",
+    "temperature_celsius": 0.0,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-183122e9f21147948277859f6c856c2c",
+    "product_smiles": "CCCc1nc2cccc(C(=O)O)c2n1Cc1ccc(-c2ccccc2-c2nc(=O)o[nH]2)cc1",
+    "reactants_smiles": "CCCc1nc2cccc(C(=O)OC)c2n1Cc1ccc(-c2ccccc2-c2nc(=O)o[nH]2)cc1.Cl.[Na+].[OH-]",
+    "solvent": null,
+    "temperature_celsius": 60.0,
+    "catalyst": null,
+    "yield_percent": 90.0
+  },
+  {
+    "reaction_id": "ord-df4667fb20a546fe8a55503ff8e91e87",
+    "product_smiles": "CC(=O)O.CC(=O)[O-].[Na+]",
+    "reactants_smiles": "CC(=O)[O-].[Na+].[Na+].[OH-]",
+    "solvent": "C(C)(=O)O",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-7fad1d254847413c8096c53b9b70c106",
+    "product_smiles": "CN(C)CCS(=O)(=O)N(C)c1ccc(N/C(=C2\\C(=O)Nc3ccccc32)c2ccccc2)cc1",
+    "reactants_smiles": "CCOC(=C1C(=O)Nc2ccccc21)c1ccccc1.CN(C)CCS(=O)(=O)N(C)c1ccc(N)cc1",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-0da7b9dc6c1948afb1bfa26633b16135",
+    "product_smiles": "Fc1cccc(F)c1CNc1cc2c3c(c1)[C@@H]1CNCC[C@@H]1N3CCSC2",
+    "reactants_smiles": "CC(C)(C)OC(=O)N1CC[C@H]2[C@@H](C1)c1cc(N)cc3c1N2CCSC3.O=Cc1c(F)cccc1F",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-3e9bb0034e4d46e1a7bf272e86dd3f35",
+    "product_smiles": "CS(=O)(=O)c1ccccc1S(=O)(=O)Nc1ccc2[nH]nc(-c3cccs3)c2c1",
+    "reactants_smiles": "CC(C)(C)OC(=O)N(c1ccc2c(c1)c(I)nn2C(=O)OC(C)(C)C)S(=O)(=O)c1ccccc1S(C)(=O)=O.O=C([O-])O.[Na+].OB(O)c1cccs1",
+    "solvent": "CN(C=O)C",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 36.5
+  },
+  {
+    "reaction_id": "ord-eab0fe71e0cc43c3893df4095261d255",
+    "product_smiles": "NS(=O)(=O)c1ccccc1CN1CCCC1",
+    "reactants_smiles": "C1CCNC1.NS(=O)(=O)c1ccccc1CCl",
+    "solvent": "C(C)#N",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 92.8
+  },
+  {
+    "reaction_id": "ord-74481810179c4b9dbbb82e033283bb5b",
+    "product_smiles": "O=C1CC(=O)NC(=O)N1",
+    "reactants_smiles": "C(=NC1CCCCC1)=NC1CCCCC1.C=CCC1(C(C)CC(=O)O)C(=O)NC(=O)NC1=O.O=[N+]([O-])c1ccc(O)cc1",
+    "solvent": "CN(C=O)C",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-cb0ae83e039e422babb6d81e64a4df69",
+    "product_smiles": "COC(=O)C1CCN(c2ccc(Br)cc2)C1",
+    "reactants_smiles": "Brc1ccc(Br)cc1.COC(=O)C1CCNC1",
+    "solvent": "CC1=CC=CC=C1",
+    "temperature_celsius": 85.0,
+    "catalyst": "C1=CC=C(C=C1)/C=C/C(=O)/C=C/C2=CC=CC=C2.C1=CC=C(C=C1)/C=C/C(=O)/C=C/C2=CC=CC=C2.C1=CC=C(C=C1)/C=C/C(=O)/C=C/C2=CC=CC=C2.[Pd].[Pd], C1=CC=C(C=C1)P(C2=CC=CC=C2)C3=C(C4=CC=CC=C4C=C3)C5=C(C=CC6=CC=CC=C65)P(C7=CC=CC=C7)C8=CC=CC=C8",
+    "yield_percent": 29.15
+  },
+  {
+    "reaction_id": "ord-89a7a9d8cd464c7daf04878ccf8298c1",
+    "product_smiles": "Cc1[nH]cnc1CSCCNC(=C[N+](=O)[O-])NCCCNC(=NC#N)NCCSCc1ccccn1",
+    "reactants_smiles": "CSC(=C[N+](=O)[O-])NCCSCc1nc[nH]c1C.CSC(=NCCSCc1ccccn1)NC#N.NCCCNC(=O)c1ccccc1",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-5d337718b4324e0dae33ac3f4b6f3bab",
+    "product_smiles": "CCOC(=O)COc1ccc(C(C)=O)cc1C",
+    "reactants_smiles": "CC(=O)c1ccc(O)c(C)c1.CCOC(=O)CBr.O=C([O-])[O-].[Cs+].[Cs+]",
+    "solvent": "C(C)#N",
+    "temperature_celsius": 40.0,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-61d7ac485ebb41cead0d0ac85fed42d1",
+    "product_smiles": "CCN(CC)c1ccc(C(=O)c2ccccc2C(=O)O)c(C)c1",
+    "reactants_smiles": "CCN(CC)c1cccc(C)c1.Clc1ccccc1.O=C1OC(=O)c2ccccc21.[Al+3].[Cl-].[Cl-].[Cl-]",
+    "solvent": "O",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-d229cb2de4d94ee3acd656b3de7ca16d",
+    "product_smiles": "Cl.N#Cc1cncc2cccc(O[C@H]3CC[C@H](NCCO)CC3)c12",
+    "reactants_smiles": "BrCCOC1CCCCO1.Cl.N#Cc1cncc2cccc(O[C@H]3CC[C@H](N)CC3)c12",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-5286c593126f48fab83604898c4bbbb3",
+    "product_smiles": "[Cl-].[Cl-].[Zr+2].c1cc[cH-]c1.c1cc[cH-]c1",
+    "reactants_smiles": "CC(C)c1ccccc1.[Al+3].[Cl-].[Cl-].[Cl-].[Al].[Cl-].[Cl-].[Cl-].[Cl-].[Zr+4]",
+    "solvent": "Cl, ClCCl",
+    "temperature_celsius": 110.0,
+    "catalyst": "[CH-]1C=CC=C1.[CH-]1C=CC=C1.[Fe+2]",
+    "yield_percent": 118.6
+  },
+  {
+    "reaction_id": "ord-07ccba316ab64ff1a0c5fdbf401e073f",
+    "product_smiles": "COC(=O)/C=C(\\Nc1ccccc1C#N)C(=O)OC",
+    "reactants_smiles": "COC(=O)C#CC(=O)OC.N#Cc1ccccc1N",
+    "solvent": "C(C)(C)(C)O",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 44.3
+  },
+  {
+    "reaction_id": "ord-25b2f8bfafe540368db659a4bd1935bf",
+    "product_smiles": "Cc1cc(N2CCOCC2)cc(C)c1NC(=O)CC1CCCC1",
+    "reactants_smiles": "C1COCCN1.Cc1cc(Br)cc(C)c1NC(=O)CC1CCCC1",
+    "solvent": "CC1=CC=CC=C1",
+    "temperature_celsius": 80.0,
+    "catalyst": "C1=CC=C(C=C1)/C=C/C(=O)/C=C/C2=CC=CC=C2.C1=CC=C(C=C1)/C=C/C(=O)/C=C/C2=CC=CC=C2.C1=CC=C(C=C1)/C=C/C(=O)/C=C/C2=CC=CC=C2.[Pd].[Pd], CN(C)C1=CC=CC=C1C2=CC=CC=C2P(C3CCCCC3)C4CCCCC4",
+    "yield_percent": 13.21
+  },
+  {
+    "reaction_id": "ord-9f60d5c7a383418895395ffe7d11e22f",
+    "product_smiles": "O=[N+]([O-])c1ccc(Oc2cc(F)c(C(F)(F)F)c(Cl)c2)cc1Oc1ccc(O)cc1",
+    "reactants_smiles": "BrB(Br)Br.COc1ccc(Oc2cc(Oc3cc(F)c(C(F)(F)F)c(Cl)c3)ccc2[N+](=O)[O-])cc1",
+    "solvent": "C(Cl)Cl",
+    "temperature_celsius": -78.0,
+    "catalyst": null,
+    "yield_percent": 62.6
+  },
+  {
+    "reaction_id": "ord-bf5538abf09f4116b115afb71cb81295",
+    "product_smiles": "COc1cc(OC)c(-c2c(C)noc2C)cc1/C=C/C(=O)c1ccc(C(=O)O)cc1",
+    "reactants_smiles": "CC(=O)c1ccc(C(=O)O)cc1.COc1cc(OC)c(-c2c(C)noc2C)cc1C=O",
+    "solvent": null,
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": 7.0
+  },
+  {
+    "reaction_id": "ord-43fc139c41d84237a967f7fa62214d1c",
+    "product_smiles": "CCOC(=O)c1ccc(CBr)c(Br)c1",
+    "reactants_smiles": "CCOC(=O)c1ccc(C)c(Br)c1.O=C(OOC(=O)c1ccccc1)c1ccccc1.O=C1CCC(=O)N1Br",
+    "solvent": "C(Cl)(Cl)(Cl)Cl",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-6bef68f4d0124a8aa5a5f891c79f1214",
+    "product_smiles": "CCCCC(C)(C)C(=O)CCCCl",
+    "reactants_smiles": "CCCCC(C)(C)Cl.CCCC[C](C)(C)[Mg][Cl].Cl.O=C(Cl)CCCCl.[Mg]",
+    "solvent": "CCOCC",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-20462acb03f44b94af918c2c8fa90cf5",
+    "product_smiles": "COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2",
+    "reactants_smiles": "CC(C)=CCc1c(O)cc(O)c(C(=O)CC(C)C)c1[O-].CC[O-].[Na+].COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1C(NC(C)=O)CC2.COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2.CSC.[Na]",
+    "solvent": "CO",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-676d71720fa34c01adc0bfc09583b9d6",
+    "product_smiles": "Cl.O=C(C1CCNCC1)N1CCOCC1",
+    "reactants_smiles": "C1COCCN1.CC(C)(C)OC(=O)N1CCC(C(=O)O)CC1.CCN=C=NCCCN(C)C.Cl.On1nnc2ccccc21",
+    "solvent": "CN(C=O)C",
+    "temperature_celsius": null,
+    "catalyst": null,
+    "yield_percent": null
+  },
+  {
+    "reaction_id": "ord-f3fb8eb843ff4e899aa4fef472859b2c",
+    "product_smiles": "O=C1N(N2CCOCC2)c2ccccc2C1(Cc1ccncc1)Cc1ccncc1",
+    "reactants_smiles": "Cl.ClCc1ccncc1.ClC(Cl)Cl.O.O=C1Cc2ccccc2N1N1CCOCC1",
+    "solvent": "C1(=CC=CC=C1)C, [OH-].[Na+]",
+    "temperature_celsius": 70.0,
+    "catalyst": "[Cl-].C(C1=CC=CC=C1)[N+](CC)(CC)CC",
+    "yield_percent": 88.0
+  }
+]

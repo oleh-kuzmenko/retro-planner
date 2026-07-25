@@ -13,6 +13,4 @@ dist/
 research/fine-tune/v2/01/content/
 research/fine-tune/v2/02/*.jsonl
 .claude/settings.local.json
-/data/
-/experiments/
 .claude

@@ -15,6 +15,7 @@ import argparse
 import importlib.util
 import json
 import logging
+import random
 import uuid
 from collections.abc import Iterable, Iterator
 from pathlib import Path
@@ -208,6 +209,71 @@ def take_unique_by_product(payloads: Iterator[dict], count: int) -> list[dict]:
         if len(targets) >= count:
             break
     return targets
+
+
+def stratified_reservoir_sample(
+    payloads: Iterator[dict],
+    count: int,
+    max_per_group: int,
+    group_field: str = "source_dataset",
+    seed: int = 0,
+) -> list[dict]:
+    """Randomly sample up to `count` payloads with distinct `product_smiles`,
+    capping how many can come from any single `group_field` value (e.g. one
+    ORD source file, which is typically one contributed paper/patent dataset
+    and therefore one narrow slice of chemistry -- see PZ analysis: an
+    uncapped first-N pull put 71/100 targets on a single Pd/phosphine
+    coupling system). The cap forces the sample to span at least
+    `ceil(count / max_per_group)` distinct sources.
+
+    Runs in a single streaming pass over `payloads` and exits as soon as
+    `count` capped, deduped candidates have been collected, so it does not
+    need to read the full corpus. Within each group, kept payloads are
+    chosen via reservoir sampling (Algorithm R) so they're a uniform random
+    subset of what that group produced rather than just the first ones
+    encountered -- except possibly the group that is mid-read when the early
+    exit fires, which only reflects what had been seen of it so far.
+    """
+    rng = random.Random(seed)
+    reservoirs: dict[str, list[dict]] = {}
+    seen_in_group: dict[str, int] = {}
+    seen_products: set[str] = set()
+    pooled_size = 0
+
+    for payload in payloads:
+        product = payload.get("product_smiles")
+        if not product or product in seen_products:
+            continue
+        seen_products.add(product)
+
+        group = payload.get(group_field) or "unknown"
+        reservoir = reservoirs.setdefault(group, [])
+        seen_in_group[group] = seen_in_group.get(group, 0) + 1
+
+        if len(reservoir) < max_per_group:
+            reservoir.append(payload)
+            pooled_size += 1
+        else:
+            j = rng.randrange(seen_in_group[group])
+            if j < max_per_group:
+                reservoir[j] = payload
+
+        if pooled_size >= count:
+            break
+
+    pooled = [payload for reservoir in reservoirs.values() for payload in reservoir]
+    if len(pooled) > count:
+        pooled = rng.sample(pooled, count)
+    else:
+        rng.shuffle(pooled)
+
+    LOGGER.info(
+        "Sampled %d target(s) from %d source group(s) (max %d per group).",
+        len(pooled),
+        len(reservoirs),
+        max_per_group,
+    )
+    return pooled
 
 
 def write_eval_targets(
