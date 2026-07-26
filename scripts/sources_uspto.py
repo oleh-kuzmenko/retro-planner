@@ -125,7 +125,18 @@ def normalize_row(row: dict, split: str, idx: int) -> Optional[dict]:
     }
 
 
-def iter_uspto_payloads(dataset_name: str = DEFAULT_DATASET) -> Iterator[dict]:
+def iter_uspto_payloads(
+    dataset_name: str = DEFAULT_DATASET, splits: Iterable[str] | None = None
+) -> Iterator[dict]:
+    """Yield normalized rows from `dataset_name`, optionally restricted to `splits`.
+
+    `splits=None` (the default) walks every split in the dataset, matching
+    the original behavior. Pass e.g. `splits=("test",)` to pull only from a
+    dataset's canonical test partition -- needed when the dataset's own
+    split names correspond to a model's train/test division and mixing them
+    back together would leak training examples into an eval set (see
+    `build_eval_targets_uspto_test_holdout.py`).
+    """
     from datasets import load_dataset
     from tqdm import tqdm
 
@@ -133,6 +144,8 @@ def iter_uspto_payloads(dataset_name: str = DEFAULT_DATASET) -> Iterator[dict]:
     dataset = load_dataset(dataset_name)
 
     for split_name, split_data in dataset.items():
+        if splits is not None and split_name not in splits:
+            continue
         LOGGER.info("Processing USPTO split=%s rows=%s", split_name, len(split_data))
         for idx, row in enumerate(tqdm(split_data, desc=f"USPTO {split_name}")):
             normalized = normalize_row(row, split_name, idx)

@@ -1,0 +1,1720 @@
+[
+  {
+    "index": 0,
+    "product_smiles": "N#Cc1cccc(NC(=O)Nc2ccc([C@@H]3CNCCO3)cc2F)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"N#Cc1cccc(NC(=O)Nc2ccc([C@@H]3CNCCO3)cc2F)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"CC(C)(C)OC(=O)N1CCOC[C@H]1c1ccc(NC(=O)Nc2cccc(C#N)c2)c(F)c1\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 1,
+    "product_smiles": "CCC(Cl)C(=O)N[C@@H](CO)c1cc(F)cc(F)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CCC(Cl)C(=O)N[C@@H](CO)c1cc(F)cc(F)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"CCC(Cl)C(=O)Cl\",\"N[C@@H](CO)c1cc(F)cc(F)c1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 2,
+    "product_smiles": "CC(C)Cc1cc(C(=O)N2CCN(CC(C)C)CC2)ccc1OCc1ccc(Cl)cc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(C)Cc1cc(C(=O)N2CCN(CC(C)C)CC2)ccc1OCc1ccc(Cl)cc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"CC(C)Cc1cc(C(=O)O)ccc1OCc1ccc(Cl)cc1\",\"CC(C)CN1CCNCC1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 3,
+    "product_smiles": "CC(C)c1noc(C=C2CCN(C(=O)OC(C)(C)C)CC2)n1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(C)c1noc(C=C2CCN(C(=O)OC(C)(C)C)CC2)n1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"3\",\"reactants\":[\"CC(C)(C)OC(=O)N1CCC(=O)CC1\",\"CC(C)c1noc(C[P+](c2ccccc2)(c2ccccc2)c2ccccc2)n1\"]}",
+    "reaction_class": "3",
+    "warnings": []
+  },
+  {
+    "index": 4,
+    "product_smiles": "Nc1cccc(C2=NOC(c3c(Cl)cccc3Cl)C2)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"Nc1cccc(C2=NOC(c3c(Cl)cccc3Cl)C2)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"7\",\"reactants\":[\"O=[N+]([O-])c1cccc(C2=NOC(c3c(Cl)cccc3Cl)C2)c1\"]}",
+    "reaction_class": "7",
+    "warnings": []
+  },
+  {
+    "index": 5,
+    "product_smiles": "CC(C)C[C@H](NC(=O)c1cc2ccccc2s1)C(=O)NC[C@@H]1CCCN(S(=O)(=O)c2ccccc2C#N)C1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(C)C[C@H](NC(=O)c1cc2ccccc2s1)C(=O)NC[C@@H]1CCCN(S(=O)(=O)c2ccccc2C#N)C1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"N#Cc1ccccc1S(=O)(=O)Cl\",\"CC(C)C[C@H](NC(=O)c1cc2ccccc2s1)C(=O)NC[C@@H]1CCCNC1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 6,
+    "product_smiles": "O=C(c1ccnc(-c2cccs2)c1)N1CCOCC1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"O=C(c1ccnc(-c2cccs2)c1)N1CCOCC1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"O=C(O)c1ccnc(-c2cccs2)c1\",\"C1COCCN1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 7,
+    "product_smiles": "CC(C)(C)c1nc2c(C(=O)O)cc(-c3ccccc3)c(N)c2o1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(C)(C)c1nc2c(C(=O)O)cc(-c3ccccc3)c(N)c2o1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"COC(=O)c1cc(-c2ccccc2)c(N)c2oc(C(C)(C)C)nc12\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 8,
+    "product_smiles": "CN(C)c1ccc2c(=O)n(-c3cccc(Br)c3)ccc2c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CN(C)c1ccc2c(=O)n(-c3cccc(Br)c3)ccc2c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"Brc1cccc(Br)c1\",\"CN(C)c1ccc2c(=O)[nH]ccc2c1\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 9,
+    "product_smiles": "CC(C)(C)OC(=O)N(Cc1ccc(C(F)(F)F)cc1)n1cccc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(C)(C)OC(=O)N(Cc1ccc(C(F)(F)F)cc1)n1cccc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"5\",\"reactants\":[\"CC(C)(C)OC(=O)OC(=O)OC(C)(C)C\",\"FC(F)(F)c1ccc(CNn2cccc2)cc1\"]}",
+    "reaction_class": "5",
+    "warnings": []
+  },
+  {
+    "index": 10,
+    "product_smiles": "NCc1cc(O)cc(Cl)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"NCc1cc(O)cc(Cl)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"7\",\"reactants\":[\"N#Cc1cc(O)cc(Cl)c1\"]}",
+    "reaction_class": "7",
+    "warnings": []
+  },
+  {
+    "index": 11,
+    "product_smiles": "COC(=O)c1cccc(C=NO)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COC(=O)c1cccc(C=NO)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"9\",\"reactants\":[\"COC(=O)c1cccc(C=O)c1\",\"NO\"]}",
+    "reaction_class": "9",
+    "warnings": []
+  },
+  {
+    "index": 12,
+    "product_smiles": "Cn1cnc2c(C#N)nc(-c3ccc(OCCO)c(C(F)(F)F)c3)cc21",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"Cn1cnc2c(C#N)nc(-c3ccc(OCCO)c(C(F)(F)F)c3)cc21\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"Cn1cnc2c(C#N)nc(-c3ccc(OCCOC4CCCCO4)c(C(F)(F)F)c3)cc21\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 13,
+    "product_smiles": "COC(=O)c1cc(Br)ccc1NC(=O)COc1cccc(-c2ccoc2)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COC(=O)c1cc(Br)ccc1NC(=O)COc1cccc(-c2ccoc2)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"O=C(O)COc1cccc(-c2ccoc2)c1\",\"COC(=O)c1cc(Br)ccc1N\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 14,
+    "product_smiles": "CCOC(=O)c1cc(Oc2ccc(S(C)(=O)=O)cc2)c2cc(CBr)oc2c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CCOC(=O)c1cc(Oc2ccc(S(C)(=O)=O)cc2)c2cc(CBr)oc2c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"10\",\"reactants\":[\"O=C1CCC(=O)N1Br\",\"CCOC(=O)c1cc(Oc2ccc(S(C)(=O)=O)cc2)c2cc(C)oc2c1\"]}",
+    "reaction_class": "10",
+    "warnings": []
+  },
+  {
+    "index": 15,
+    "product_smiles": "Clc1ccc(-c2cnc(NCc3ccncc3)nc2NC2CCN(Cc3ccccc3)CC2)cc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"Clc1ccc(-c2cnc(NCc3ccncc3)nc2NC2CCN(Cc3ccccc3)CC2)cc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"O=Cc1ccncc1\",\"Nc1ncc(-c2ccc(Cl)cc2)c(NC2CCN(Cc3ccccc3)CC2)n1\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 16,
+    "product_smiles": "Cc1cccc(NC(=O)c2cccc(N)c2)c1C",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"Cc1cccc(NC(=O)c2cccc(N)c2)c1C\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"7\",\"reactants\":[\"Cc1cccc(NC(=O)c2cccc([N+](=O)[O-])c2)c1C\"]}",
+    "reaction_class": "7",
+    "warnings": []
+  },
+  {
+    "index": 17,
+    "product_smiles": "CC(O)c1oc(=O)c2ccccc2c1-c1ccccn1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(O)c1oc(=O)c2ccccc2c1-c1ccccn1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"3\",\"reactants\":[\"CC(=O)c1oc(=O)c2ccccc2c1-c1ccccn1\",\"[CH3][Mg+]\"]}",
+    "reaction_class": "3",
+    "warnings": []
+  },
+  {
+    "index": 18,
+    "product_smiles": "COC=C1CCC(C(=O)OC)CC1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COC=C1CCC(C(=O)OC)CC1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"3\",\"reactants\":[\"COC(=O)C1CCC(=O)CC1\",\"COC[P+](c1ccccc1)(c1ccccc1)c1ccccc1\"]}",
+    "reaction_class": "3",
+    "warnings": []
+  },
+  {
+    "index": 19,
+    "product_smiles": "O=Cc1c(OC(F)F)ccc(F)c1Cl",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"O=Cc1c(OC(F)F)ccc(F)c1Cl\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"3\",\"reactants\":[\"FC(F)Oc1ccc(F)c(Cl)c1Br\",\"CN(C)C=O\"]}",
+    "reaction_class": "3",
+    "warnings": []
+  },
+  {
+    "index": 20,
+    "product_smiles": "O=C(Cc1cnccn1)N[C@@H](COCc1ccccc1)C(=O)Nc1ccc(Oc2ccc(F)cc2)cc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"O=C(Cc1cnccn1)N[C@@H](COCc1ccccc1)C(=O)Nc1ccc(Oc2ccc(F)cc2)cc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"O=C(O)Cc1cnccn1\",\"N[C@@H](COCc1ccccc1)C(=O)Nc1ccc(Oc2ccc(F)cc2)cc1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 21,
+    "product_smiles": "COC(=O)c1ccc(Cl)c2nc3n(c12)CCCCN3c1ncc(Cl)cc1Cl",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COC(=O)c1ccc(Cl)c2nc3n(c12)CCCCN3c1ncc(Cl)cc1Cl\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"Clc1cnc(Cl)c(Cl)c1\",\"COC(=O)c1ccc(Cl)c2nc3[nH]c4c(n3c12)CCCCN4\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 22,
+    "product_smiles": "N#Cc1cc([N+](=O)[O-])ccc1N1CCOCC1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"N#Cc1cc([N+](=O)[O-])ccc1N1CCOCC1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"N#Cc1cc([N+](=O)[O-])ccc1F\",\"C1COCCN1\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 23,
+    "product_smiles": "CC(=O)OC[C@H]1CN(c2cccc(F)c2)C(=O)O1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(=O)OC[C@H]1CN(c2cccc(F)c2)C(=O)O1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"CC(=O)OC[C@H]1CN(c2cccc(F)c2)C(=O)O1Cc1ccccc1\"]}",
+    "reaction_class": "6",
+    "warnings": [
+      "Dropped 1 unparseable reactant fragment(s)."
+    ]
+  },
+  {
+    "index": 24,
+    "product_smiles": "FC(F)(F)c1cccc(CN(CCCBr)CC(c2ccccc2)c2ccccc2)c1Cl",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"FC(F)(F)c1cccc(CN(CCCBr)CC(c2ccccc2)c2ccccc2)c1Cl\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"BrCCCBr\",\"NCc1cccc(C(F)(F)F)c1Cl\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 25,
+    "product_smiles": "COc1ccc(-n2nc(C)cc2C(=O)O)cc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COc1ccc(-n2nc(C)cc2C(=O)O)cc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"CCOC(=O)c1cc(C)nn1-c1ccc(OC)cc1\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 26,
+    "product_smiles": "N#Cc1cc(Br)ccc1OCc1ccccc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"N#Cc1cc(Br)ccc1OCc1ccccc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"BrCc1ccccc1\",\"N#Cc1cc(Br)ccc1O\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 27,
+    "product_smiles": "CC(=O)N1CCN(c2ccc(Oc3ncnc4c3cnn4C3CCN(C(=O)OC(C)(C)C)CC3)cc2)CC1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(=O)N1CCN(c2ccc(Oc3ncnc4c3cnn4C3CCN(C(=O)OC(C)(C)C)CC3)cc2)CC1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"CC(=O)N1CCN(c2ccc(Oc3ncnc4c3cnn4C3CCBrCC3)cc2)CC1\",\"CC(C)(C)OC(=O)N1CCC(=O)CC1\"]}",
+    "reaction_class": "1",
+    "warnings": [
+      "Dropped 1 unparseable reactant fragment(s)."
+    ]
+  },
+  {
+    "index": 28,
+    "product_smiles": "O=[N+]([O-])c1cccc(-c2csc(NN=C3CCN(Cc4ccccc4)CC3)n2)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"O=[N+]([O-])c1cccc(-c2csc(NN=C3CCN(Cc4ccccc4)CC3)n2)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"O=[N+]([O-])c1cccc(-c2csc(Cl)n2)c1\",\"NN=C1CCN(Cc2ccccc2)CC1\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 29,
+    "product_smiles": "OC(c1ccccc1)(c1ccccc1)C1CCN(CCNc2ncccn2)CC1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"OC(c1ccccc1)(c1ccccc1)C1CCN(CCNc2ncccn2)CC1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"Clc1ncccn1\",\"NCCN1CCC(C(O)(c2ccccc2)c2ccccc2)CC1\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 30,
+    "product_smiles": "O=C(Nc1ccccc1NC(=O)c1ccc2c(Br)c[nH]c2c1)OCC1CCN(c2ccncc2)CC1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"O=C(Nc1ccccc1NC(=O)c1ccc2c(Br)c[nH]c2c1)OCC1CCN(c2ccncc2)CC1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"O=C(Cl)c1ccc2c(Br)c[nH]c2c1\",\"Nc1ccccc1NC(=O)OCC1CCN(c2ccncc2)CC1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 31,
+    "product_smiles": "CCC1CNCCCN1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CCC1CNCCCN1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"CCC1CN(C(=O)OC(C)(C)C)CCCN1\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 32,
+    "product_smiles": "CN1Cc2c(N3CCN(C(=O)OC(C)(C)C)CC3)cccc2N(Cc2cccc(F)c2)C1=O",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CN1Cc2c(N3CCN(C(=O)OC(C)(C)C)CC3)cccc2N(Cc2cccc(F)c2)C1=O\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"Fc1cccc(CBr)c1\",\"CN1Cc2c(N3CCN(C(=O)OC(C)(C)C)CC3)cccc2NC1=O\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 33,
+    "product_smiles": "COC(=O)c1cc(Cn2ccnn2)ccc1OC",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COC(=O)c1cc(Cn2ccnn2)ccc1OC\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"COC(=O)c1cc(CBr)ccc1OC\",\"c1nnccn1\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 34,
+    "product_smiles": "N#Cc1cncc(-c2ccc3c(c2)C2(COC(N)=N2)[C@H]2CC(=O)CC[C@@H]2O3)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"N#Cc1cncc(-c2ccc3c(c2)C2(COC(N)=N2)[C@H]2CC(=O)CC[C@@H]2O3)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"CC(C)(C)OC(=O)NC1=C(c2cncc(C#N)c2)C2(O)CCC(=O)CC[C@@H]21\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 35,
+    "product_smiles": "CC(C)(C)OC(=O)N1CCC(CO)CC1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(C)(C)OC(=O)N1CCC(CO)CC1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"7\",\"reactants\":[\"CC(C)(C)OC(=O)N1CCC(C(=O)O)CC1\"]}",
+    "reaction_class": "7",
+    "warnings": []
+  },
+  {
+    "index": 36,
+    "product_smiles": "COC(=O)c1ccc(CCC(=O)c2cccnc2Nc2ccccc2)c(OC)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COC(=O)c1ccc(CCC(=O)c2cccnc2Nc2ccccc2)c(OC)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"3\",\"reactants\":[\"COC(=O)c1ccc(Br)c(OC)c1\",\"CON(C)C(=O)CCc1cccnc1Nc1ccccc1\"]}",
+    "reaction_class": "3",
+    "warnings": []
+  },
+  {
+    "index": 37,
+    "product_smiles": "Cc1cc(C[C@@H](O)C(=O)O)cc(Cl)c1OCc1ccccc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"Cc1cc(C[C@@H](O)C(=O)O)cc(Cl)c1OCc1ccccc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"CCOC(=O)[C@H](Cc1cc(C)c(OCc2ccccc2)c(Cl)c1)O\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 38,
+    "product_smiles": "O=C1Nc2ccccc2/C1=C\\c1ccc2[nH]nnc2c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"O=C1Nc2ccccc2/C1=C\\\\c1ccc2[nH]nnc2c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"3\",\"reactants\":[\"O=Cc1ccc2[nH]nnc2c1\",\"O=C1Cc2ccccc2N1\"]}",
+    "reaction_class": "3",
+    "warnings": []
+  },
+  {
+    "index": 39,
+    "product_smiles": "COc1cnc(Cn2ccnc2-c2ncccn2)c(OC)n1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COc1cnc(Cn2ccnc2-c2ncccn2)c(OC)n1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"4\",\"reactants\":[\"COc1cnc(CN=[N+]=[N-])c(OC)n1\",\"C#Cc1ncccn1\"]}",
+    "reaction_class": "4",
+    "warnings": []
+  },
+  {
+    "index": 40,
+    "product_smiles": "CS(=O)(=O)Nc1ccc2c(c1)C(=O)CC1(CCN(CCc3ccc4nonc4c3)CC1)O2",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CS(=O)(=O)Nc1ccc2c(c1)C(=O)CC1(CCN(CCc3ccc4nonc4c3)CC1)O2\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"O=C1CC2(CCN(CCc3ccc4nonc4c3)CC1)Oc2cc(Br)ccc21\",\"CS(N)(=O)=O\"]}",
+    "reaction_class": "1",
+    "warnings": [
+      "Dropped 1 unparseable reactant fragment(s)."
+    ]
+  },
+  {
+    "index": 41,
+    "product_smiles": "CC1(C)OB(c2c[nH]c3cc(C#N)ccc23)OC1(C)C",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC1(C)OB(c2c[nH]c3cc(C#N)ccc23)OC1(C)C\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"9\",\"reactants\":[\"CC1(C)OB(B2OC(C)(C)C(C)(C)O2)c2c[nH]c3cc(C#N)ccc23OC1(C)C\"]}",
+    "reaction_class": "9",
+    "warnings": [
+      "Dropped 1 unparseable reactant fragment(s)."
+    ]
+  },
+  {
+    "index": 42,
+    "product_smiles": "CCOC(=O)NC(=S)Nc1cccc(I)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CCOC(=O)NC(=S)Nc1cccc(I)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"CCOC(=O)Cl\",\"NS(=N)c1cccc(I)c1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 43,
+    "product_smiles": "COc1nc(C)cnc1NS(=O)(=O)c1cccc(Cl)c1C",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COc1nc(C)cnc1NS(=O)(=O)c1cccc(Cl)c1C\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"Cc1c(S(=O)(=O)Cl)cccc1Cl\",\"COc1nc(C)cnc1N\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 44,
+    "product_smiles": "CC(C)(C)OC(=O)NC(C)(CO[C@](C)(C(N)=O)C(F)(F)F)c1cccc(Br)n1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(C)(C)OC(=O)NC(C)(CO[C@](C)(C(N)=O)C(F)(F)F)c1cccc(Br)n1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"9\",\"reactants\":[\"CC(C)(C)OC(=O)NC(C)(CO[C@](C)(C(=O)O)C(F)(F)F)c1cccc(Br)n1\",\"N\"]}",
+    "reaction_class": "9",
+    "warnings": []
+  },
+  {
+    "index": 45,
+    "product_smiles": "NCC1CCN(C(=O)Oc2ccc(Oc3ccc(C(F)(F)F)cn3)cc2)CC1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"NCC1CCN(C(=O)Oc2ccc(Oc3ccc(C(F)(F)F)cn3)cc2)CC1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"CC(C)(C)OC(=O)NCC1CCN(C(=O)Oc2ccc(Oc3ccc(C(F)(F)F)cn3)cc2)CC1\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 46,
+    "product_smiles": "Cc1cc2nc(NC(=O)c3ccc(C(C)(C)O)cc3)cc(-c3ccccc3)n2n1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"Cc1cc2nc(NC(=O)c3ccc(C(C)(C)O)cc3)cc(-c3ccccc3)n2n1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"CC(C)(O)c1ccc(C(=O)Cl)cc1\",\"Cc1cc2nc(N)cc(-c3ccccc3)n2n1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 47,
+    "product_smiles": "CCCc1cc(CC(=O)O)ccc1OC1COc2ccc(C(C)=O)c(O)c2C1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CCCc1cc(CC(=O)O)ccc1OC1COc2ccc(C(C)=O)c(O)c2C1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"CCCc1cc(CC(=O)OC)ccc1OC1COc2ccc(C(C)=O)c(O)c2C1\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 48,
+    "product_smiles": "CC(C)(C)OC(=O)/C=C1/CCCN(C(=O)OC(C)(C)C)C1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(C)(C)OC(=O)/C=C1/CCCN(C(=O)OC(C)(C)C)C1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"3\",\"reactants\":[\"CC(C)(C)OC(=O)CP(=O)(OCC)OCC\",\"CC(C)(C)OC(=O)N1CCC/C=C\\\\C1\"]}",
+    "reaction_class": "3",
+    "warnings": []
+  },
+  {
+    "index": 49,
+    "product_smiles": "N#Cc1ccc2[nH]nc(-c3ccc4cc(OCCN5CCCC5)ccc4c3)c2c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"N#Cc1ccc2[nH]nc(-c3ccc4cc(OCCN5CCCC5)ccc4c3)c2c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"COc1ccc(CN2CCCC2)cc1-c1ccc2[nH]nc(C#N)cc2c1\"]}",
+    "reaction_class": "6",
+    "warnings": [
+      "Dropped 1 unparseable reactant fragment(s)."
+    ]
+  },
+  {
+    "index": 50,
+    "product_smiles": "COc1cc(O)cc(Br)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COc1cc(O)cc(Br)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"COc1cc(OCc2ccccc2)cc(Br)c1\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 51,
+    "product_smiles": "CC(C)c1nc(OCC(=O)N(C)C2CCN(Cc3ccccc3)CC2)nc(C(C)C)c1N",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(C)c1nc(OCC(=O)N(C)C2CCN(Cc3ccccc3)CC2)nc(C(C)C)c1N\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"7\",\"reactants\":[\"CC(C)c1nc(OCC(=O)N(C)C2CCN(Cc3ccccc3)CC2)nc(C(C)C)c1[N+](=O)[O-]\"]}",
+    "reaction_class": "7",
+    "warnings": []
+  },
+  {
+    "index": 52,
+    "product_smiles": "CCOC(=O)C(F)(F)C(O)c1ccccc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CCOC(=O)C(F)(F)C(O)c1ccccc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"3\",\"reactants\":[\"CCOC(=O)C(F)(F)C(=O)c1ccccc1\",\"[CH3][Mg+]\"]}",
+    "reaction_class": "3",
+    "warnings": []
+  },
+  {
+    "index": 53,
+    "product_smiles": "NNc1nc(NCc2ccc(Cl)nc2)nc(Nc2ccc(F)c(C(F)(F)F)c2)n1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"NNc1nc(NCc2ccc(Cl)nc2)nc(Nc2ccc(F)c(C(F)(F)F)c2)n1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"9\",\"reactants\":[\"Fc1ccc(Nc2nc(NCc3ccc(Cl)nc3)nc(Cl)n2)cc1C(F)(F)F\",\"NN\"]}",
+    "reaction_class": "9",
+    "warnings": []
+  },
+  {
+    "index": 54,
+    "product_smiles": "CC(=O)NCC1CN(c2ccc(N3CCN(C(=O)CCN4CCOCC4)CC3)c(F)c2)C(=O)O1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(=O)NCC1CN(c2ccc(N3CCN(C(=O)CCN4CCOCC4)CC3)c(F)c2)C(=O)O1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"O=C(O)CCN1CCOCC1\",\"CC(=O)NCC1CN(c2ccc(N3CCNCC3)c(F)c2)C(=O)O1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 55,
+    "product_smiles": "Cc1cc(CC(=O)O)n(C)c1C(=O)c1ccc(Cl)cc1Cl",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"Cc1cc(CC(=O)O)n(C)c1C(=O)c1ccc(Cl)cc1Cl\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"CCOC(=O)Cc1cc(C)c(C(=O)c2ccc(Cl)cc2Cl)n1C\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 56,
+    "product_smiles": "NCc1ccc(I)c(O)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"NCc1ccc(I)c(O)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"7\",\"reactants\":[\"N#Cc1ccc(I)c(O)c1\"]}",
+    "reaction_class": "7",
+    "warnings": []
+  },
+  {
+    "index": 57,
+    "product_smiles": "CCOc1cc(NCCSCc2[nH]cnc2C)nc2ccccc12",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CCOc1cc(NCCSCc2[nH]cnc2C)nc2ccccc12\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"Cc1ncc[nH]1CBr\",\"CCOc1cc(NCCS)nc2ccccc12\"]}",
+    "reaction_class": "1",
+    "warnings": [
+      "Dropped 1 unparseable reactant fragment(s)."
+    ]
+  },
+  {
+    "index": 58,
+    "product_smiles": "COc1ccc(C(=O)c2ccccn2)c(Cl)c1Cl",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COc1ccc(C(=O)c2ccccn2)c(Cl)c1Cl\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"3\",\"reactants\":[\"O=C(Cl)c1ccccn1\",\"COc1cc[c]([Mg+])c(Cl)c1Cl\"]}",
+    "reaction_class": "3",
+    "warnings": []
+  },
+  {
+    "index": 59,
+    "product_smiles": "O=C(NCC(=O)N1CCC(Oc2cccc(C(F)(F)F)c2)CC1)c1cc(-c2ccc(O)cc2)on1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"O=C(NCC(=O)N1CCC(Oc2cccc(C(F)(F)F)c2)CC1)c1cc(-c2ccc(O)cc2)on1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"COc1ccc(-c2cc(C(=O)NCC(=O)N3CCC(Oc4cccc(C(F)(F)F)c4)CC3)no2)cc1\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 60,
+    "product_smiles": "CCOC(=O)NCCN1CCC(Nc2nc3ccccc3n2Cc2cscn2)CC1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CCOC(=O)NCCN1CCC(Nc2nc3ccccc3n2Cc2cscn2)CC1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"ClCc1cscn1\",\"CCOC(=O)NCCN1CCC(Nc2nc3ccccc3[nH]2)CC1\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 61,
+    "product_smiles": "Cc1ccc(CC(C)NCC(O)c2ccccc2)cc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"Cc1ccc(CC(C)NCC(O)c2ccccc2)cc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"O=C(CCl)c1ccccc1\",\"Cc1ccc(CC(C)NC)cc1\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 62,
+    "product_smiles": "CCCN1CCC2CC(=O)c3c(C)cc(C)cc3C2C1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CCCN1CCC2CC(=O)c3c(C)cc(C)cc3C2C1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"CCCN1CCC2CC(=O)c3c(C)cc(C)cc3C2C1C(=O)OC(C)(C)C\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 63,
+    "product_smiles": "Cc1ccc(-c2cc(Br)ccc2OCc2ccc(Cl)c(Cl)c2)n1-c1cccc(C(=O)O)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"Cc1ccc(-c2cc(Br)ccc2OCc2ccc(Cl)c(Cl)c2)n1-c1cccc(C(=O)O)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"CCOC(=O)c1cccc(-n2c(C)ccc2-c2cc(Br)ccc2OCc2ccc(Cl)c(Cl)c2)c1\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 64,
+    "product_smiles": "Cc1c(C(=O)NC2C3CCC(C)(C2O)C3(C)C)cc(-c2cc(C(F)(F)F)ccc2C(F)(F)F)n1C[C@H]1CCCO1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"Cc1c(C(=O)NC2C3CCC(C)(C2O)C3(C)C)cc(-c2cc(C(F)(F)F)ccc2C(F)(F)F)n1C[C@H]1CCCO1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"3\",\"reactants\":[\"Cc1c(C(=O)NC2C3CCC(C)(C2O)C3(C)C)cc(Br)n1C[C@H]1CCCO1\",\"OB(O)c1cc(C(F)(F)F)ccc1C(F)(F)F\"]}",
+    "reaction_class": "3",
+    "warnings": []
+  },
+  {
+    "index": 65,
+    "product_smiles": "C[C@@H]1CCCN1CCc1ccc(-c2ccc3c(c2)CN(C(=O)CO)C3)cc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"C[C@@H]1CCCN1CCc1ccc(-c2ccc3c(c2)CN(C(=O)CO)C3)cc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"C[C@@H]1CCCN1CCc1ccc(-c2ccc3c(c2)CN(C(=O)COCc2ccccc2)C3)cc1\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 66,
+    "product_smiles": "CC(CO)(CO)NS(=O)(=O)c1cc(NC(=O)c2cnn3c(C(F)(F)F)cc(-c4ccc(C(F)(F)F)cc4)nc23)c(Cl)s1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(CO)(CO)NS(=O)(=O)c1cc(NC(=O)c2cnn3c(C(F)(F)F)cc(-c4ccc(C(F)(F)F)cc4)nc23)c(Cl)s1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"O=C(O)c1cnn2c(C(F)(F)F)cc(-c3ccc(C(F)(F)F)cc3)nc12\",\"CC(CO)(CO)NS(=O)(=O)c1cc(N)c(Cl)s1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 67,
+    "product_smiles": "CC1OC(C)(C)OC1C(=O)O",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC1OC(C)(C)OC1C(=O)O\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"CCOC(=O)C1(C(=O)O)OC(C)(C)OC1C\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 68,
+    "product_smiles": "CCCCc1nc(C)n(-c2cccc(OCCO[Si](C)(C)C(C)(C)C)c2)c(=O)c1Cc1ccc(-c2ccccc2C#N)cc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CCCCc1nc(C)n(-c2cccc(OCCO[Si](C)(C)C(C)(C)C)c2)c(=O)c1Cc1ccc(-c2ccccc2C#N)cc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"3\",\"reactants\":[\"CCCCc1nc(C)n(-c2cccc(OCCO[Si](C)(C)C(C)(C)C)c2)c(=O)c1Cc1ccc(Br)cc1\",\"N#Cc1ccccc1B(O)O\"]}",
+    "reaction_class": "3",
+    "warnings": []
+  },
+  {
+    "index": 69,
+    "product_smiles": "COc1ccc(-n2c(C(=O)N3CCC(F)(F)CC3)cc3cc(C(=O)N4CCN(C(C)C)CC4)ccc32)cc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COc1ccc(-n2c(C(=O)N3CCC(F)(F)CC3)cc3cc(C(=O)N4CCN(C(C)C)CC4)ccc32)cc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"COc1ccc(-n2c(C(=O)O)cc3cc(C(=O)N4CCN(C(C)C)CC4)ccc32)cc1\",\"FC1(F)CCNCC1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 70,
+    "product_smiles": "Cc1c(N(Cc2ccc(C#N)cc2)Cc2ccc(Oc3cccc(OCCc4cccs4)c3)cc2)cccc1[N+](=O)[O-]",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"Cc1c(N(Cc2ccc(C#N)cc2)Cc2ccc(Oc3cccc(OCCc4cccs4)c3)cc2)cccc1[N+](=O)[O-]\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"N#Cc1ccc(CBr)cc1\",\"Cc1c(NCc2ccc(Oc3cccc(OCCc4cccs4)c3)cc2)cccc1[N+](=O)[O-]\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 71,
+    "product_smiles": "COC(=O)C(C)Oc1cc(-n2nc(C)n(C(F)F)c2=O)c(F)cc1Cl",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COC(=O)C(C)Oc1cc(-n2nc(C)n(C(F)F)c2=O)c(F)cc1Cl\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"COC(=O)C(C)Br\",\"Cc1nn(-c2cc(O)c(Cl)cc2F)c(=O)n1C(F)F\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 72,
+    "product_smiles": "O=Cc1ccc(OC(=O)c2ccccc2)c([N+](=O)[O-])c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"O=Cc1ccc(OC(=O)c2ccccc2)c([N+](=O)[O-])c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"O=C(Cl)c1ccccc1\",\"O=Cc1ccc(O)c([N+](=O)[O-])c1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 73,
+    "product_smiles": "COc1ncc(Cl)cc1CN1CCC(/C=C/c2ccccc2F)CC1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COc1ncc(Cl)cc1CN1CCC(/C=C/c2ccccc2F)CC1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"COc1ncc(Cl)cc1C=O\",\"Fc1ccccc1/C=C\\\\1CCNCC1\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 74,
+    "product_smiles": "CN(C)Cc1cc(N2C3CCC2COC3)nc(-c2ccc(NC(=O)NC3CC3)cc2)n1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CN(C)Cc1cc(N2C3CCC2COC3)nc(-c2ccc(NC(=O)NC3CC3)cc2)n1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"CN(C)Cc1cc(N2C3CCC2COC3)nc(-c2ccc(N)cc2)n1\",\"O=C=NC1CC1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 75,
+    "product_smiles": "N#Cc1ncc(Sc2ccccn2)cc1Oc1ccc(F)cc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"N#Cc1ncc(Sc2ccccn2)cc1Oc1ccc(F)cc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"N#Cc1ncc(Cl)cc1Oc1ccc(F)cc1\",\"Sc1ccccn1\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 76,
+    "product_smiles": "COc1cccc2o[c]([Sn]([CH3])([CH3])[CH3])cc12",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COc1cccc2o[c]([Sn]([CH3])([CH3])[CH3])cc12\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"CI\",\"CH3[Sn]([CH3])([CH3])c1cc2oc(OC)cccc2o1\"]}",
+    "reaction_class": "1",
+    "warnings": [
+      "Dropped 1 unparseable reactant fragment(s)."
+    ]
+  },
+  {
+    "index": 77,
+    "product_smiles": "CCn1cc(-c2ccc(Cl)cc2Cl)nc1/C=C/c1ccc(-c2ccc(OCCCC(=O)OC)cc2)cc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CCn1cc(-c2ccc(Cl)cc2Cl)nc1/C=C/c1ccc(-c2ccc(OCCCC(=O)OC)cc2)cc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"3\",\"reactants\":[\"COC(=O)CCCc1ccc(-c2ccc(/C=C\\\\c3nc(-c4ccc(Cl)cc4Cl)cnn3CC)cc2)cc1\",\"[CH3][Mg+]\"]}",
+    "reaction_class": "3",
+    "warnings": [
+      "Dropped 1 unparseable reactant fragment(s)."
+    ]
+  },
+  {
+    "index": 78,
+    "product_smiles": "CCCCCCC(C)NC(=O)CCCc1ccccc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CCCCCCC(C)NC(=O)CCCc1ccccc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"O=C(O)CCCc1ccccc1\",\"CCCCCCC(N)C\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 79,
+    "product_smiles": "Cc1[nH]cc2c(=O)n(-c3ccc(Cl)cc3)nc-2c1-c1cccc(C(=O)N2CCCC2)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"Cc1[nH]cc2c(=O)n(-c3ccc(Cl)cc3)nc-2c1-c1cccc(C(=O)N2CCCC2)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"Cc1[nH]cc2c(=O)n(-c3ccc(Cl)cc3)nc-2c1-c1cccc(C(=O)O)c1\",\"C1CCNC1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 80,
+    "product_smiles": "CC(C)OP(=O)(Cc1ccc([N+](=O)[O-])cc1)OC(C)C",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(C)OP(=O)(Cc1ccc([N+](=O)[O-])cc1)OC(C)C\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"O=[N+]([O-])c1ccc(CBr)cc1\",\"CC(C)OP(O)OC(C)C\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 81,
+    "product_smiles": "O=C(NC[C@H](O)C(=O)O)c1ncc2cc(Oc3ccccc3)ccc2c1O",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"O=C(NC[C@H](O)C(=O)O)c1ncc2cc(Oc3ccccc3)ccc2c1O\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"CCOC(=O)[C@@H](CN=C=O)c1ncc2cc(Oc3ccccc3)ccc2c1O\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 82,
+    "product_smiles": "O=[N+]([O-])c1ccc(F)c(F)c1OCc1ccccc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"O=[N+]([O-])c1ccc(F)c(F)c1OCc1ccccc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"BrCc1ccccc1\",\"O=[N+]([O-])c1ccc(F)c(F)c1O\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 83,
+    "product_smiles": "c1ccc(N2CCN(CCCCc3cccnc3)CC2)nc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"c1ccc(N2CCN(CCCCc3cccnc3)CC2)nc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"ClCCCCc1cccnc1\",\"c1cc(N2CCNCC2)cn1\"]}",
+    "reaction_class": "1",
+    "warnings": [
+      "Dropped 1 unparseable reactant fragment(s)."
+    ]
+  },
+  {
+    "index": 84,
+    "product_smiles": "C=CCOc1ccc(C#N)cc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"C=CCOc1ccc(C#N)cc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"C=CCBr\",\"N#Cc1ccc(O)cc1\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 85,
+    "product_smiles": "OCc1ccc2cn(-c3ccc(C(F)(F)F)cc3)nc2c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"OCc1ccc2cn(-c3ccc(C(F)(F)F)cc3)nc2c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"7\",\"reactants\":[\"O=C(O)c1ccc2cn(-c3ccc(C(F)(F)F)cc3)nc2c1\"]}",
+    "reaction_class": "7",
+    "warnings": []
+  },
+  {
+    "index": 86,
+    "product_smiles": "N#CCc1ccc(N)c(Cl)c1Br",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"N#CCc1ccc(N)c(Cl)c1Br\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"7\",\"reactants\":[\"N#CCc1ccc([N+](=O)[O-])c(Cl)c1Br\"]}",
+    "reaction_class": "7",
+    "warnings": []
+  },
+  {
+    "index": 87,
+    "product_smiles": "O=C(O)CCc1ccc(F)c(NC(=O)c2cc(-c3cccc(F)c3)cc3ccccc23)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"O=C(O)CCc1ccc(F)c(NC(=O)c2cc(-c3cccc(F)c3)cc3ccccc23)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"CCOC(=O)CCc1ccc(F)c(NC(=O)c2cc(-c3cccc(F)c3)cc3ccccc23)c1\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 88,
+    "product_smiles": "COC(=O)CCCc1ccc(I)cc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COC(=O)CCCc1ccc(I)cc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"3\",\"reactants\":[\"COC(=O)CCCI\",\"OB(O)c1ccc(I)cc1\"]}",
+    "reaction_class": "3",
+    "warnings": []
+  },
+  {
+    "index": 89,
+    "product_smiles": "O=C(O)c1ccc2cc(-c3ccccc3)oc2c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"O=C(O)c1ccc2cc(-c3ccccc3)oc2c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"COC(=O)c1ccc2cc(-c3ccccc3)oc2c1\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 90,
+    "product_smiles": "Nc1nc(NCc2ccc3c(c2)OCO3)c2cc(Cl)ccc2n1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"Nc1nc(NCc2ccc3c(c2)OCO3)c2cc(Cl)ccc2n1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"7\",\"reactants\":[\"O=[N+]([O-])c1nc(NCc2ccc3c(c2)OCO3)c2cc(Cl)ccc2n1\"]}",
+    "reaction_class": "7",
+    "warnings": []
+  },
+  {
+    "index": 91,
+    "product_smiles": "CC(C)(C)OC(=O)N1CCN(c2ncnc3[nH]cc(-c4ccccc4Cl)c23)CC1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(C)(C)OC(=O)N1CCN(c2ncnc3[nH]cc(-c4ccccc4Cl)c23)CC1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"Clc1cc(-c2ccccc2Cl)c2[nH]cnc2n1\",\"CC(C)(C)OC(=O)N1CCNCC1\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 92,
+    "product_smiles": "COC(=O)NC(C)(CO)CCc1cccs1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COC(=O)NC(C)(CO)CCc1cccs1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"7\",\"reactants\":[\"COC(=O)NC(C)(C#Cc1cccs1)CCc1cccs1\"]}",
+    "reaction_class": "7",
+    "warnings": []
+  },
+  {
+    "index": 93,
+    "product_smiles": "O=S(=O)(NCCCCO)c1ccc(-c2ccc(C(F)(F)F)cc2)c(F)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"O=S(=O)(NCCCCO)c1ccc(-c2ccc(C(F)(F)F)cc2)c(F)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"3\",\"reactants\":[\"O=S(=O)(NCCCCO)c1ccc(Br)c(F)c1\",\"OB(O)c1ccc(C(F)(F)F)cc1\"]}",
+    "reaction_class": "3",
+    "warnings": []
+  },
+  {
+    "index": 94,
+    "product_smiles": "c1ccc(-c2nnn(C3CCCCO3)n2)c(-c2ccc(COC3CCCCO3)cc2)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"c1ccc(-c2nnn(C3CCCCO3)n2)c(-c2ccc(COC3CCCCO3)cc2)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"4\",\"reactants\":[\"C#CC(c1ccc(COC2CCCCO2)cc1)c1ccccc1\",\"C#CN1CCCCO1\"]}",
+    "reaction_class": "4",
+    "warnings": []
+  },
+  {
+    "index": 95,
+    "product_smiles": "CC(=O)N[C@H]1CCCN(C(=O)c2ccc(Br)cc2NC2(Cc3cccc(Cl)c3)C(=O)Nc3cc(Cl)ccc32)C1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(=O)N[C@H]1CCCN(C(=O)c2ccc(Br)cc2NC2(Cc3cccc(Cl)c3)C(=O)Nc3cc(Cl)ccc32)C1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"O=C(O)c1ccc(Br)cc1NC1(Cc2cccc(Cl)c2)C(=O)Nc2cc(Cl)ccc21\",\"CC(=O)N[C@H]1CCCNC1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 96,
+    "product_smiles": "CN(C(=O)c1ccc(-n2cccn2)cc1)[C@@H]1CCNC1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CN(C(=O)c1ccc(-n2cccn2)cc1)[C@@H]1CCNC1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"6\",\"reactants\":[\"CN(C(=O)c1ccc(-n2cccn2)cc1)[C@@H]1CCN(C(=O)OC(C)(C)C)C1\"]}",
+    "reaction_class": "6",
+    "warnings": []
+  },
+  {
+    "index": 97,
+    "product_smiles": "CC(F)(F)CCCCn1cc(NC(=O)c2ncoc2-c2ccccc2)cn1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CC(F)(F)CCCCn1cc(NC(=O)c2ncoc2-c2ccccc2)cn1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"O=C(O)c1ncoc1-c1ccccc1\",\"CC(F)(F)CCCCn1cc(N)cn1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  },
+  {
+    "index": 98,
+    "product_smiles": "CCCOc1cc(F)cc(C[C@H](NC(C)=O)[C@H](O)[C@H]2CO[C@@H](OCC(C)(C)C)[C@H](C)N2C(=O)OC(C)(C)C)c1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"CCCOc1cc(F)cc(C[C@H](NC(C)=O)[C@H](O)[C@H]2CO[C@@H](OCC(C)(C)C)[C@H](C)N2C(=O)OC(C)(C)C)c1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"1\",\"reactants\":[\"CC(C)(C)CO[C@@H]1CO[C@H](C[C@@H](O)[C@H](O)C(=O)N[C@@H](Cc2cc(F)cc(F)c2)C(=O)OC(C)(C)C)N(C(=O)OC(C)(C)C)C1\",\"CCCI\"]}",
+    "reaction_class": "1",
+    "warnings": []
+  },
+  {
+    "index": 99,
+    "product_smiles": "COC(=O)c1ccc([C@H](C)NC(=O)c2cc(Cl)ccc2Oc2cccc(C)c2)cc1",
+    "request": [
+      {
+        "role": "system",
+        "content": "You are a chemistry reaction prediction model.\nReturn valid compact JSON only.\nPredict reactants and reaction class for a single-step synthesis of the target product.\nUse canonical SMILES strings when possible.\nDo not include conditions or explanations."
+      },
+      {
+        "role": "user",
+        "content": "{\"task\":\"predict_reactants_and_class\",\"product_smiles\":\"COC(=O)c1ccc([C@H](C)NC(=O)c2cc(Cl)ccc2Oc2cccc(C)c2)cc1\"}"
+      }
+    ],
+    "raw_response": "{\"reaction_class\":\"2\",\"reactants\":[\"Cc1cccc(Oc2ccc(Cl)cc2C(=O)O)c1\",\"COC(=O)c1ccc([C@@H](N)C)cc1\"]}",
+    "reaction_class": "2",
+    "warnings": []
+  }
+]

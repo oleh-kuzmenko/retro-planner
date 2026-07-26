@@ -1,0 +1,24 @@
+{
+  "model_slug": "qwen25_7b_lora_peft",
+  "script": "scripts/models/run_qwen_lora_peft.py",
+  "cli_args": {
+    "input": "ord_eval_targets.json",
+    "model_slug": "qwen25_7b_lora_peft",
+    "base_model": "Qwen/Qwen2.5-7B-Instruct",
+    "lora_adapter": "oleh13/retro-reactants-qwen25-7b-lora",
+    "dtype": "bfloat16",
+    "prompt_style": "json",
+    "max_new_tokens": "***redacted***",
+    "device": "cuda",
+    "load_in_4bit": true,
+    "limit": null,
+    "experiment_id": "uspto_lora_ord_eval",
+    "experiments_root": "experiments"
+  },
+  "input_path": "ord_eval_targets.json",
+  "input_sha256": "e4437032c553b4f24fc9507087b92d5f53373997c86d6e956f587a82a9b340c2",
+  "record_count": 100,
+  "status": "completed",
+  "started_at": "2026-07-26T15:49:59.982443+00:00",
+  "finished_at": "2026-07-26T16:00:01.618804+00:00"
+}

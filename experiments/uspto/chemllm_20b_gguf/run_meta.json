@@ -1,0 +1,23 @@
+{
+  "model_slug": "chemllm_20b_gguf",
+  "script": "scripts/models/run_chemllm.py",
+  "cli_args": {
+    "input": "uspto_eval_targets.json",
+    "model_slug": "chemllm_20b_gguf",
+    "repo_id": "mradermacher/ChemLLM-20B-Chat-SFT-i1-GGUF",
+    "filename": "ChemLLM-20B-Chat-SFT.i1-Q4_K_M.gguf",
+    "n_ctx": 2048,
+    "n_gpu_layers": -1,
+    "max_tokens": "***redacted***",
+    "temperature": 0.0,
+    "limit": null,
+    "experiment_id": "uspto",
+    "experiments_root": "experiments"
+  },
+  "input_path": "uspto_eval_targets.json",
+  "input_sha256": "86c747e901f87deb44d2636bc6cc6e71398c8e1db02230523f528f3191424f6e",
+  "record_count": 100,
+  "status": "completed",
+  "started_at": "2026-07-26T16:07:22.719454+00:00",
+  "finished_at": "2026-07-26T16:19:36.913188+00:00"
+}
