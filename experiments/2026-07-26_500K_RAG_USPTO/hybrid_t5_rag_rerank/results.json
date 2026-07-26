@@ -1,0 +1,702 @@
+[
+  {
+    "index": 0,
+    "product_smiles": "c1ccc(-c2ccc(Oc3ccc(OC[C@H]4CCCN4)cc3)cc2)cc1",
+    "reactants_smiles": "CC(C)(C)OC(=O)N1CCC[C@@H]1COc1ccc(Oc2ccc(-c3ccccc3)cc2)cc1",
+    "predicted_reactants_smiles": "CC(C)(C)OC(=O)N1CCC[C@@H]1COc1ccc(Oc2ccc(-c3ccccc3)cc2)cc1",
+    "raw_response": "<answer>CC(C)(C)OC(=O)N1CCC[C@@H]1COc1ccc(Oc2ccc(-c3ccccc3)cc2)cc1</answer>"
+  },
+  {
+    "index": 1,
+    "product_smiles": "C#CCOC(=O)C(C)O",
+    "reactants_smiles": "C#CCO.CC(O)C(=O)O",
+    "predicted_reactants_smiles": "C#CCO.CC(O)C(=O)O",
+    "raw_response": "<answer>C#CCO.CC(O)C(=O)O</answer>"
+  },
+  {
+    "index": 2,
+    "product_smiles": "Cc1c(C2=NN(Cc3cccc(C(F)(F)F)c3)S(=O)(=O)c3ccccc32)c2cc(F)ccc2n1CC(=O)O",
+    "reactants_smiles": "Cc1c(C2=NN(Cc3cccc(C(F)(F)F)c3)S(=O)(=O)c3ccccc32)c2cc(F)ccc2n1CC(=O)OC(C)(C)C",
+    "predicted_reactants_smiles": "COC(=O)Cn1c(C)c(C2=NN(Cc3cccc(C(F)(F)F)c3)S(=O)(=O)c3ccccc32)c2cc(F)ccc21",
+    "raw_response": "<answer>COC(=O)Cn1c(C)c(C2=NN(Cc3cccc(C(F)(F)F)c3)S(=O)(=O)c3ccccc32)c2cc(F)ccc21</answer>"
+  },
+  {
+    "index": 3,
+    "product_smiles": "COc1cc(C#Cc2ccc(C(C)(C)C(=O)O)cc2)cc2c1C(N(C)C1CC1)CCC2(C)C",
+    "reactants_smiles": "COC(=O)C(C)(C)c1ccc(C#Cc2cc(OC)c3c(c2)C(C)(C)CCC3N(C)C2CC2)cc1",
+    "predicted_reactants_smiles": "COC(=O)C(C)(C)c1ccc(C#Cc2cc(OC)c3c(c2)C(C)(C)CCC3N(C)C2CC2)cc1",
+    "raw_response": "<answer>COC(=O)C(C)(C)c1ccc(C#Cc2cc(OC)c3c(c2)C(C)(C)CCC3N(C)C2CC2)cc1</answer>"
+  },
+  {
+    "index": 4,
+    "product_smiles": "CCc1cccc(CC)c1-c1nc(C)c(C(=O)OC)c(OC)n1",
+    "reactants_smiles": "COC(=O)c1c(C)nc(Cl)nc1OC.CCc1cccc(CC)c1B(O)O",
+    "predicted_reactants_smiles": "CCc1cccc(CC)c1B(O)O.COC(=O)c1c(C)nc(Cl)nc1OC",
+    "raw_response": "<answer>CCc1cccc(CC)c1B(O)O.COC(=O)c1c(C)nc(Cl)nc1OC</answer>"
+  },
+  {
+    "index": 5,
+    "product_smiles": "CCNC(=O)Nc1sc2c(c1C(=O)N1CCC(N3CCCC4(C3)CC(C)(C)OC4=O)CC1)CCN(C(C)=O)C2",
+    "reactants_smiles": "CC(=O)OC(C)=O.CCNC(=O)Nc1sc2c(c1C(=O)N1CCC(N3CCCC4(C3)CC(C)(C)OC4=O)CC1)CCNC2",
+    "predicted_reactants_smiles": "CC(=O)N1CCc2c(sc(N)c2C(=O)N2CCC(N3CCCC4(C3)CC(C)(C)OC4=O)CC2)C1.CCNC(=O)Cl",
+    "raw_response": "<answer>CC(=O)N1CCc2c(sc(N)c2C(=O)N2CCC(N3CCCC4(C3)CC(C)(C)OC4=O)CC2)C1.CCNC(=O)Cl</answer>"
+  },
+  {
+    "index": 6,
+    "product_smiles": "COC(=O)OC(C#Cc1cccc(C)n1)C1CCN(C(=O)OC(C)(C)C)CC1",
+    "reactants_smiles": "COC(=O)Cl.Cc1cccc(C#CC(O)C2CCN(C(=O)OC(C)(C)C)CC2)n1",
+    "predicted_reactants_smiles": "COC(=O)Cl.Cc1cccc(C#CC(O)C2CCN(C(=O)OC(C)(C)C)CC2)n1",
+    "raw_response": "<answer>COC(=O)Cl.Cc1cccc(C#CC(O)C2CCN(C(=O)OC(C)(C)C)CC2)n1</answer>"
+  },
+  {
+    "index": 7,
+    "product_smiles": "CC(C)(C)C(=O)OCOC(=O)CNc1cccc(C(NCc2ccc(-c3nccs3)cc2)S(=O)(=O)c2ccccn2)n1",
+    "reactants_smiles": "CC(C)(C)C(=O)OCCl.O=C(O)CNc1cccc(C(NCc2ccc(-c3nccs3)cc2)S(=O)(=O)c2ccccn2)n1",
+    "predicted_reactants_smiles": "CC(C)(C)C(=O)OCCl.O=C(O)CNc1cccc(C(NCc2ccc(-c3nccs3)cc2)S(=O)(=O)c2ccccn2)n1",
+    "raw_response": "<answer>CC(C)(C)C(=O)OCCl.O=C(O)CNc1cccc(C(NCc2ccc(-c3nccs3)cc2)S(=O)(=O)c2ccccn2)n1</answer>"
+  },
+  {
+    "index": 8,
+    "product_smiles": "Cc1cc(Nc2cc3c(C)cccc3c(Oc3ccccc3)n2)n[nH]1",
+    "reactants_smiles": "Cc1cc(Nc2cc3c(C)cccc3c(Cl)n2)n[nH]1.Oc1ccccc1",
+    "predicted_reactants_smiles": "Cc1cc(Nc2cc3c(C)cccc3c(Cl)n2)n[nH]1.Oc1ccccc1",
+    "raw_response": "<answer>Cc1cc(Nc2cc3c(C)cccc3c(Cl)n2)n[nH]1.Oc1ccccc1</answer>"
+  },
+  {
+    "index": 9,
+    "product_smiles": "Cn1c(CC(=O)Nc2ccc(F)c(Cl)c2)nc(N2CCOC(CF)C2)cc1=O",
+    "reactants_smiles": "Cn1c(CC(=O)O)nc(N2CCOC(CF)C2)cc1=O.Nc1ccc(F)c(Cl)c1",
+    "predicted_reactants_smiles": "Cn1c(CC(=O)O)nc(N2CCOC(CF)C2)cc1=O.Nc1ccc(F)c(Cl)c1",
+    "raw_response": "<answer>Cn1c(CC(=O)O)nc(N2CCOC(CF)C2)cc1=O.Nc1ccc(F)c(Cl)c1</answer>"
+  },
+  {
+    "index": 10,
+    "product_smiles": "O=C1C(=O)c2ccccc2C2=C1SCC1(CCN(C(=O)c3ccncc3)CC1)O2",
+    "reactants_smiles": "O=C(Cl)c1ccncc1.O=C1C(=O)c2ccccc2C2=C1SCC1(CCNCC1)O2",
+    "predicted_reactants_smiles": "O=C(Cl)c1ccncc1.O=C1C(=O)c2ccccc2C2=C1SCC1(CCNCC1)O2",
+    "raw_response": "<answer>O=C(Cl)c1ccncc1.O=C1C(=O)c2ccccc2C2=C1SCC1(CCNCC1)O2</answer>"
+  },
+  {
+    "index": 11,
+    "product_smiles": "O=C(O)c1cc(C2CC2)c(OCC2CCN(Cc3ccc(C4CC4)cc3Cl)CC2)cc1F",
+    "reactants_smiles": "COC(=O)c1cc(C2CC2)c(OCC2CCN(Cc3ccc(C4CC4)cc3Cl)CC2)cc1F",
+    "predicted_reactants_smiles": "CCOC(=O)c1cc(C2CC2)c(OCC2CCN(Cc3ccc(C4CC4)cc3Cl)CC2)cc1F",
+    "raw_response": "<answer>CCOC(=O)c1cc(C2CC2)c(OCC2CCN(Cc3ccc(C4CC4)cc3Cl)CC2)cc1F</answer>"
+  },
+  {
+    "index": 12,
+    "product_smiles": "COC(=O)CS(=O)(=O)c1cc(C)ccc1N",
+    "reactants_smiles": "COC(=O)CS(=O)(=O)c1cc(C)ccc1[N+](=O)[O-]",
+    "predicted_reactants_smiles": "COC(=O)CS(=O)(=O)c1cc(C)ccc1[N+](=O)[O-]",
+    "raw_response": "<answer>COC(=O)CS(=O)(=O)c1cc(C)ccc1[N+](=O)[O-]</answer>"
+  },
+  {
+    "index": 13,
+    "product_smiles": "O=C(C1CCc2cc(F)ccc21)N1CCC[C@H](c2nc(-c3ccc(F)cc3)no2)C1",
+    "reactants_smiles": "O=C(O)C1CCc2cc(F)ccc21.Fc1ccc(-c2noc([C@H]3CCCNC3)n2)cc1",
+    "predicted_reactants_smiles": "Fc1ccc(-c2noc([C@H]3CCCNC3)n2)cc1.O=C(O)C1CCc2cc(F)ccc21",
+    "raw_response": "<answer>Fc1ccc(-c2noc([C@H]3CCCNC3)n2)cc1.O=C(O)C1CCc2cc(F)ccc21</answer>"
+  },
+  {
+    "index": 14,
+    "product_smiles": "CN(C)C1CCC(NCCO)CC1",
+    "reactants_smiles": "CN(C)C1CCC(N(CCO)C(=O)OC(C)(C)C)CC1",
+    "predicted_reactants_smiles": "CN(C)[C@H]1CC[C@H](NCCO[Si](C)(C)C(C)(C)C)CC1",
+    "raw_response": "<answer>CN(C)[C@H]1CC[C@H](NCCO[Si](C)(C)C(C)(C)C)CC1</answer>"
+  },
+  {
+    "index": 15,
+    "product_smiles": "CCSc1ncc(CO)n1C",
+    "reactants_smiles": "CCI.Cn1c(CO)cnc1S",
+    "predicted_reactants_smiles": "CCI.Cn1c(CO)cnc1S",
+    "raw_response": "<answer>CCI.Cn1c(CO)cnc1S</answer>"
+  },
+  {
+    "index": 16,
+    "product_smiles": "CC(C)c1cccc(C(C)C)c1NC(=O)NS(=O)(=O)NC(c1ccccc1)c1ccccc1",
+    "reactants_smiles": "CC(C)c1cccc(C(C)C)c1NC(=O)NS(=O)(=O)Cl.NC(c1ccccc1)c1ccccc1",
+    "predicted_reactants_smiles": "CC(C)c1cccc(C(C)C)c1NC(=O)NS(=O)(=O)Cl.NC(c1ccccc1)c1ccccc1",
+    "raw_response": "<answer>CC(C)c1cccc(C(C)C)c1NC(=O)NS(=O)(=O)Cl.NC(c1ccccc1)c1ccccc1</answer>"
+  },
+  {
+    "index": 17,
+    "product_smiles": "CC(=O)c1ccc(OCc2ccccc2)c2[nH]c(=O)ccc12",
+    "reactants_smiles": "BrCc1ccccc1.CC(=O)c1ccc(O)c2[nH]c(=O)ccc12",
+    "predicted_reactants_smiles": "BrCc1ccccc1.CC(=O)c1ccc(O)c2[nH]c(=O)ccc12.O=C([O-])[O-].[K+].[K+]",
+    "raw_response": "<answer>BrCc1ccccc1.CC(=O)c1ccc(O)c2[nH]c(=O)ccc12.O=C([O-])[O-].[K+].[K+]</answer>"
+  },
+  {
+    "index": 18,
+    "product_smiles": "Cc1cccc(C(=O)NC2(C(=O)O)Cc3ccccc3C2)c1CC(C)C",
+    "reactants_smiles": "CC(C)=Cc1c(C)cccc1C(=O)NC1(C(=O)O)Cc2ccccc2C1",
+    "predicted_reactants_smiles": "CCOC(=O)C1(NC(=O)c2cccc(C)c2CC(C)C)Cc2ccccc2C1",
+    "raw_response": "<answer>CCOC(=O)C1(NC(=O)c2cccc(C)c2CC(C)C)Cc2ccccc2C1</answer>"
+  },
+  {
+    "index": 19,
+    "product_smiles": "CCc1cnc(CCNC(=O)Nc2nc(C)c(-c3cc(C)nc(S(C)=O)n3)s2)o1",
+    "reactants_smiles": "O=C(OO)c1cccc(Cl)c1.CCc1cnc(CCNC(=O)Nc2nc(C)c(-c3cc(C)nc(SC)n3)s2)o1",
+    "predicted_reactants_smiles": "CCc1cnc(CCNC(=O)Nc2nc(C)c(-c3cc(C)nc(SC)n3)s2)o1.O=C(OO)c1cccc(Cl)c1",
+    "raw_response": "<answer>CCc1cnc(CCNC(=O)Nc2nc(C)c(-c3cc(C)nc(SC)n3)s2)o1.O=C(OO)c1cccc(Cl)c1</answer>"
+  },
+  {
+    "index": 20,
+    "product_smiles": "CC(=O)NNc1ccc(C(C)C)cc1",
+    "reactants_smiles": "CC(=O)O.CC(C)c1ccc(NN)cc1",
+    "predicted_reactants_smiles": "CC(=O)O.CC(C)c1ccc(NN)cc1",
+    "raw_response": "<answer>CC(=O)O.CC(C)c1ccc(NN)cc1</answer>"
+  },
+  {
+    "index": 21,
+    "product_smiles": "O=C(CCc1ccc2c(c1)OCO2)NC1Cc2cc(Cl)ccc2N(Cc2ccccc2)C1",
+    "reactants_smiles": "O=C(O)CCc1ccc2c(c1)OCO2.NC1Cc2cc(Cl)ccc2N(Cc2ccccc2)C1",
+    "predicted_reactants_smiles": "O=C(C=Cc1ccc2c(c1)OCO2)NC1Cc2cc(Cl)ccc2N(Cc2ccccc2)C1",
+    "raw_response": "<answer>O=C(C=Cc1ccc2c(c1)OCO2)NC1Cc2cc(Cl)ccc2N(Cc2ccccc2)C1</answer>"
+  },
+  {
+    "index": 22,
+    "product_smiles": "CC(=O)c1ccc(OC(C)C)c(C)c1",
+    "reactants_smiles": "CC(C)I.CC(=O)c1ccc(O)c(C)c1",
+    "predicted_reactants_smiles": "CC(=O)c1ccc(O)c(C)c1.CC(C)I.O=C([O-])[O-]",
+    "raw_response": "<answer>CC(=O)c1ccc(O)c(C)c1.CC(C)I.O=C([O-])[O-]</answer>"
+  },
+  {
+    "index": 23,
+    "product_smiles": "CSc1ncc(Br)c(CO)n1",
+    "reactants_smiles": "COC(=O)c1nc(SC)ncc1Br",
+    "predicted_reactants_smiles": "COC(=O)c1nc(SC)ncc1Br",
+    "raw_response": "<answer>COC(=O)c1nc(SC)ncc1Br</answer>"
+  },
+  {
+    "index": 24,
+    "product_smiles": "CCOC(=O)c1ccc(=O)n(CCOC)c1",
+    "reactants_smiles": "COCCBr.CCOC(=O)c1ccc(=O)[nH]c1",
+    "predicted_reactants_smiles": "CCOC(=O)c1ccc(=O)[nH]c1.COCCBr",
+    "raw_response": "<answer>CCOC(=O)c1ccc(=O)[nH]c1.COCCBr</answer>"
+  },
+  {
+    "index": 25,
+    "product_smiles": "CC(C)(C)OC(=O)NCCC1CCNCC1",
+    "reactants_smiles": "CC(C)(C)OC(=O)NCCc1ccncc1",
+    "predicted_reactants_smiles": "CC(C)(C)OC(=O)NCCC1CCN(Cc2ccccc2)CC1",
+    "raw_response": "<answer>CC(C)(C)OC(=O)NCCC1CCN(Cc2ccccc2)CC1</answer>"
+  },
+  {
+    "index": 26,
+    "product_smiles": "CCn1cc(-c2cnc(N)c(-c3ccc(C(=O)O)c(F)c3)n2)cn1",
+    "reactants_smiles": "CCn1cc(-c2cnc(N)c(-c3ccc(C(=O)OC)c(F)c3)n2)cn1",
+    "predicted_reactants_smiles": "CCn1cc(-c2cnc(N)c(-c3ccc(C(=O)OC)c(F)c3)n2)cn1",
+    "raw_response": "<answer>CCn1cc(-c2cnc(N)c(-c3ccc(C(=O)OC)c(F)c3)n2)cn1</answer>"
+  },
+  {
+    "index": 27,
+    "product_smiles": "Cc1ccc2c(c1)N(CC(=O)c1ccccc1C)C(=O)C(NC(=O)OC(C)(C)C)CN2C(=O)C1CCCCC1",
+    "reactants_smiles": "Cc1ccccc1C(=O)CBr.Cc1ccc2c(c1)NC(=O)C(NC(=O)OC(C)(C)C)CN2C(=O)C1CCCCC1",
+    "predicted_reactants_smiles": "Cc1ccc2c(c1)NC(=O)C(NC(=O)OC(C)(C)C)CN2C(=O)C1CCCCC1.Cc1ccccc1C(=O)CBr",
+    "raw_response": "<answer>Cc1ccc2c(c1)NC(=O)C(NC(=O)OC(C)(C)C)CN2C(=O)C1CCCCC1.Cc1ccccc1C(=O)CBr</answer>"
+  },
+  {
+    "index": 28,
+    "product_smiles": "CC(C)(C)[Si](C)(C)OC1CCOc2c(C=O)cccc21",
+    "reactants_smiles": "CN(C)C=O.CC(C)(C)[Si](C)(C)OC1CCOc2ccccc21",
+    "predicted_reactants_smiles": "CC(C)(C)[Si](C)(C)OC1CCOc2ccccc21.CCOCC.CN(C)C=O",
+    "raw_response": "<answer>CC(C)(C)[Si](C)(C)OC1CCOc2ccccc21.CCOCC.CN(C)C=O</answer>"
+  },
+  {
+    "index": 29,
+    "product_smiles": "CCCC(C(=O)OC)c1c(C)nc(N2CCCCC2)nc1-c1ccc(OC)cc1F",
+    "reactants_smiles": "CCCC(C(=O)OC)c1c(C)nc(N2CCCCC2)nc1Cl.COc1ccc(B(O)O)c(F)c1",
+    "predicted_reactants_smiles": "CCCC(C(=O)OC)c1c(C)nc(N2CCCCC2)nc1Cl.COc1ccc(B(O)O)c(F)c1",
+    "raw_response": "<answer>CCCC(C(=O)OC)c1c(C)nc(N2CCCCC2)nc1Cl.COc1ccc(B(O)O)c(F)c1</answer>"
+  },
+  {
+    "index": 30,
+    "product_smiles": "CS(=O)(=O)c1ccc(Cl)c(N)c1",
+    "reactants_smiles": "CS(=O)(=O)c1ccc(Cl)c([N+](=O)[O-])c1",
+    "predicted_reactants_smiles": "CS(=O)(=O)c1ccc(Cl)c([N+](=O)[O-])c1",
+    "raw_response": "<answer>CS(=O)(=O)c1ccc(Cl)c([N+](=O)[O-])c1</answer>"
+  },
+  {
+    "index": 31,
+    "product_smiles": "CCc1nc2c(N[C@@H]3CC[C@@H](N4CCOCC4)CC3)nc(Nc3cnn(C4CCOCC4)c3)nc2s1",
+    "reactants_smiles": "CCc1nc2c(N[C@@H]3CC[C@@H](N4CCOCC4)CC3)nc(Cl)nc2s1.Nc1cnn(C2CCOCC2)c1",
+    "predicted_reactants_smiles": "CCc1nc2c(N[C@@H]3CC[C@@H](N4CCOCC4)CC3)nc(Cl)nc2s1.Nc1cnn(C2CCOCC2)c1",
+    "raw_response": "<answer>CCc1nc2c(N[C@@H]3CC[C@@H](N4CCOCC4)CC3)nc(Cl)nc2s1.Nc1cnn(C2CCOCC2)c1</answer>"
+  },
+  {
+    "index": 32,
+    "product_smiles": "O=C(O)C[C@@H]1COc2cc(O)ccc21",
+    "reactants_smiles": "O=C(O)Cc1coc2cc(O)ccc12",
+    "predicted_reactants_smiles": "COC(=O)C[C@@H]1COc2cc(O)ccc21",
+    "raw_response": "<answer>COC(=O)C[C@@H]1COc2cc(O)ccc21</answer>"
+  },
+  {
+    "index": 33,
+    "product_smiles": "Cc1cc(F)ccc1-c1nncc2cc(Sc3cccc(F)c3)ccc12",
+    "reactants_smiles": "Cc1cc(F)ccc1-c1nncc2cc(Cl)ccc12.Fc1cccc(S)c1",
+    "predicted_reactants_smiles": "Cc1cc(F)ccc1-c1nncc2cc(Cl)ccc12.Fc1cccc(S)c1",
+    "raw_response": "<answer>Cc1cc(F)ccc1-c1nncc2cc(Cl)ccc12.Fc1cccc(S)c1</answer>"
+  },
+  {
+    "index": 34,
+    "product_smiles": "Cc1nn(-c2ccc(Cl)nn2)c(C)c1N",
+    "reactants_smiles": "Cc1nn(-c2ccc(Cl)nn2)c(C)c1N1C(=O)c2ccccc2C1=O",
+    "predicted_reactants_smiles": "Cc1nn(-c2ccc(Cl)nn2)c(C)c1N1C(=O)c2ccccc2C1=O",
+    "raw_response": "<answer>Cc1nn(-c2ccc(Cl)nn2)c(C)c1N1C(=O)c2ccccc2C1=O</answer>"
+  },
+  {
+    "index": 35,
+    "product_smiles": "C(=N\\C(c1ccccc1)c1ccccc1)/c1ccc2ccc(-c3ccccc3)nc2c1",
+    "reactants_smiles": "O=Cc1ccc2ccc(-c3ccccc3)nc2c1.NC(c1ccccc1)c1ccccc1",
+    "predicted_reactants_smiles": "NC(c1ccccc1)c1ccccc1.O=Cc1ccc2ccc(-c3ccccc3)nc2c1",
+    "raw_response": "<answer>NC(c1ccccc1)c1ccccc1.O=Cc1ccc2ccc(-c3ccccc3)nc2c1</answer>"
+  },
+  {
+    "index": 36,
+    "product_smiles": "COc1ccc([C@](C)(N)C(=O)O)cc1",
+    "reactants_smiles": "COc1ccc([C@](C)(NC(C)=O)C(=O)O)cc1",
+    "predicted_reactants_smiles": "COc1ccc([C@]2(C)C(=O)O[C@@H](c3ccccc3)N2C(=O)c2ccccc2)cc1",
+    "raw_response": "<answer>COc1ccc([C@]2(C)C(=O)O[C@@H](c3ccccc3)N2C(=O)c2ccccc2)cc1</answer>"
+  },
+  {
+    "index": 37,
+    "product_smiles": "COc1ccc(C(C)=CC#N)cc1",
+    "reactants_smiles": "CCOP(=O)(CC#N)OCC.COc1ccc(C(C)=O)cc1",
+    "predicted_reactants_smiles": "CCOP(=O)(CC#N)OCC.COc1ccc(C(C)=O)cc1",
+    "raw_response": "<answer>CCOP(=O)(CC#N)OCC.COc1ccc(C(C)=O)cc1</answer>"
+  },
+  {
+    "index": 38,
+    "product_smiles": "CC(O)c1ncnc(Cl)c1I",
+    "reactants_smiles": "CC(=O)OC(C)c1ncnc(Cl)c1I",
+    "predicted_reactants_smiles": "CC(=O)OC(C)c1ncnc(Cl)c1I",
+    "raw_response": "<answer>CC(=O)OC(C)c1ncnc(Cl)c1I</answer>"
+  },
+  {
+    "index": 39,
+    "product_smiles": "COc1ccc(C[C@H](NC(=O)[C@@H](N)Cc2ccc(OC)cc2)C(=O)N[C@H]2[C@@H](O)[C@H](n3cnc4c(N)ncnc43)O[C@@H]2C(=O)O)cc1",
+    "reactants_smiles": "COc1ccc(C[C@H](NC(=O)OC(C)(C)C)C(=O)N[C@@H](Cc2ccc(OC)cc2)C(=O)N[C@H]2[C@@H](O)[C@H](n3cnc4c(N)ncnc43)O[C@@H]2C(=O)O)cc1",
+    "predicted_reactants_smiles": "COc1ccc(C[C@H](NC(=O)[C@H](Cc2ccc(OC)cc2)NC(=O)OC(C)(C)C)C(=O)N[C@H]2[C@@H](O)[C@H](n3cnc4c(N)ncnc43)O[C@@H]2C(=O)O)cc1",
+    "raw_response": "<answer>COc1ccc(C[C@H](NC(=O)[C@H](Cc2ccc(OC)cc2)NC(=O)OC(C)(C)C)C(=O)N[C@H]2[C@@H](O)[C@H](n3cnc4c(N)ncnc43)O[C@@H]2C(=O)O)cc1</answer>"
+  },
+  {
+    "index": 40,
+    "product_smiles": "CCCCCCCOc1ccc(Cc2nc3cc(CN(CC(=O)OC(C)(C)C)C(=O)c4ccc(NC(=O)Cc5ccc(OC)cc5)cc4)ccc3[nH]2)cc1",
+    "reactants_smiles": "COc1ccc(CC(=O)Nc2ccc(C(=O)O)cc2)cc1.CCCCCCCOc1ccc(Cc2nc3cc(CNCC(=O)OC(C)(C)C)ccc3[nH]2)cc1",
+    "predicted_reactants_smiles": "CCCCCCCOc1ccc(Cc2nc3cc(CNCC(=O)OC(C)(C)C)ccc3[nH]2)cc1.COc1ccc(CC(=O)Nc2ccc(C(=O)Cl)cc2)cc1",
+    "raw_response": "<answer>CCCCCCCOc1ccc(Cc2nc3cc(CNCC(=O)OC(C)(C)C)ccc3[nH]2)cc1.COc1ccc(CC(=O)Nc2ccc(C(=O)Cl)cc2)cc1</answer>"
+  },
+  {
+    "index": 41,
+    "product_smiles": "Clc1ccc(-c2cc(Cn3ccnc3)no2)s1",
+    "reactants_smiles": "Clc1ccc(-c2cc(CBr)no2)s1.c1c[nH]cn1",
+    "predicted_reactants_smiles": "Clc1ccc(-c2cc(CBr)no2)s1.c1c[nH]cn1",
+    "raw_response": "<answer>Clc1ccc(-c2cc(CBr)no2)s1.c1c[nH]cn1</answer>"
+  },
+  {
+    "index": 42,
+    "product_smiles": "CC1NC2=NCCN2C1c1ccccc1",
+    "reactants_smiles": "CC(NC1=NCCN1)C(O)c1ccccc1",
+    "predicted_reactants_smiles": "CC(NC1=NCCN1)C(O)c1ccccc1.O=S(=O)(O)O",
+    "raw_response": "<answer>CC(NC1=NCCN1)C(O)c1ccccc1.O=S(=O)(O)O</answer>"
+  },
+  {
+    "index": 43,
+    "product_smiles": "NC1CCN(c2cc3c(cc2F)c(=O)c(C(=O)O)cn3-c2ccncc2F)C1",
+    "reactants_smiles": "CC(=O)NC1CCN(c2cc3c(cc2F)c(=O)c(C(=O)O)cn3-c2ccncc2F)C1",
+    "predicted_reactants_smiles": "CC(=O)NC1CCN(c2cc3c(cc2F)c(=O)c(C(=O)O)cn3-c2ccncc2F)C1",
+    "raw_response": "<answer>CC(=O)NC1CCN(c2cc3c(cc2F)c(=O)c(C(=O)O)cn3-c2ccncc2F)C1</answer>"
+  },
+  {
+    "index": 44,
+    "product_smiles": "O=C(O)CN1CCC(n2c(=O)[nH]c3ccccc32)CC1",
+    "reactants_smiles": "CCOC(=O)CN1CCC(n2c(=O)[nH]c3ccccc32)CC1",
+    "predicted_reactants_smiles": "CCOC(=O)CN1CCC(n2c(=O)[nH]c3ccccc32)CC1",
+    "raw_response": "<answer>CCOC(=O)CN1CCC(n2c(=O)[nH]c3ccccc32)CC1</answer>"
+  },
+  {
+    "index": 45,
+    "product_smiles": "C=C[C@@H](C)C[C@H]1O[C@@H]1[C@H](C)[C@@H](O)CC",
+    "reactants_smiles": "C=C[C@@H](C)C[C@H]1O[C@@H]1[C@H](C)[C@H](CC)O[Si](C)(C)C(C)(C)C",
+    "predicted_reactants_smiles": "C=C[C@@H](C)C[C@H]1O[C@@H]1[C@H](C)[C@@H](CC)O[Si](C)(C)C(C)(C)C",
+    "raw_response": "<answer>C=C[C@@H](C)C[C@H]1O[C@@H]1[C@H](C)[C@@H](CC)O[Si](C)(C)C(C)(C)C</answer>"
+  },
+  {
+    "index": 46,
+    "product_smiles": "CC(Br)C(=O)c1cc2cc(F)ccc2s1",
+    "reactants_smiles": "CC(Br)C(=O)Cl.Fc1ccc2sccc2c1",
+    "predicted_reactants_smiles": "CCC(=O)c1cc2cc(F)ccc2s1.C[N+](C)(C)c1ccccc1",
+    "raw_response": "<answer>CCC(=O)c1cc2cc(F)ccc2s1.C[N+](C)(C)c1ccccc1</answer>"
+  },
+  {
+    "index": 47,
+    "product_smiles": "Nc1ccc2c(c1)OCC2",
+    "reactants_smiles": "O=[N+]([O-])c1ccc2c(c1)OCC2",
+    "predicted_reactants_smiles": "O=[N+]([O-])c1ccc2c(c1)OCC2",
+    "raw_response": "<answer>O=[N+]([O-])c1ccc2c(c1)OCC2</answer>"
+  },
+  {
+    "index": 48,
+    "product_smiles": "CC(C)(C)c1ccc(NC(=O)c2cccnc2SC(NC(=O)CN2CCOCC2)c2ccncc2)cc1",
+    "reactants_smiles": "CC(C)(C)c1ccc(NC(=O)c2cccnc2SC(NC(=O)CCl)c2ccncc2)cc1.C1COCCN1",
+    "predicted_reactants_smiles": "CC(C)(C)c1ccc(NC(=O)c2cccnc2SC(NC(=O)CCl)c2ccncc2)cc1.C1COCCN1",
+    "raw_response": "<answer>C1COCCN1.CC(C)(C)c1ccc(NC(=O)c2cccnc2SC(NC(=O)CCl)c2ccncc2)cc1</answer>"
+  },
+  {
+    "index": 49,
+    "product_smiles": "Cc1cncc(-c2cccc(C(=O)CC(=O)Nc3cc(C)c(Cl)cc3NC(=O)OC(C)(C)C)c2)n1",
+    "reactants_smiles": "Cc1cncc(-c2cccc(C(=O)CC(=O)OC(C)(C)C)c2)n1.Cc1cc(N)c(NC(=O)OC(C)(C)C)cc1Cl",
+    "predicted_reactants_smiles": "Cc1cc(N)c(NC(=O)OC(C)(C)C)cc1Cl.Cc1cncc(-c2cccc(C(=O)CC(=O)OC(C)(C)C)c2)n1",
+    "raw_response": "<answer>Cc1cc(N)c(NC(=O)OC(C)(C)C)cc1Cl.Cc1cncc(-c2cccc(C(=O)CC(=O)OC(C)(C)C)c2)n1</answer>"
+  },
+  {
+    "index": 50,
+    "product_smiles": "O=C1OC(=O)C23CCCC12C1C=CC3C1",
+    "reactants_smiles": "C1=CCC=C1.O=C1OC(=O)C2=C1CCC2",
+    "predicted_reactants_smiles": "C1=CCC=C1.O=C1OC(=O)C2=C1CCC2",
+    "raw_response": "<answer>C1=CCC=C1.O=C1OC(=O)C2=C1CCC2</answer>"
+  },
+  {
+    "index": 51,
+    "product_smiles": "CCOC(=O)c1ccc(-c2ccc(OCCO)cc2)cc1",
+    "reactants_smiles": "CCOC(=O)COc1ccc(-c2ccc(C(=O)OCC)cc2)cc1",
+    "predicted_reactants_smiles": "CCOC(=O)c1ccc(-c2ccc(O)cc2)cc1.OCCBr",
+    "raw_response": "<answer>CCOC(=O)c1ccc(-c2ccc(O)cc2)cc1.OCCBr</answer>"
+  },
+  {
+    "index": 52,
+    "product_smiles": "Cc1nn(CCN)c(C)c1Oc1ccc(Cl)cc1",
+    "reactants_smiles": "NCCCl.Cc1n[nH]c(C)c1Oc1ccc(Cl)cc1",
+    "predicted_reactants_smiles": "Cc1n[nH]c(C)c1Oc1ccc(Cl)cc1.NCCCl",
+    "raw_response": "<answer>Cc1n[nH]c(C)c1Oc1ccc(Cl)cc1.NCCCl</answer>"
+  },
+  {
+    "index": 53,
+    "product_smiles": "NC(=O)c1[nH]c2ccccc2c1-c1ccc(NS(=O)(=O)c2cc(C(F)(F)F)ccc2F)cc1",
+    "reactants_smiles": "O=S(=O)(Cl)c1cc(C(F)(F)F)ccc1F.NC(=O)c1[nH]c2ccccc2c1-c1ccc(N)cc1",
+    "predicted_reactants_smiles": "NC(=O)c1[nH]c2ccccc2c1-c1ccc(N)cc1.O=S(=O)(Cl)c1cc(C(F)(F)F)ccc1F",
+    "raw_response": "<answer>NC(=O)c1[nH]c2ccccc2c1-c1ccc(N)cc1.O=S(=O)(Cl)c1cc(C(F)(F)F)ccc1F</answer>"
+  },
+  {
+    "index": 54,
+    "product_smiles": "C[C@@H](c1ccc(-c2ccnc(N3CCOCC3)n2)cc1)N1CC[C@](CC(C)(C)O)(c2ccccc2)OC1=O",
+    "reactants_smiles": "Brc1ccnc(N2CCOCC2)n1.C[C@@H](c1ccc(B2OC(C)(C)C(C)(C)O2)cc1)N1CC[C@](CC(C)(C)O)(c2ccccc2)OC1=O",
+    "predicted_reactants_smiles": "Brc1ccnc(N2CCOCC2)n1.C[C@@H](c1ccc(B2OC(C)(C)C(C)(C)O2)cc1)N1CC[C@](CC(C)(C)O)(c2ccccc2)OC1=O",
+    "raw_response": "<answer>Brc1ccnc(N2CCOCC2)n1.C[C@@H](c1ccc(B2OC(C)(C)C(C)(C)O2)cc1)N1CC[C@](CC(C)(C)O)(c2ccccc2)OC1=O</answer>"
+  },
+  {
+    "index": 55,
+    "product_smiles": "COC[C@@H]1CN(CCN2CCN(C(=O)c3cc(C(F)(F)F)cc(C(F)(F)F)c3)[C@H](Cc3ccc(C)c(NCN4C(=O)CCC4O)c3)C2)CCO1",
+    "reactants_smiles": "COC[C@@H]1CN(CCN2CCN(C(=O)c3cc(C(F)(F)F)cc(C(F)(F)F)c3)[C@H](Cc3ccc(C)c(NCN4C(=O)CCC4=O)c3)C2)CCO1",
+    "predicted_reactants_smiles": "COC[C@@H]1CN(CCN2CCN(C(=O)c3cc(C(F)(F)F)cc(C(F)(F)F)c3)[C@H](Cc3ccc(C)c(NCN4C(=O)CCC4O)c3)C2)CCO1",
+    "raw_response": "<answer>COC[C@@H]1CN(CCN2CCN(C(=O)c3cc(C(F)(F)F)cc(C(F)(F)F)c3)[C@H](Cc3ccc(C)c(NCN4C(=O)CCC4O)c3)C2)CCO1</answer>"
+  },
+  {
+    "index": 56,
+    "product_smiles": "CC(CNc1ccc2c(c1)OCO2)N1CCN(c2ccccn2)CC1",
+    "reactants_smiles": "CC(C(=O)Nc1ccc2c(c1)OCO2)N1CCN(c2ccccn2)CC1",
+    "predicted_reactants_smiles": "CC(C(=O)Nc1ccc2c(c1)OCO2)N1CCN(c2ccccn2)CC1",
+    "raw_response": "<answer>CC(C(=O)Nc1ccc2c(c1)OCO2)N1CCN(c2ccccn2)CC1</answer>"
+  },
+  {
+    "index": 57,
+    "product_smiles": "O=C(O)c1cc(-c2csc(NC(=O)N(CCC(c3ccccc3)c3ccccc3)CCN3CCOCC3)n2)on1",
+    "reactants_smiles": "CCOC(=O)c1cc(-c2csc(NC(=O)N(CCC(c3ccccc3)c3ccccc3)CCN3CCOCC3)n2)on1",
+    "predicted_reactants_smiles": "CCOC(=O)c1cc(-c2csc(NC(=O)N(CCC(c3ccccc3)c3ccccc3)CCN3CCOCC3)n2)on1",
+    "raw_response": "<answer>CCOC(=O)c1cc(-c2csc(NC(=O)N(CCC(c3ccccc3)c3ccccc3)CCN3CCOCC3)n2)on1</answer>"
+  },
+  {
+    "index": 58,
+    "product_smiles": "Cc1cncc(-c2ccc3c(n2)N(C(=O)Nc2cnccn2)[C@H]2CCN3C2)c1",
+    "reactants_smiles": "O=C(Nc1cnccn1)N1c2nc(Cl)ccc2N2CC[C@H]1C2.Cc1cncc(B(O)O)c1",
+    "predicted_reactants_smiles": "Cc1cncc(B(O)O)c1.O=C(Nc1cnccn1)N1c2nc(Cl)ccc2N2CC[C@H]1C2",
+    "raw_response": "<answer>Cc1cncc(B(O)O)c1.O=C(Nc1cnccn1)N1c2nc(Cl)ccc2N2CC[C@H]1C2</answer>"
+  },
+  {
+    "index": 59,
+    "product_smiles": "Cc1ccc(-c2ccnc(Cl)c2)n1CC(=O)OCc1ccccc1",
+    "reactants_smiles": "CC(=O)CCC(=O)c1ccnc(Cl)c1.NCC(=O)OCc1ccccc1",
+    "predicted_reactants_smiles": "CC(=O)CCC(=O)c1ccnc(Cl)c1.NCC(=O)OCc1ccccc1",
+    "raw_response": "<answer>CC(=O)CCC(=O)c1ccnc(Cl)c1.NCC(=O)OCc1ccccc1</answer>"
+  },
+  {
+    "index": 60,
+    "product_smiles": "CC(C)(C)OC(=O)c1cc(OC(C)(C)C)c(C(=O)O)s1",
+    "reactants_smiles": "CCOC(=O)c1sc(C(=O)OC(C)(C)C)cc1OC(C)(C)C",
+    "predicted_reactants_smiles": "CCOC(=O)c1sc(C(=O)OC(C)(C)C)cc1OC(C)(C)C",
+    "raw_response": "<answer>CCOC(=O)c1sc(C(=O)OC(C)(C)C)cc1OC(C)(C)C</answer>"
+  },
+  {
+    "index": 61,
+    "product_smiles": "Cc1nnc(-c2ccc3occ(-c4ccc(C(=O)N5CCCC5)c(F)c4)c3c2)o1",
+    "reactants_smiles": "Cc1nnc(-c2ccc3occ(-c4ccc(C(=O)O)c(F)c4)c3c2)o1.C1CCNC1",
+    "predicted_reactants_smiles": "C1CCNC1.Cc1nnc(-c2ccc3occ(-c4ccc(C(=O)O)c(F)c4)c3c2)o1",
+    "raw_response": "<answer>C1CCNC1.Cc1nnc(-c2ccc3occ(-c4ccc(C(=O)O)c(F)c4)c3c2)o1</answer>"
+  },
+  {
+    "index": 62,
+    "product_smiles": "CC(C)c1ccc(Br)cc1",
+    "reactants_smiles": "C=C(C)c1ccc(Br)cc1",
+    "predicted_reactants_smiles": "BrBr.CC(C)c1ccccc1",
+    "raw_response": "<answer>BrBr.CC(C)c1ccccc1</answer>"
+  },
+  {
+    "index": 63,
+    "product_smiles": "CC(C)(C)c1ccc(S(=O)(=O)Nc2ccc(Cl)cc2C(=O)O)cc1",
+    "reactants_smiles": "CC(C)(C)c1ccc(S(=O)(=O)Cl)cc1.Nc1ccc(Cl)cc1C(=O)O",
+    "predicted_reactants_smiles": "CC(C)(C)c1ccc(S(=O)(=O)Cl)cc1.Nc1ccc(Cl)cc1C(=O)O",
+    "raw_response": "<answer>CC(C)(C)c1ccc(S(=O)(=O)Cl)cc1.Nc1ccc(Cl)cc1C(=O)O</answer>"
+  },
+  {
+    "index": 64,
+    "product_smiles": "CN1CCN(C(=O)OC2c3ccccc3C(=O)N2c2ccc3ncccc3n2)CC1",
+    "reactants_smiles": "CN1CCN(C(=O)Cl)CC1.O=C1c2ccccc2C(O)N1c1ccc2ncccc2n1",
+    "predicted_reactants_smiles": "CN1CCN(C(=O)Cl)CC1.O=C1c2ccccc2C(O)N1c1ccc2ncccc2n1",
+    "raw_response": "<answer>CN1CCN(C(=O)Cl)CC1.O=C1c2ccccc2C(O)N1c1ccc2ncccc2n1</answer>"
+  },
+  {
+    "index": 65,
+    "product_smiles": "O=C(OCc1cc2ccccc2o1)Oc1ccc([N+](=O)[O-])cc1",
+    "reactants_smiles": "O=C(Cl)Oc1ccc([N+](=O)[O-])cc1.OCc1cc2ccccc2o1",
+    "predicted_reactants_smiles": "O=C(Cl)Oc1ccc([N+](=O)[O-])cc1.OCc1cc2ccccc2o1",
+    "raw_response": "<answer>O=C(Cl)Oc1ccc([N+](=O)[O-])cc1.OCc1cc2ccccc2o1</answer>"
+  },
+  {
+    "index": 66,
+    "product_smiles": "COc1ccc(Cn2c(=O)c3c(Nc4cccc(C(=O)N5CCC(O)C5)c4)c(C)c(=O)n(C)c3n(-c3ccc(I)cc3F)c2=O)cc1",
+    "reactants_smiles": "COc1ccc(Cn2c(=O)c3c(Nc4cccc(C(=O)O)c4)c(C)c(=O)n(C)c3n(-c3ccc(I)cc3F)c2=O)cc1.OC1CCNC1",
+    "predicted_reactants_smiles": "COc1ccc(Cn2c(=O)c3c(Nc4cccc(C(=O)N5CCC(O)C5)c4)c(C)c(=O)n(C)c3n(-c3ccc(I)cc3F)c2=O)cc1",
+    "raw_response": "<answer>COc1ccc(Cn2c(=O)c3c(Nc4cccc(C(=O)N5CCC(O)C5)c4)c(C)c(=O)n(C)c3n(-c3ccc(I)cc3F)c2=O)cc1</answer>"
+  },
+  {
+    "index": 67,
+    "product_smiles": "CC(C)Oc1ccc(S(C)(=O)=O)cc1C(=O)N1CCC(Oc2ccc([N+](=O)[O-])cc2)CC1",
+    "reactants_smiles": "CC(C)Oc1ccc(S(C)(=O)=O)cc1C(=O)N1CCC(O)CC1.O=[N+]([O-])c1ccc(O)cc1",
+    "predicted_reactants_smiles": "CC(C)Oc1ccc(S(C)(=O)=O)cc1C(=O)N1CCC(O)CC1.O=[N+]([O-])c1ccc(O)cc1",
+    "raw_response": "<answer>CC(C)Oc1ccc(S(C)(=O)=O)cc1C(=O)N1CCC(O)CC1.O=[N+]([O-])c1ccc(O)cc1</answer>"
+  },
+  {
+    "index": 68,
+    "product_smiles": "Cc1ncc(-c2ncnc(Nc3ccc(C(=O)Nc4ccccc4N)cc3)n2)n1C(C)C",
+    "reactants_smiles": "Cc1ncc(-c2ncnc(Nc3ccc(C(=O)O)cc3)n2)n1C(C)C.Nc1ccccc1N",
+    "predicted_reactants_smiles": "Cc1ncc(-c2ncnc(Nc3ccc(C(=O)O)cc3)n2)n1C(C)C.Nc1ccccc1N",
+    "raw_response": "<answer>Cc1ncc(-c2ncnc(Nc3ccc(C(=O)O)cc3)n2)n1C(C)C.Nc1ccccc1N</answer>"
+  },
+  {
+    "index": 69,
+    "product_smiles": "Cc1cn(CCc2ccccc2N)cn1",
+    "reactants_smiles": "Cc1cn(CCc2ccccc2NC(=O)OC(C)(C)C)cn1",
+    "predicted_reactants_smiles": "Cc1cn(CCc2ccccc2[N+](=O)[O-])cn1",
+    "raw_response": "<answer>Cc1cn(CCc2ccccc2[N+](=O)[O-])cn1</answer>"
+  },
+  {
+    "index": 70,
+    "product_smiles": "CCCc1c(OCCCC(=O)OCC)ccc(C(C)=O)c1OCCOCCOCCOCCBr",
+    "reactants_smiles": "BrCCOCCOCCOCCBr.CCCc1c(OCCCC(=O)OCC)ccc(C(C)=O)c1O",
+    "predicted_reactants_smiles": "BrCCOCCOCCOCCBr.CCCc1c(OCCCC(=O)OCC)ccc(C(C)=O)c1O.O=C([O-])[O-]",
+    "raw_response": "<answer>BrCCOCCOCCOCCBr.CCCc1c(OCCCC(=O)OCC)ccc(C(C)=O)c1O.O=C([O-])[O-]</answer>"
+  },
+  {
+    "index": 71,
+    "product_smiles": "Cc1cnc(N2CCN(C(=O)c3cnc(N4CCN(C)C4=O)cn3)CC2)c(C)c1",
+    "reactants_smiles": "Cc1cnc(N2CCN(C(=O)c3cnc(Br)cn3)CC2)c(C)c1.CN1CCNC1=O",
+    "predicted_reactants_smiles": "CI.Cc1cnc(N2CCN(C(=O)c3cnc(N4CCNC4=O)cn3)CC2)c(C)c1",
+    "raw_response": "<answer>CI.Cc1cnc(N2CCN(C(=O)c3cnc(N4CCNC4=O)cn3)CC2)c(C)c1</answer>"
+  },
+  {
+    "index": 72,
+    "product_smiles": "CCNc1ccc(N)cc1C(=O)Nc1c(C)cc(C(F)(C(F)(F)F)C(F)(F)F)cc1C",
+    "reactants_smiles": "CCNc1ccc([N+](=O)[O-])cc1C(=O)Nc1c(C)cc(C(F)(C(F)(F)F)C(F)(F)F)cc1C",
+    "predicted_reactants_smiles": "CCNc1ccc([N+](=O)[O-])cc1C(=O)Nc1c(C)cc(C(F)(C(F)(F)F)C(F)(F)F)cc1C",
+    "raw_response": "<answer>CCNc1ccc([N+](=O)[O-])cc1C(=O)Nc1c(C)cc(C(F)(C(F)(F)F)C(F)(F)F)cc1C</answer>"
+  },
+  {
+    "index": 73,
+    "product_smiles": "C1=CCN(c2cccc(Cc3ccccc3)c2)C1",
+    "reactants_smiles": "Brc1cccc(N2CC=CC2)c1.[Mg+][CH2]c1ccccc1",
+    "predicted_reactants_smiles": "Brc1cccc(N2CC=CC2)c1.[Mg+]Cc1ccccc1",
+    "raw_response": "<answer>Brc1cccc(N2CC=CC2)c1.[Mg+]Cc1ccccc1</answer>"
+  },
+  {
+    "index": 74,
+    "product_smiles": "C=C(C)COc1ccc(C=O)cc1OC",
+    "reactants_smiles": "C=C(C)CCl.COc1cc(C=O)ccc1O",
+    "predicted_reactants_smiles": "C=C(C)CCl.COc1cc(C=O)ccc1O",
+    "raw_response": "<answer>C=C(C)CCl.COc1cc(C=O)ccc1O</answer>"
+  },
+  {
+    "index": 75,
+    "product_smiles": "CC(=O)N[C@H](C)c1ccccn1",
+    "reactants_smiles": "CC(=O)N[C@H](C)c1ccc(F)cn1",
+    "predicted_reactants_smiles": "CC(=O)OC(C)=O.C[C@@H](N)c1ccccn1",
+    "raw_response": "<answer>CC(=O)OC(C)=O.C[C@@H](N)c1ccccn1</answer>"
+  },
+  {
+    "index": 76,
+    "product_smiles": "N#Cc1cnc2c(c1Nc1ccc(Cl)cc1Br)C=C1N=CN=C1C2",
+    "reactants_smiles": "N#Cc1cnc2c(c1Cl)C=C1N=CN=C1C2.Nc1ccc(Cl)cc1Br",
+    "predicted_reactants_smiles": "N#Cc1cnc2c(c1Cl)C=C1N=CN=C1C2.Nc1ccc(Cl)cc1Br",
+    "raw_response": "<answer>N#Cc1cnc2c(c1Cl)C=C1N=CN=C1C2.Nc1ccc(Cl)cc1Br</answer>"
+  },
+  {
+    "index": 77,
+    "product_smiles": "O=C(O)CCCc1ccc(C2CCCCC2)cc1",
+    "reactants_smiles": "O=C(O)CCC(=O)c1ccc(C2CCCCC2)cc1",
+    "predicted_reactants_smiles": "O=C(O)CCC(=O)c1ccc(C2CCCCC2)cc1",
+    "raw_response": "<answer>O=C(O)CCC(=O)c1ccc(C2CCCCC2)cc1</answer>"
+  },
+  {
+    "index": 78,
+    "product_smiles": "CC(C)CN(C(=O)c1nnn(-c2ccccc2)c1CO)[C@H]1C[C@@H](C(=O)N2CCOCC2)CN(C(=O)OC(C)(C)C)C1",
+    "reactants_smiles": "CC(C)CN(C(=O)c1nnn(-c2ccccc2)c1CO)[C@H]1C[C@@H](C(=O)O)CN(C(=O)OC(C)(C)C)C1.C1COCCN1",
+    "predicted_reactants_smiles": "C1COCCN1.CC(C)CN(C(=O)c1nnn(-c2ccccc2)c1CO)[C@H]1C[C@@H](C(=O)O)CN(C(=O)OC(C)(C)C)C1",
+    "raw_response": "<answer>C1COCCN1.CC(C)CN(C(=O)c1nnn(-c2ccccc2)c1CO)[C@H]1C[C@@H](C(=O)O)CN(C(=O)OC(C)(C)C)C1</answer>"
+  },
+  {
+    "index": 79,
+    "product_smiles": "Cc1cc(-c2ccc(F)c(F)c2)c2c(c1)cc1n2CCNC1=O",
+    "reactants_smiles": "Cc1cc(Br)c2c(c1)cc1n2CCNC1=O.OB(O)c1ccc(F)c(F)c1",
+    "predicted_reactants_smiles": "Cc1cc(Br)c2c(c1)cc1n2CCNC1=O.OB(O)c1ccc(F)c(F)c1",
+    "raw_response": "<answer>Cc1cc(Br)c2c(c1)cc1n2CCNC1=O.OB(O)c1ccc(F)c(F)c1</answer>"
+  },
+  {
+    "index": 80,
+    "product_smiles": "Cc1cc(Br)c(C)c2c1SCCC2O",
+    "reactants_smiles": "Cc1cc(Br)c(C)c2c1SCCC2=O",
+    "predicted_reactants_smiles": "Cc1cc(Br)c(C)c2c1SCCC2=O",
+    "raw_response": "<answer>Cc1cc(Br)c(C)c2c1SCCC2=O</answer>"
+  },
+  {
+    "index": 81,
+    "product_smiles": "COC(=O)c1nc(C)sc1-c1ccc(C)c(F)c1F",
+    "reactants_smiles": "COC(=O)C(=O)C(Cl)c1ccc(C)c(F)c1F.CC(N)=S",
+    "predicted_reactants_smiles": "CC(N)=S.COC(=O)C(=O)C(Cl)c1ccc(C)c(F)c1F",
+    "raw_response": "<answer>CC(N)=S.COC(=O)C(=O)C(Cl)c1ccc(C)c(F)c1F</answer>"
+  },
+  {
+    "index": 82,
+    "product_smiles": "CC(C)(C)OC(=O)c1nc(N2CCc3cccc(C(=O)Nc4nc5ccccc5s4)c3C2)ccc1CCCOc1ccnc(Cl)c1",
+    "reactants_smiles": "CC(C)(C)OC(=O)c1nc(N2CCc3cccc(C(=O)Nc4nc5ccccc5s4)c3C2)ccc1CCCI.Oc1ccnc(Cl)c1",
+    "predicted_reactants_smiles": "CC(C)(C)OC(=O)c1nc(N2CCc3cccc(C(=O)Nc4nc5ccccc5s4)c3C2)ccc1CCCO.Oc1ccnc(Cl)c1",
+    "raw_response": "<answer>CC(C)(C)OC(=O)c1nc(N2CCc3cccc(C(=O)Nc4nc5ccccc5s4)c3C2)ccc1CCCO.Oc1ccnc(Cl)c1</answer>"
+  },
+  {
+    "index": 83,
+    "product_smiles": "C[C@H]1C[C@H](N2CCCC2)CCN1",
+    "reactants_smiles": "C[C@H]1C[C@H](N2CCCC2)CCN1C(=O)OC(C)(C)C",
+    "predicted_reactants_smiles": "C[C@H]1C[C@H](N2CCCC2)CCN1C(=O)OC(C)(C)C",
+    "raw_response": "<answer>C[C@H]1C[C@H](N2CCCC2)CCN1C(=O)OC(C)(C)C</answer>"
+  },
+  {
+    "index": 84,
+    "product_smiles": "O=C1Nc2ccccc2C1=Cc1cccs1",
+    "reactants_smiles": "O=Cc1cccs1.O=C1Cc2ccccc2N1",
+    "predicted_reactants_smiles": "C1CCNCC1.O=C1Cc2ccccc2N1.O=Cc1cccs1",
+    "raw_response": "<answer>C1CCNCC1.O=C1Cc2ccccc2N1.O=Cc1cccs1</answer>"
+  },
+  {
+    "index": 85,
+    "product_smiles": "O=[N+]([O-])c1ccc(-c2ccc(Cn3cc4nc(-c5cccc(F)c5F)nc-4cn3)cn2)c(C(F)(F)F)c1",
+    "reactants_smiles": "O=[N+]([O-])c1ccc(-c2ccc(CBr)cn2)c(C(F)(F)F)c1.Fc1cccc(-c2nc3cn[nH]cc-3n2)c1F",
+    "predicted_reactants_smiles": "Fc1cccc(-c2nc3cn[nH]cc-3n2)c1F.O=[N+]([O-])c1ccc(-c2ccc(CBr)cn2)c(C(F)(F)F)c1",
+    "raw_response": "<answer>Fc1cccc(-c2nc3cn[nH]cc-3n2)c1F.O=[N+]([O-])c1ccc(-c2ccc(CBr)cn2)c(C(F)(F)F)c1</answer>"
+  },
+  {
+    "index": 86,
+    "product_smiles": "CCCS(=O)(=O)Nc1ccc(F)c(C(=O)Nc2cnc3c(c2)cc(C#CCN(C)C)n3S(=O)(=O)c2ccccc2)c1F",
+    "reactants_smiles": "CCCS(=O)(=O)Nc1ccc(F)c(C(=O)Nc2cnc3c(c2)cc(I)n3S(=O)(=O)c2ccccc2)c1F.C#CCN(C)C",
+    "predicted_reactants_smiles": "C#CCN(C)C.CCCS(=O)(=O)Nc1ccc(F)c(C(=O)Nc2cnc3c(c2)cc(I)n3S(=O)(=O)c2ccccc2)c1F",
+    "raw_response": "<answer>C#CCN(C)C.CCCS(=O)(=O)Nc1ccc(F)c(C(=O)Nc2cnc3c(c2)cc(I)n3S(=O)(=O)c2ccccc2)c1F</answer>"
+  },
+  {
+    "index": 87,
+    "product_smiles": "Nc1nc(Nc2ccc(Oc3ccnc4[nH]ccc34)c(F)c2)cc(C2CCCN(C(=O)OCc3ccccc3)C2)n1",
+    "reactants_smiles": "Nc1nc(Cl)cc(C2CCCN(C(=O)OCc3ccccc3)C2)n1.Nc1ccc(Oc2ccnc3[nH]ccc23)c(F)c1",
+    "predicted_reactants_smiles": "Nc1nc(Cl)cc(C2CCCN(C(=O)OCc3ccccc3)C2)n1.Nc1ccc(Oc2ccnc3[nH]ccc23)c(F)c1",
+    "raw_response": "<answer>Nc1ccc(Oc2ccnc3[nH]ccc23)c(F)c1.Nc1nc(Cl)cc(C2CCCN(C(=O)OCc3ccccc3)C2)n1</answer>"
+  },
+  {
+    "index": 88,
+    "product_smiles": "CSCc1cccc(N2CCN(c3cc4nc5c(cc4cc3F)c(=O)c(C(=O)O)cn5C)CC2)c1",
+    "reactants_smiles": "Cn1cc(C(=O)O)c(=O)c2cc3cc(F)c(F)cc3nc21.CSCc1cccc(N2CCNCC2)c1",
+    "predicted_reactants_smiles": "CSCc1cccc(N2CCNCC2)c1.Cn1cc(C(=O)O)c(=O)c2cc3cc(F)c(F)cc3nc21",
+    "raw_response": "<answer>CSCc1cccc(N2CCNCC2)c1.Cn1cc(C(=O)O)c(=O)c2cc3cc(F)c(F)cc3nc21</answer>"
+  },
+  {
+    "index": 89,
+    "product_smiles": "N=C(N)NN=C(C=Cc1ccc2ccccc2c1)C=Cc1ccc2ccccc2c1",
+    "reactants_smiles": "O=C(C=Cc1ccc2ccccc2c1)C=Cc1ccc2ccccc2c1.N=C(N)NN",
+    "predicted_reactants_smiles": "N=C(N)NN.O=C(C=Cc1ccc2ccccc2c1)C=Cc1ccc2ccccc2c1",
+    "raw_response": "<answer>N=C(N)NN.O=C(C=Cc1ccc2ccccc2c1)C=Cc1ccc2ccccc2c1</answer>"
+  },
+  {
+    "index": 90,
+    "product_smiles": "COC(=O)c1ncc2c(cc(CCc3ccccc3)c(=O)n2Cc2ccccc2)c1O",
+    "reactants_smiles": "COC(=O)c1ncc2c(cc(C#Cc3ccccc3)c(=O)n2Cc2ccccc2)c1O",
+    "predicted_reactants_smiles": "COC(=O)c1ncc2c(cc(C#Cc3ccccc3)c(=O)n2Cc2ccccc2)c1O",
+    "raw_response": "<answer>COC(=O)c1ncc2c(cc(C#Cc3ccccc3)c(=O)n2Cc2ccccc2)c1O</answer>"
+  },
+  {
+    "index": 91,
+    "product_smiles": "COc1ccc(Cl)cc1C(=O)NCCc1ccc(-c2ccc(OC(C)(C)CO)cc2)cc1",
+    "reactants_smiles": "CCOC(=O)C(C)(C)Oc1ccc(-c2ccc(CCNC(=O)c3cc(Cl)ccc3OC)cc2)cc1",
+    "predicted_reactants_smiles": "CCOC(=O)C(C)(C)Oc1ccc(-c2ccc(CCNC(=O)c3cc(Cl)ccc3OC)cc2)cc1",
+    "raw_response": "<answer>CCOC(=O)C(C)(C)Oc1ccc(-c2ccc(CCNC(=O)c3cc(Cl)ccc3OC)cc2)cc1</answer>"
+  },
+  {
+    "index": 92,
+    "product_smiles": "CC(C)OC(=O)N1CCC(n2ncc(COc3ccc(-n4cnnn4)nc3)n2)CC1",
+    "reactants_smiles": "CC(C)OC(=O)Cl.c1cc(-n2cnnn2)ncc1OCc1cnn(C2CCNCC2)n1",
+    "predicted_reactants_smiles": "CC(C)OC(=O)N1CCC(n2ncc(CCl)n2)CC1.Oc1ccc(-n2cnnn2)nc1",
+    "raw_response": "<answer>CC(C)OC(=O)N1CCC(n2ncc(CCl)n2)CC1.Oc1ccc(-n2cnnn2)nc1</answer>"
+  },
+  {
+    "index": 93,
+    "product_smiles": "C#Cc1cccc(Nc2ncnc3cc(OC)c(O)cc23)c1",
+    "reactants_smiles": "C#Cc1cccc(Nc2ncnc3cc(OC)c(OC(C)=O)cc23)c1",
+    "predicted_reactants_smiles": "C#Cc1cccc(Nc2ncnc3cc(OC)c(OC(C)=O)cc23)c1.Cl",
+    "raw_response": "<answer>C#Cc1cccc(Nc2ncnc3cc(OC)c(OC(C)=O)cc23)c1.Cl</answer>"
+  },
+  {
+    "index": 94,
+    "product_smiles": "CC(C)(C)OC(=O)N1C[C@@H](O)C(I)=C[C@H]1CO[Si](C)(C)C(C)(C)C",
+    "reactants_smiles": "CC(C)(C)OC(=O)N1CC(=O)C(I)=C[C@H]1CO[Si](C)(C)C(C)(C)C",
+    "predicted_reactants_smiles": "CC(C)(C)OC(=O)N1CC(=O)C(I)=C[C@H]1CO[Si](C)(C)C(C)(C)C.CC1=C[C@@H](CO[Si](C)(C)C(C)(C)C)N(C(=O)OC(C)(C)C)C[C@H]1O",
+    "raw_response": "<answer>CC(C)(C)OC(=O)N1CC(=O)C(I)=C[C@H]1CO[Si](C)(C)C(C)(C)C.CC1=C[C@@H](CO[Si](C)(C)C(C)(C)C)N(C(=O)OC(C)(C)C)C[C@H]1O</answer>"
+  },
+  {
+    "index": 95,
+    "product_smiles": "Cc1cc(SCc2sc(-c3ccc(C(F)(F)F)cc3F)nc2C)ccc1O",
+    "reactants_smiles": "Cc1cc(SCc2sc(-c3ccc(C(F)(F)F)cc3F)nc2C)ccc1O[Si](C)(C)C(C)(C)C",
+    "predicted_reactants_smiles": "Cc1cc(SCc2sc(-c3ccc(C(F)(F)F)cc3F)nc2C)ccc1O[Si](C)(C)C(C)(C)C",
+    "raw_response": "<answer>Cc1cc(SCc2sc(-c3ccc(C(F)(F)F)cc3F)nc2C)ccc1O[Si](C)(C)C(C)(C)C</answer>"
+  },
+  {
+    "index": 96,
+    "product_smiles": "CC(C)(C)OC(=O)N[C@@H]1CCN(C(=O)OCc2ccccc2)C[C@H]1O",
+    "reactants_smiles": "CC(C)(C)OC(=O)OC(=O)OC(C)(C)C.N[C@@H]1CCN(C(=O)OCc2ccccc2)C[C@H]1O",
+    "predicted_reactants_smiles": "CC(C)(C)OC(=O)OC(=O)OC(C)(C)C.N[C@@H]1CCN(C(=O)OCc2ccccc2)C[C@H]1O",
+    "raw_response": "<answer>CC(C)(C)OC(=O)OC(=O)OC(C)(C)C.N[C@@H]1CCN(C(=O)OCc2ccccc2)C[C@H]1O</answer>"
+  },
+  {
+    "index": 97,
+    "product_smiles": "CCC(=O)N(c1ccccc1)C1CCCN(Cc2ccccc2)C1",
+    "reactants_smiles": "CCC(=O)Cl.c1ccc(CN2CCCC(Nc3ccccc3)C2)cc1",
+    "predicted_reactants_smiles": "CCC(=O)Cl.c1ccc(CN2CCCC(Nc3ccccc3)C2)cc1",
+    "raw_response": "<answer>CCC(=O)Cl.c1ccc(CN2CCCC(Nc3ccccc3)C2)cc1</answer>"
+  },
+  {
+    "index": 98,
+    "product_smiles": "C=CCN1c2ccc3nc(OC(C)C)cc(C(F)(F)F)c3c2OC[C@H]1CC",
+    "reactants_smiles": "C=CCBr.CC[C@@H]1COc2c(ccc3nc(OC(C)C)cc(C(F)(F)F)c23)N1",
+    "predicted_reactants_smiles": "C=CCBr.CC[C@@H]1COc2c(ccc3nc(OC(C)C)cc(C(F)(F)F)c23)N1",
+    "raw_response": "<answer>C=CCBr.CC[C@@H]1COc2c(ccc3nc(OC(C)C)cc(C(F)(F)F)c23)N1</answer>"
+  },
+  {
+    "index": 99,
+    "product_smiles": "COc1nc2cc(Cl)ccc2nc1N1CCN(C)CC1",
+    "reactants_smiles": "COc1nc2cc(Cl)ccc2nc1Cl.CN1CCNCC1",
+    "predicted_reactants_smiles": "CN1CCNCC1.COc1nc2cc(Cl)ccc2nc1Cl",
+    "raw_response": "<answer>CN1CCNCC1.COc1nc2cc(Cl)ccc2nc1Cl</answer>"
+  }
+]
