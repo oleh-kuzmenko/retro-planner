@@ -1,7 +1,7 @@
 import re
 
 from retro_eval import prompting
-from retro_eval.prompting import build_cot_prompt, build_cot_repair_prompt
+from retro_eval.prompting import build_cot_prompt, build_cot_repair_prompt, build_rerank_prompt
 
 
 CYRILLIC_RE = re.compile(r"[Ѐ-ӿ]")
@@ -56,6 +56,25 @@ def test_build_cot_repair_prompt_includes_issues():
 
     assert "garbage" in prompt
     assert "failed RDKit validation" in prompt
+
+
+def test_build_rerank_prompt_lists_all_candidates_and_tags():
+    candidates = ["CC(=O)O.CCO", "CCOC(=O)C", "CCO"]
+    prompt = build_rerank_prompt(TARGET_SMILES, RAG_EXAMPLES, candidates)
+
+    for idx, candidate in enumerate(candidates, start=1):
+        assert f"Candidate {idx}: {candidate}" in prompt
+    assert "<think>" in prompt
+    assert "<answer>" in prompt
+    assert TARGET_SMILES in prompt
+    assert RAG_EXAMPLES[0]["reaction_smiles"] in prompt
+
+
+def test_build_rerank_prompt_handles_no_rag_examples():
+    prompt = build_rerank_prompt(TARGET_SMILES, [], ["CCO"])
+
+    assert "No literature precedents were retrieved." in prompt
+    assert "Candidate 1: CCO" in prompt
 
 
 def test_no_prompt_template_strings_contain_cyrillic_characters():

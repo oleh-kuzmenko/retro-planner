@@ -199,6 +199,20 @@ def mol_from_smiles_without_atom_maps(smiles: str | None):
     return mol
 
 
+def canonicalize_smiles_without_atom_maps(smiles: str | None) -> Optional[str]:
+    """Return canonical SMILES with atom-map numbers stripped, preserving dot-separated fragments."""
+    if not smiles:
+        return None
+
+    fragments: list[str] = []
+    for fragment in smiles.split("."):
+        mol = mol_from_smiles_without_atom_maps(fragment)
+        if mol is None:
+            return None
+        fragments.append(Chem.MolToSmiles(mol, canonical=True))
+    return ".".join(fragments)
+
+
 def parse_reaction_smiles(reaction_smiles: str | None):
     if not reaction_smiles or ">>" not in reaction_smiles:
         return None

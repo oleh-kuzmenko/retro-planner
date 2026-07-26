@@ -168,12 +168,13 @@ def merge_retrieval_hits(
 ) -> list[dict]:
     """Merge molecule/transform candidates and rank by the hybrid score.
 
-    Per PZ fig 3.2, the default hybrid score is exactly two Tanimoto
-    components: `weights.molecule * molecule_similarity +
-    weights.reaction * reaction_similarity`. `weights.reaction_class` blends
-    in a SMARTS-heuristic reaction-class similarity; it is an extension
-    beyond the PZ architecture and defaults to 0.0 (see
-    EXPERIMENTAL_RETRIEVAL_WEIGHTS in config.py to enable it).
+    The hybrid score blends three Tanimoto/heuristic components:
+    `weights.molecule * molecule_similarity + weights.reaction *
+    reaction_similarity + weights.reaction_class * reaction_class_similarity`.
+    The first two follow PZ fig 3.2; `reaction_class` is an extension beyond
+    the PZ architecture that biases retrieval toward precedents of the same
+    disconnection type (see reaction_classes.py), not just structurally
+    similar molecules.
     """
     merged: dict[str, dict] = {}
 

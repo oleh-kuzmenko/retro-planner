@@ -5,6 +5,7 @@ from retro_eval.harness.parsing import (
     parse_chemllm_answer,
     parse_cot_answer,
     parse_json_reactants_response,
+    parse_rerank_answer,
 )
 
 TARGET_SMILES = "CC(=O)OCC"
@@ -70,3 +71,55 @@ def test_parse_json_reactants_response_drops_unparseable_fragments():
     predicted, extra = parse_json_reactants_response(raw)
     assert predicted == "CCO"
     assert "Dropped 1" in extra["warnings"][0]
+
+
+RERANK_CANDIDATES = ["CCO", "CC(=O)Cl", "c1ccccc1"]
+
+
+def test_parse_rerank_answer_matches_exact_candidate():
+    raw = "<think>The alcohol plus acid chloride gives the ester.</think><answer>CC(=O)Cl</answer>"
+    predicted, extra = parse_rerank_answer(raw, RERANK_CANDIDATES)
+    assert predicted == "CC(=O)Cl"
+    assert extra["think"] == "The alcohol plus acid chloride gives the ester."
+    assert extra["warnings"] == []
+
+
+def test_parse_rerank_answer_matches_canonically_equivalent_candidate():
+    raw = "<answer>OCC</answer>"  # canonically equal to candidate "CCO"
+    predicted, extra = parse_rerank_answer(raw, RERANK_CANDIDATES)
+    assert predicted == "CCO"
+    assert extra["warnings"] == []
+
+
+def test_parse_rerank_answer_falls_back_to_candidate_1_without_answer_tag():
+    predicted, extra = parse_rerank_answer("I think it's the ester.", RERANK_CANDIDATES)
+    assert predicted == RERANK_CANDIDATES[0]
+    assert "did not contain an <answer> tag" in extra["warnings"][0]
+
+
+def test_parse_rerank_answer_falls_back_to_candidate_1_for_invalid_smiles():
+    raw = "<answer>not-a-smiles(((</answer>"
+    predicted, extra = parse_rerank_answer(raw, RERANK_CANDIDATES)
+    assert predicted == RERANK_CANDIDATES[0]
+    assert "failed RDKit validation" in extra["warnings"][0]
+
+
+def test_parse_rerank_answer_uses_literal_answer_when_not_a_shown_candidate():
+    raw = "<answer>CCN</answer>"  # valid SMILES, but not one of the shown candidates
+    predicted, extra = parse_rerank_answer(raw, RERANK_CANDIDATES)
+    assert predicted == "CCN"
+    assert "did not exactly match" in extra["warnings"][0]
+
+
+def test_parse_rerank_answer_skips_invalid_candidates_when_falling_back():
+    candidates = ["not-a-smiles(((", "CCO", "c1ccccc1"]
+    predicted, extra = parse_rerank_answer("no answer tag here", candidates)
+    assert predicted == "CCO"  # first *valid* candidate, not candidates[0]
+    assert "Fell back to the first valid T5 candidate" in extra["warnings"][0]
+
+
+def test_parse_rerank_answer_reports_failure_when_all_candidates_invalid():
+    candidates = ["not-a-smiles(((", "also-bad((", "still-bad(("]
+    predicted, extra = parse_rerank_answer("no answer tag here", candidates)
+    assert predicted == ""
+    assert extra["errors"]

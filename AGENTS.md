@@ -41,9 +41,10 @@ RAG (step 5) uses hybrid retrieval from two Qdrant collections:
 
 Qdrant's own Cosine distance only shortlists ANN candidates; retrieved hits are rescored
 with an exact Tanimoto coefficient and merged/reranked in `retrieval.py` with
-`weights.molecule * tanimoto_product + weights.reaction * tanimoto_transform` by default
-(`reaction_class` similarity is an opt-in extension, weight 0.0 unless
-`EXPERIMENTAL_RETRIEVAL_WEIGHTS` is used) before being passed to the LLM as CoT context.
+`weights.molecule * tanimoto_product + weights.reaction * tanimoto_transform +
+weights.reaction_class * reaction_class_similarity` (defaults: 0.5 / 0.3 / 0.2) before being
+passed to the LLM as CoT context. `reaction_class` biases retrieval toward precedents of the
+same disconnection type (see `reaction_classes.py`), not just structurally similar molecules.
 `scripts/index_uspto_to_qdrant.py`/`scripts/index_ord_to_qdrant.py` populate both
 collections from USPTO-50K/ORD, excluding whatever step 1 already wrote to
 `data/*_eval_targets.json` so those targets stay unseen by the RAG index.

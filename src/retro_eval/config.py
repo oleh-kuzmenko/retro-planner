@@ -12,19 +12,12 @@ VECTOR_SIZE = 2048
 @dataclass(frozen=True)
 class RetrievalWeights:
     molecule: float = 0.5
-    reaction: float = 0.5
-    reaction_class: float = 0.0
+    reaction: float = 0.3
+    reaction_class: float = 0.2
 
 
-# PZ fig 3.2: the hybrid score is exactly two Tanimoto components (product +
-# transform). reaction_class defaults to 0.0 so it does not contribute.
+# Extends the PZ fig 3.2 two-component hybrid score (product + transform
+# Tanimoto) with a SMARTS-heuristic reaction-class term (see
+# reaction_classes.py), so retrieval can prefer precedents of the same
+# disconnection type over precedents that merely look structurally similar.
 DEFAULT_RETRIEVAL_WEIGHTS = RetrievalWeights()
-
-# Extension beyond the PZ architecture: blends in a SMARTS-heuristic
-# reaction-class similarity (see reaction_classes.py). Opt in explicitly via
-# `RetrievalConfig(weights=EXPERIMENTAL_RETRIEVAL_WEIGHTS)`; not used by default.
-EXPERIMENTAL_RETRIEVAL_WEIGHTS = RetrievalWeights(
-    molecule=0.5,
-    reaction=0.3,
-    reaction_class=0.2,
-)

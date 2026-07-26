@@ -8,7 +8,7 @@ from typing import Optional
 
 from indexing_common import LOGGER, require_modules
 
-from retro_eval.chemistry import canonicalize_smiles
+from retro_eval.chemistry import canonicalize_smiles_without_atom_maps
 from retro_eval.reaction_classes import normalize_reaction_class
 
 DEFAULT_DATASET = "pingzhili/uspto-50k"
@@ -30,13 +30,22 @@ def require_uspto_dependencies() -> None:
 
 
 def canonicalize_reaction_side(smiles: str | Iterable[str] | None) -> Optional[str]:
+    """Canonicalize each fragment of a reaction side, stripping atom maps.
+
+    `rxn_smiles` in the source dataset is atom-mapped (unlike the dataset's
+    own `prod_smiles` column), and `normalize_row` below falls back to
+    splitting it when no clean reactants/product column is present. Atom
+    maps must be stripped here so payloads stay comparable to the unmapped
+    `product_smiles` in eval-targets files (see `load_excluded_product_smiles`
+    in `indexing_common.py`, which matches on that exact string).
+    """
     if smiles is None:
         return None
 
     parts = smiles.split(".") if isinstance(smiles, str) else list(smiles)
     canonical_parts = []
     for part in parts:
-        canonical = canonicalize_smiles(str(part).strip())
+        canonical = canonicalize_smiles_without_atom_maps(str(part).strip())
         if canonical:
             canonical_parts.append(canonical)
 
@@ -79,7 +88,7 @@ def normalize_row(row: dict, split: str, idx: int) -> Optional[dict]:
     if not product or not reactants:
         return None
 
-    product_canonical = canonicalize_smiles(product)
+    product_canonical = canonicalize_smiles_without_atom_maps(product)
     if not product_canonical:
         return None
 
