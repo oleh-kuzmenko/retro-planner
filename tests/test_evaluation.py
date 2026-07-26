@@ -1,9 +1,12 @@
 from retro_eval.evaluation import (
     canonical_precursor_set,
+    is_core_exact_match,
+    is_core_exact_match_smiles,
     is_exact_match,
     is_exact_match_smiles,
     is_valid_smiles,
     split_fragments,
+    strip_salts_and_catalysts,
     structure_success_rate,
 )
 
@@ -67,3 +70,48 @@ def test_is_exact_match_smiles_ignores_order_and_canonicalizes():
 def test_is_exact_match_smiles_false_for_empty_prediction_or_reference():
     assert is_exact_match_smiles("", "CCO") is False
     assert is_exact_match_smiles("CCO", None) is False
+
+
+def test_strip_salts_and_catalysts_drops_ions_and_carbon_free_molecules():
+    assert strip_salts_and_catalysts(["CCO", "[Na+]", "[OH-]", "O", "Cl"]) == ["CCO"]
+
+
+def test_strip_salts_and_catalysts_keeps_neutral_organometallics():
+    # Grignard reagent and a boronic acid genuinely contribute atoms to the product.
+    assert strip_salts_and_catalysts(["Br[Mg]c1ccccc1", "OB(O)c1cccs1"]) == [
+        "Br[Mg]c1ccccc1",
+        "OB(O)c1cccs1",
+    ]
+
+
+def test_strip_salts_and_catalysts_drops_charged_carbonate_despite_carbon():
+    assert strip_salts_and_catalysts(["CCO", "O=C([O-])[O-]", "[Na+]", "[Na+]"]) == ["CCO"]
+
+
+def test_strip_salts_and_catalysts_keeps_unparseable_fragments():
+    assert strip_salts_and_catalysts(["not-a-smiles"]) == ["not-a-smiles"]
+
+
+def test_is_core_exact_match_ignores_auxiliary_salts_on_both_sides():
+    predicted = ["CCN(CC)c1ccc(C(=O)c2ccccc2C(=O)O)c(C)c1", "CN(C)c1cccc(N(C)C)c1"]
+    reference = [
+        "CC(=O)OC(C)=O",
+        "CCN(CC)c1ccc(C(=O)c2ccccc2C(=O)O)c(C)c1",
+        "CN(C)c1cccc(N(C)C)c1",
+        "[Na+]",
+        "[OH-]",
+    ]
+    assert is_exact_match(predicted, reference) is False
+    assert is_core_exact_match(predicted, reference) is False  # CC(=O)OC(C)=O is organic, kept
+
+
+def test_is_core_exact_match_true_once_only_salts_differ():
+    predicted = ["CCO", "[Na+]"]
+    reference = ["CCO", "[Na+]", "[OH-]"]
+    assert is_exact_match(predicted, reference) is False
+    assert is_core_exact_match(predicted, reference) is True
+
+
+def test_is_core_exact_match_smiles_false_for_empty_prediction_or_reference():
+    assert is_core_exact_match_smiles("", "CCO") is False
+    assert is_core_exact_match_smiles("CCO", None) is False

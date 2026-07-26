@@ -106,6 +106,7 @@ class RetryingProvider:
         model: str,
         temperature: float,
         json_mode: bool = False,
+        reasoning_effort: str | None = None,
     ) -> str:
         import tenacity
 
@@ -120,7 +121,11 @@ class RetryingProvider:
         )
         def _call() -> str:
             return self._inner.generate(
-                messages=messages, model=model, temperature=temperature, json_mode=json_mode
+                messages=messages,
+                model=model,
+                temperature=temperature,
+                json_mode=json_mode,
+                reasoning_effort=reasoning_effort,
             )
 
         while True:

@@ -14,7 +14,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from retro_eval.evaluation import is_exact_match_smiles, is_valid_smiles
+from retro_eval.evaluation import is_core_exact_match_smiles, is_exact_match_smiles, is_valid_smiles
 from retro_eval.harness.experiment import RESULTS_FILENAME, RUN_META_FILENAME
 from retro_eval.harness.records import EvalRecord
 
@@ -97,6 +97,7 @@ def build_comparison_rows(
         fieldnames += [
             f"predicted_reactants_{run.model_slug}",
             f"exact_match_{run.model_slug}",
+            f"core_exact_match_{run.model_slug}",
             f"valid_{run.model_slug}",
         ]
 
@@ -124,6 +125,9 @@ def build_comparison_rows(
             row[f"exact_match_{run.model_slug}"] = (
                 is_exact_match_smiles(predicted, reference) if reference else False
             )
+            row[f"core_exact_match_{run.model_slug}"] = (
+                is_core_exact_match_smiles(predicted, reference) if reference else False
+            )
         rows.append(row)
 
     return fieldnames, rows
@@ -145,5 +149,11 @@ def summarize(model_runs: list[ModelRun], rows: list[dict]) -> dict[str, dict]:
             continue
         valid = sum(1 for row in rows if row.get(f"valid_{run.model_slug}"))
         exact_match = sum(1 for row in rows if row.get(f"exact_match_{run.model_slug}"))
-        summary[run.model_slug] = {"total": total, "valid": valid, "exact_match": exact_match}
+        core_exact_match = sum(1 for row in rows if row.get(f"core_exact_match_{run.model_slug}"))
+        summary[run.model_slug] = {
+            "total": total,
+            "valid": valid,
+            "exact_match": exact_match,
+            "core_exact_match": core_exact_match,
+        }
     return summary

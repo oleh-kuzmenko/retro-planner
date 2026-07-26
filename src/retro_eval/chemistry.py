@@ -83,6 +83,38 @@ def clean_and_canonicalize(smiles: str | None) -> Optional[str]:
     return canonicalize_smiles(smiles)
 
 
+def is_inorganic_salt_or_catalyst(smiles: str | None) -> bool:
+    """Heuristic: is this fragment a bare counter-ion, mineral salt, or simple inorganic catalyst?
+
+    True if the fragment carries a net formal charge (e.g. `[Na+]`, `[OH-]`, a
+    carbonate/sulfate ion) or contains no carbon atom at all (water, HCl, ammonia,
+    POCl3, a bare metal catalyst like `[Pd]`). These are the reaction-record
+    reagents/counterions (bases, drying agents, catalysts) that ORD/USPTO ground
+    truth lists alongside the true bond-forming reactants but that a retrosynthesis
+    model isn't expected to reconstruct verbatim.
+
+    Neutral, carbon-containing organometallics (Grignards, boronic acids, alkyl
+    halides) are left alone since they genuinely contribute atoms to the product.
+    Unparseable input returns False so it isn't silently stripped -- it still fails
+    downstream canonicalization like any other invalid fragment.
+    """
+    if not smiles:
+        return False
+
+    normalized = normalize_formula_smiles(smiles)
+    if not normalized:
+        return False
+
+    with rdBase.BlockLogs():
+        mol = Chem.MolFromSmiles(normalized)
+    if mol is None:
+        return False
+
+    if Chem.GetFormalCharge(mol) != 0:
+        return True
+    return not any(atom.GetSymbol() == "C" for atom in mol.GetAtoms())
+
+
 def morgan_array(smiles: str) -> Optional[np.ndarray]:
     normalized = normalize_formula_smiles(smiles)
     if not normalized:

@@ -46,6 +46,7 @@ class OpenAICompatibleLLMProvider:
         model: str,
         temperature: float,
         json_mode: bool = False,
+        reasoning_effort: str | None = None,
     ) -> str:
         request = {
             "model": model,
@@ -54,6 +55,8 @@ class OpenAICompatibleLLMProvider:
         }
         if json_mode:
             request["response_format"] = {"type": "json_object"}
+        if reasoning_effort:
+            request["reasoning_effort"] = reasoning_effort
 
         LOGGER.info(
             "Custom OpenAI chat request started model=%s temperature=%.2f "

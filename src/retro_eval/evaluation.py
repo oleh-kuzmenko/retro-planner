@@ -7,7 +7,7 @@ provider, no Qdrant) so they can be unit tested in isolation.
 
 from __future__ import annotations
 
-from retro_eval.chemistry import canonicalize_smiles
+from retro_eval.chemistry import canonicalize_smiles, is_inorganic_salt_or_catalyst
 
 
 def canonical_precursor_set(smiles_list: list[str]) -> frozenset[str] | None:
@@ -68,3 +68,32 @@ def is_exact_match_smiles(predicted: str | None, reference: str | None) -> bool:
     if not predicted or not reference:
         return False
     return is_exact_match(split_fragments(predicted), split_fragments(reference))
+
+
+def strip_salts_and_catalysts(fragments: list[str]) -> list[str]:
+    """Drop inorganic salt/counter-ion/catalyst fragments (see `is_inorganic_salt_or_catalyst`).
+
+    Fragments that fail to parse are kept rather than dropped, so an invalid
+    prediction still fails exact-match downstream instead of being masked by
+    having its garbage silently removed.
+    """
+    return [fragment for fragment in fragments if not is_inorganic_salt_or_catalyst(fragment)]
+
+
+def is_core_exact_match(predicted: list[str], reference: list[str]) -> bool:
+    """`is_exact_match`, ignoring inorganic salts/catalysts on both sides.
+
+    Reaction records (e.g. ORD) often list every reagent used -- bases, drying
+    salts, metal catalysts -- alongside the true bond-forming reactants. A model
+    that recovers the correct disconnection but omits those auxiliary reagents
+    (or a reranker that picks a beam missing them) should still count as correct
+    here, since it got the actual retrosynthetic transform right.
+    """
+    return is_exact_match(strip_salts_and_catalysts(predicted), strip_salts_and_catalysts(reference))
+
+
+def is_core_exact_match_smiles(predicted: str | None, reference: str | None) -> bool:
+    """`is_core_exact_match` for dot-joined prediction/reference strings instead of lists."""
+    if not predicted or not reference:
+        return False
+    return is_core_exact_match(split_fragments(predicted), split_fragments(reference))

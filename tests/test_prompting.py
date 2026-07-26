@@ -77,6 +77,17 @@ def test_build_rerank_prompt_handles_no_rag_examples():
     assert "Candidate 1: CCO" in prompt
 
 
+def test_build_rerank_prompt_flags_top_candidate_and_requires_reasoning():
+    candidates = ["CC(=O)O.CCO", "CCOC(=O)C"]
+    prompt = build_rerank_prompt(TARGET_SMILES, RAG_EXAMPLES, candidates)
+
+    assert "Candidate 1: CC(=O)O.CCO <- specialized model's top-ranked" in prompt
+    assert "Candidate 2: CCOC(=O)C" in prompt
+    assert "Candidate 2: CCOC(=O)C <-" not in prompt
+    assert "You MUST reason step by step" in prompt
+    assert "clear, specific evidence" in prompt
+
+
 def test_no_prompt_template_strings_contain_cyrillic_characters():
     with open(prompting.__file__, encoding="utf-8") as handle:
         module_source = handle.read()

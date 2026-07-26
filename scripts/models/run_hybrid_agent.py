@@ -39,7 +39,11 @@ this repo's actual aggregator only understands the dated run-folder layout above
 Talks to any OpenAI-compatible chat-completions endpoint via `--base-url`/`--api-key`/
 `--model` for the reranking call -- e.g. Groq's `llama-3.3-70b-versatile`, or any other
 OpenAI/Cerebras/OpenRouter-hosted model. Rate limits and long-pause/resume behavior are
-identical to `run_rag_cot_llm.py`/`run_cot_llm.py`.
+identical to `run_rag_cot_llm.py`/`run_cot_llm.py`. For a reasoning-capable reranker model
+(gpt-oss-*, o-series, ...), pass `--reasoning-effort high` so it actually deliberates
+before answering -- an eval run found it otherwise skipping straight to `<answer>` with
+no visible `<think>` reasoning in 98/100 records, which correlated with it swapping a
+correct top T5 beam for a "textbook-generic" but wrong alternative.
 
 Example:
     pip install -e ".[local-models,eval-runner]"
@@ -48,6 +52,10 @@ Example:
     python scripts/models/run_hybrid_agent.py --input data/uspto_eval_targets.json --limit 10 \\
         --base-url https://api.groq.com/openai/v1 --api-key $GROQ_API_KEY \\
         --model llama-3.3-70b-versatile
+    # For a reasoning-capable model instead, add --reasoning-effort high:
+    python scripts/models/run_hybrid_agent.py --input data/ord_eval_targets.json \\
+        --base-url https://api.cerebras.ai/v1 --api-key $CEREBRAS_API_KEY \\
+        --model gpt-oss-120b --reasoning-effort high
     # If it pauses on a rate limit, just rerun the same command later.
 """
 
@@ -180,6 +188,16 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--model", default="llama-3.3-70b-versatile", help="Reranker model id.")
     parser.add_argument("--temperature", type=float, default=0.0)
+    parser.add_argument(
+        "--reasoning-effort",
+        default=None,
+        choices=["low", "medium", "high"],
+        help="Forwarded as the API request's reasoning_effort field, for reasoning-capable "
+        "reranker models (e.g. gpt-oss-* on Cerebras/Groq/OpenRouter, OpenAI o-series). "
+        "Leave unset for non-reasoning models (e.g. Groq's llama-3.3), which reject the "
+        "field outright. An eval run found the reranker skipping its <think> reasoning "
+        "in 98/100 records without this set, silently guessing instead of deliberating.",
+    )
     parser.add_argument("--max-retries", type=int, default=5)
     parser.add_argument("--limit", type=int, default=None, help="Only process the first N records.")
     parser.add_argument(
@@ -311,6 +329,7 @@ def main() -> None:
                 model=args.model,
                 temperature=args.temperature,
                 json_mode=False,
+                reasoning_effort=args.reasoning_effort,
             )
             entry["raw_llm_response"] = raw
 

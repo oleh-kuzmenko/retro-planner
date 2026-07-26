@@ -67,7 +67,8 @@ def main() -> None:
 
     for model_slug, stats in summarize(model_runs, rows).items():
         LOGGER.info(
-            "  %s: validity=%d/%d (%.1f%%), exact_match=%d/%d (%.1f%%)",
+            "  %s: validity=%d/%d (%.1f%%), exact_match=%d/%d (%.1f%%), "
+            "core_exact_match=%d/%d (%.1f%%)",
             model_slug,
             stats["valid"],
             stats["total"],
@@ -75,6 +76,9 @@ def main() -> None:
             stats["exact_match"],
             stats["total"],
             100 * stats["exact_match"] / stats["total"],
+            stats["core_exact_match"],
+            stats["total"],
+            100 * stats["core_exact_match"] / stats["total"],
         )
 
 
