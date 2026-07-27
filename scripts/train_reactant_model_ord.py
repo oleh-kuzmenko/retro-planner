@@ -59,7 +59,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--per-device-train-batch-size", type=int, default=16)
     parser.add_argument("--per-device-eval-batch-size", type=int, default=16)
     parser.add_argument("--gradient-accumulation-steps", type=int, default=1)
-    parser.add_argument("--learning-rate", type=float, default=3e-4)
+    parser.add_argument(
+        "--learning-rate",
+        type=float,
+        default=5e-5,
+        help="Full fine-tune of an already-pretrained checkpoint; kept conservative "
+        "(was 3e-4 in an earlier version, which measurably degraded ORD accuracy "
+        "below the pre-fine-tune baseline -- see diploma methodology notes).",
+    )
+    parser.add_argument("--warmup-ratio", type=float, default=0.06)
     parser.add_argument("--save-steps", type=int, default=250)
     parser.add_argument("--eval-steps", type=int, default=250)
     parser.add_argument("--logging-steps", type=int, default=25)
@@ -157,6 +165,7 @@ def main() -> None:
         per_device_eval_batch_size=args.per_device_eval_batch_size,
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         learning_rate=args.learning_rate,
+        warmup_ratio=args.warmup_ratio,
         eval_strategy="steps",
         eval_steps=args.eval_steps,
         save_strategy="steps",
@@ -164,6 +173,9 @@ def main() -> None:
         save_total_limit=args.save_total_limit,
         logging_steps=args.logging_steps,
         predict_with_generate=False,
+        load_best_model_at_end=True,
+        metric_for_best_model="eval_loss",
+        greater_is_better=False,
         report_to=[],
         seed=args.seed,
     )
