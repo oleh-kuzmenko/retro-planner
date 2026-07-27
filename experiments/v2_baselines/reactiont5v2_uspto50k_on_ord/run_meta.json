@@ -1,0 +1,21 @@
+{
+  "model_slug": "reactiont5v2_uspto50k_on_ord",
+  "script": "scripts/models/run_reactiont5.py",
+  "cli_args": {
+    "input": "data/v2_ord_eval_targets.json",
+    "model_slug": "reactiont5v2_uspto50k_on_ord",
+    "t5_model": "sagawa/ReactionT5v2-retrosynthesis-USPTO_50k",
+    "num_beams": 5,
+    "max_length": 150,
+    "device": "cpu",
+    "limit": null,
+    "experiment_id": "v2_baselines",
+    "experiments_root": "experiments"
+  },
+  "input_path": "data/v2_ord_eval_targets.json",
+  "input_sha256": "ecf1c095965fdee1daa09b6db24c514a610f375b031aace299577390de818e85",
+  "record_count": 300,
+  "status": "completed",
+  "started_at": "2026-07-26T20:39:18.892463+00:00",
+  "finished_at": "2026-07-26T20:49:15.620807+00:00"
+}

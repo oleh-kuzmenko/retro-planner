@@ -1,6 +1,47 @@
 # Agent Notes
 
-## Project Overview
+## v2 rebuild (current direction)
+
+The RAG/Qdrant + LLM-rerank hybrid and the Qwen2.5-7B+LoRA line of experiments below are
+kept in the repo but are **no longer the thesis's proposed system** and their old
+`experiments/` numbers (100-target sets) are **not cited as results** -- a naive LLM
+rerank measurably hurt a strong ReactionT5v2 baseline, and separately the original
+`data/uspto_eval_targets.json` was found to leak 89/100 of its "test" targets into
+ReactionT5v2's own USPTO-50k training split (see `build_eval_targets_uspto_test_holdout.py`
+docstring), inflating that baseline. The thesis pivoted to a lighter, fully self-trained
+two-stage system, rebuilt from scratch with leak-checked data:
+
+- `build_eval_targets_uspto_test_holdout.py` (canonical `bisectgroup/USPTO_50K` **test**
+  split, not `pingzhili/uspto-50k` train/val) and `build_eval_targets_ord.py` produce the
+  new ~300-target eval sets: `data/v2_uspto_eval_targets.json`, `data/v2_ord_eval_targets.json`.
+- `build_train_data_ord.py` draws ONE eval-excluded, stratified ORD sample and derives both
+  Model 1's reactant train/val split and Model 2's condition train/val/test split from it
+  (`data/v2_ord_train/*.jsonl`) -- single documented source, zero leakage by construction
+  (verified: 0 product_smiles overlap in every pairwise check). `build_train_data_uspto.py`
+  writes the canonical USPTO-50k train split (`data/v2_uspto_train/reactants_train.jsonl`)
+  for optional mixed fine-tuning.
+- **Model 1** (`train_reactant_model_ord.py`): fine-tunes `sagawa/ReactionT5v2-retrosynthesis`
+  -- the checkpoint right after ORD reaction-pretraining, *before* Sagawa/Kojima's own
+  USPTO-50k fine-tuning -- on the new ORD train split. Checkpoints to a Google-Drive path
+  with HF Trainer's own resume mechanism (`get_last_checkpoint`), plus a
+  `--time-budget-minutes` callback that force-saves and stops cleanly, so training survives
+  Colab's ~3h/day session cap across multiple days. Colab wrapper: `colab/05_train_reactant_ord.ipynb`.
+- **Model 2** (`train_conditions_model.py`): full fine-tune of a plain `t5-small`/`t5-base`
+  (not chemically pretrained, unlike Model 1) predicting a JSON
+  solvent/catalyst/temperature_celsius/yield_percent string from
+  `PRODUCT: ... REACTANTS: ...` text input. Same checkpoint/resume design. Colab wrapper:
+  `colab/06_train_conditions_model.ipynb`. Evaluated by `evaluate_conditions_model.py`
+  against the held-out `data/v2_ord_train/conditions_test.jsonl`.
+- Pipeline: target SMILES -> Model 1 -> RDKit validity check
+  (`retro_eval.evaluation.is_valid_smiles`) -> Model 2 (product + validated reactants) ->
+  conditions. No Qdrant, no external LLM API call, at inference time.
+
+When resuming work on this, prefer extending the v2 scripts above over reviving the RAG
+comparison; if you touch `data/v2_*` files, re-run the leakage check (compare
+`product_smiles` sets pairwise across every eval/train/val/test file involved) before
+trusting new numbers.
+
+## Project Overview (original 4-way comparison -- historical, see above)
 
 CLI research toolkit comparing 4 retrosynthesis-prediction approaches on the same fixed
 100-reaction test set, for a bachelor's thesis. No web app: each approach runs as its own

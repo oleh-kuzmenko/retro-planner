@@ -14,3 +14,9 @@ research/fine-tune/v2/01/content/
 research/fine-tune/v2/02/*.jsonl
 .claude/settings.local.json
 .claude
+
+# v2 rebuild: large derived train/val/test splits regenerated deterministically
+# (fixed seed) by build_train_data_ord.py / build_train_data_uspto.py -- only the
+# small, fixed eval-target JSONs (data/v2_*_eval_targets.json) are committed.
+data/v2_ord_train/
+data/v2_uspto_train/
