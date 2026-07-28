@@ -55,19 +55,46 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, required=True, help="Google-Drive-mounted path, not local disk.")
     parser.add_argument("--max-source-length", type=int, default=150)
     parser.add_argument("--max-target-length", type=int, default=150)
-    parser.add_argument("--num-train-epochs", type=float, default=3.0)
+    parser.add_argument(
+        "--num-train-epochs",
+        type=float,
+        default=2.0,
+        help="Lowered from 3.0: v3 showed eval_loss bottoming out and then climbing "
+        "monotonically from ~7% into epoch 1 already, i.e. well under one epoch -- "
+        "further epochs mostly burn Colab time past the point load_best_model_at_end "
+        "will roll back to anyway.",
+    )
     parser.add_argument("--per-device-train-batch-size", type=int, default=16)
     parser.add_argument("--per-device-eval-batch-size", type=int, default=16)
     parser.add_argument("--gradient-accumulation-steps", type=int, default=1)
     parser.add_argument(
         "--learning-rate",
         type=float,
-        default=5e-5,
-        help="Full fine-tune of an already-pretrained checkpoint; kept conservative "
-        "(was 3e-4 in an earlier version, which measurably degraded ORD accuracy "
-        "below the pre-fine-tune baseline -- see diploma methodology notes).",
+        default=2e-5,
+        help="Lowered from 5e-5 (already lowered once from an initial 3e-4 -- see "
+        "diploma methodology notes): v3 at 5e-5 still overfit within well under one "
+        "epoch (eval_loss rising monotonically from the first measurement), so "
+        "trying a gentler rate to see whether the useful-improvement window widens.",
+    )
+    parser.add_argument(
+        "--weight-decay",
+        type=float,
+        default=0.01,
+        help="Was unset (0.0) in v2/v3; a small decay is standard practice and a cheap "
+        "extra guard against the fast overfitting v3 showed.",
     )
     parser.add_argument("--warmup-ratio", type=float, default=0.06)
+    parser.add_argument(
+        "--augment-prob",
+        type=float,
+        default=0.5,
+        help="Probability of showing a randomized (vs. canonical) SMILES rendering for "
+        "each training example on each access. v3 always randomized (prob=1.0), which "
+        "may have widened the train/validation distribution gap (validation always "
+        "stays canonical) and contributed to the fast overfitting observed -- 0.5 keeps "
+        "most of the augmentation benefit while regularly showing the same canonical "
+        "form validation uses.",
+    )
     parser.add_argument("--save-steps", type=int, default=250)
     parser.add_argument("--eval-steps", type=int, default=250)
     parser.add_argument(
@@ -210,19 +237,27 @@ def main() -> None:
     else:
         import numpy as np
 
-        from retro_eval.chemistry import randomize_smiles
+        from retro_eval.chemistry import canonicalize_smiles, randomize_smiles
 
         rng = np.random.default_rng(args.seed)
 
+        def augment_one(smiles: str) -> str:
+            if rng.random() < args.augment_prob:
+                return randomize_smiles(smiles, rng) or smiles
+            return canonicalize_smiles(smiles) or smiles
+
         def preprocess_augmented(examples):
-            product_smiles = [randomize_smiles(p, rng) or p for p in examples["product_smiles"]]
-            reactants_smiles = [randomize_smiles(r, rng) or r for r in examples["reactants_smiles"]]
+            product_smiles = [augment_one(p) for p in examples["product_smiles"]]
+            reactants_smiles = [augment_one(r) for r in examples["reactants_smiles"]]
             model_inputs = tokenizer(product_smiles, max_length=args.max_source_length, truncation=True)
             labels = tokenizer(text_target=reactants_smiles, max_length=args.max_target_length, truncation=True)
             model_inputs["labels"] = labels["input_ids"]
             return model_inputs
 
-        logger.info("SMILES augmentation ON: train split re-randomized on every access (online, per-epoch).")
+        logger.info(
+            "SMILES augmentation ON (prob=%.2f): train split re-randomized on every access (online, per-epoch).",
+            args.augment_prob,
+        )
         train_raw = raw["train"].remove_columns(
             [c for c in raw["train"].column_names if c not in ("product_smiles", "reactants_smiles")]
         )
@@ -239,6 +274,7 @@ def main() -> None:
         per_device_eval_batch_size=args.per_device_eval_batch_size,
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         learning_rate=args.learning_rate,
+        weight_decay=args.weight_decay,
         warmup_ratio=args.warmup_ratio,
         eval_strategy="steps",
         eval_steps=args.eval_steps,
