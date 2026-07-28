@@ -24,7 +24,19 @@ checkpoint, reporting:
   checks showed most of those "present" predictions do not actually match
   the reference. Report exact_match/any_overlap, not present_rate, as the
   correctness numbers in the thesis.
-- temperature_within_20c_rate / yield_within_15pct_rate: fraction of
+- {field}_same_group_rate (solvent, catalyst): a chemistry-informed relaxation
+  of exact_match -- e.g. dichloromethane and chloroform are both common
+  chlorinated solvents and arguably an interchangeable prediction, but
+  exact_match (and even any_overlap, if no single component is byte-identical)
+  scores that as wrong. `retro_eval.condition_similarity` classifies each
+  component into a small hand-curated family (by polarity/functional class
+  for solvents, by central metal or base/acid family for catalysts); this
+  metric counts a prediction as correct if every reference component's
+  family is also present among the predicted components' families. Only
+  counted over rows where the reference is actually classifiable (unknown
+  solvents/catalysts fall back to being excluded from this rate, not counted
+  as wrong) -- `{field}_same_group_classifiable_count` reports how many that was.
+- temperature_within_10c_rate / yield_within_10pct_rate: fraction of
   populated-reference rows where the predicted numeric value is within a
   practical tolerance of the reference (both are inherently approximate
   quantities reported inconsistently across ORD source papers). These two
@@ -45,6 +57,12 @@ import logging
 from pathlib import Path
 
 from train_conditions_model import CONDITION_FIELDS, format_input
+from retro_eval.condition_similarity import catalyst_group, component_groups, solvent_group
+
+TEMPERATURE_TOLERANCE_C = 10.0
+YIELD_TOLERANCE_PCT = 10.0
+
+GROUP_CLASSIFIERS = {"solvent": solvent_group, "catalyst": catalyst_group}
 
 LOGGER = logging.getLogger("retro_eval.evaluate_conditions_model")
 
@@ -116,7 +134,7 @@ def main() -> None:
     match_totals = {
         f"{field}_{kind}": 0
         for field in ("solvent", "catalyst")
-        for kind in ("expected", "exact_match", "any_overlap")
+        for kind in ("expected", "exact_match", "any_overlap", "same_group_classifiable", "same_group_match")
     }
     json_valid = 0
     temp_within_tol = 0
@@ -171,18 +189,27 @@ def main() -> None:
                 if pred_set is not None and (pred_set & ref_set):
                     match_totals[f"{field}_any_overlap"] += 1
 
+                classifier = GROUP_CLASSIFIERS[field]
+                ref_groups = component_groups(row.get(field), classifier)
+                if ref_groups is None:
+                    continue
+                match_totals[f"{field}_same_group_classifiable"] += 1
+                pred_groups = component_groups(parsed.get(field), classifier)
+                if pred_groups is not None and ref_groups <= pred_groups:
+                    match_totals[f"{field}_same_group_match"] += 1
+
             ref_temp = to_number(row.get("temperature_celsius"))
             pred_temp = to_number(parsed.get("temperature_celsius"))
             if ref_temp is not None:
                 temp_expected += 1
-                if pred_temp is not None and abs(pred_temp - ref_temp) <= 20:
+                if pred_temp is not None and abs(pred_temp - ref_temp) <= TEMPERATURE_TOLERANCE_C:
                     temp_within_tol += 1
 
             ref_yield = to_number(row.get("yield_percent"))
             pred_yield = to_number(parsed.get("yield_percent"))
             if ref_yield is not None:
                 yield_expected += 1
-                if pred_yield is not None and abs(pred_yield - ref_yield) <= 15:
+                if pred_yield is not None and abs(pred_yield - ref_yield) <= YIELD_TOLERANCE_PCT:
                     yield_within_tol += 1
 
         records.append(record)
@@ -195,14 +222,20 @@ def main() -> None:
         summary[f"{field}_present_rate_of_expected"] = predicted / expected if expected else None
         summary[f"{field}_expected_count"] = expected
 
-    summary["temperature_within_20c_rate"] = temp_within_tol / temp_expected if temp_expected else None
-    summary["yield_within_15pct_rate"] = yield_within_tol / yield_expected if yield_expected else None
+    summary["temperature_within_10c_rate"] = temp_within_tol / temp_expected if temp_expected else None
+    summary["yield_within_10pct_rate"] = yield_within_tol / yield_expected if yield_expected else None
 
     for field in ("solvent", "catalyst"):
         expected = match_totals[f"{field}_expected"]
         summary[f"{field}_exact_match_rate"] = match_totals[f"{field}_exact_match"] / expected if expected else None
         summary[f"{field}_any_overlap_rate"] = match_totals[f"{field}_any_overlap"] / expected if expected else None
         summary[f"{field}_match_expected_count"] = expected
+
+        classifiable = match_totals[f"{field}_same_group_classifiable"]
+        summary[f"{field}_same_group_rate"] = (
+            match_totals[f"{field}_same_group_match"] / classifiable if classifiable else None
+        )
+        summary[f"{field}_same_group_classifiable_count"] = classifiable
 
     LOGGER.info("Summary: %s", json.dumps(summary, indent=2))
     args.output.write_text(json.dumps({"summary": summary, "records": records}, indent=2, ensure_ascii=False), encoding="utf-8")

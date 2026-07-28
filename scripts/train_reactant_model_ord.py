@@ -71,7 +71,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--save-steps", type=int, default=250)
     parser.add_argument("--eval-steps", type=int, default=250)
     parser.add_argument("--logging-steps", type=int, default=25)
-    parser.add_argument("--save-total-limit", type=int, default=3)
+    parser.add_argument(
+        "--save-total-limit",
+        type=int,
+        default=2,
+        help="Kept low for Google Drive's free-tier ~15GB quota; combined with "
+        "optim=adafactor (much smaller optimizer state than AdamW) to keep each "
+        "checkpoint's disk footprint down. load_best_model_at_end always protects "
+        "the best checkpoint from rotation regardless of this limit.",
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument(
         "--time-budget-minutes",
@@ -176,6 +184,7 @@ def main() -> None:
         load_best_model_at_end=True,
         metric_for_best_model="eval_loss",
         greater_is_better=False,
+        optim="adafactor",
         report_to=[],
         seed=args.seed,
     )
