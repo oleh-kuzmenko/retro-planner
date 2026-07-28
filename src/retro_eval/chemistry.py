@@ -83,6 +83,44 @@ def clean_and_canonicalize(smiles: str | None) -> Optional[str]:
     return canonicalize_smiles(smiles)
 
 
+def randomize_smiles(smiles: str | None, rng: "np.random.Generator | None" = None) -> Optional[str]:
+    """Return a non-canonical, randomly-rooted/ordered SMILES for the same molecule.
+
+    Standard data-augmentation technique for seq2seq reaction models (Tetko
+    et al. 2020; RSGPT, Nat. Commun. 2025): training on multiple valid string
+    representations of the same molecule teaches the model the underlying
+    graph invariance instead of memorizing one canonical string per molecule,
+    which the literature reports as worth roughly +10-14 points of absolute
+    top-1 accuracy. Multi-fragment (dot-joined) SMILES are randomized
+    fragment-by-fragment, preserving fragment count.
+
+    Falls back to the canonical SMILES if the input doesn't parse, so this
+    is always safe to call in place of `canonicalize_smiles` during training.
+    """
+    if not smiles:
+        return None
+
+    fragments = smiles.split(".")
+    randomized_fragments = []
+    for fragment in fragments:
+        canonical = canonicalize_smiles(fragment)
+        if canonical is None:
+            return None
+        with rdBase.BlockLogs():
+            mol = Chem.MolFromSmiles(canonical)
+        if mol is None:
+            randomized_fragments.append(canonical)
+            continue
+        atom_indices = list(range(mol.GetNumAtoms()))
+        if rng is not None:
+            rng.shuffle(atom_indices)
+        else:
+            np.random.shuffle(atom_indices)
+        shuffled = Chem.RenumberAtoms(mol, atom_indices)
+        randomized_fragments.append(Chem.MolToSmiles(shuffled, canonical=False, doRandom=False))
+    return ".".join(randomized_fragments)
+
+
 def is_inorganic_salt_or_catalyst(smiles: str | None) -> bool:
     """Heuristic: is this fragment a bare counter-ion, mineral salt, or simple inorganic catalyst?
 

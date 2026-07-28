@@ -70,7 +70,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--warmup-ratio", type=float, default=0.06)
     parser.add_argument("--save-steps", type=int, default=250)
     parser.add_argument("--eval-steps", type=int, default=250)
-    parser.add_argument("--logging-steps", type=int, default=25)
+    parser.add_argument(
+        "--logging-steps",
+        type=int,
+        default=200,
+        help="Kept high (was 25) -- Colab's browser tab can hang after a couple hours if "
+        "the notebook cell's output/DOM grows too large from frequent log lines and "
+        "per-step tqdm bar updates. The per-step progress bar itself is disabled "
+        "unconditionally (see --enable-tqdm) in favor of this periodic printout.",
+    )
+    parser.add_argument(
+        "--enable-tqdm",
+        action="store_true",
+        help="Re-enable the per-step progress bar (off by default -- see --logging-steps).",
+    )
     parser.add_argument(
         "--save-total-limit",
         type=int,
@@ -81,6 +94,16 @@ def parse_args() -> argparse.Namespace:
         "the best checkpoint from rotation regardless of this limit.",
     )
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--no-augment",
+        action="store_true",
+        help="Disable SMILES-randomization data augmentation (on by default). Literature "
+        "(Tetko et al. 2020; RSGPT, Nat. Commun. 2025) reports roughly +10-14 points "
+        "absolute top-1 accuracy from training on randomized, non-canonical SMILES "
+        "instead of memorizing one canonical string per molecule. Applied online (a "
+        "fresh random rendering each epoch) to the train split only -- validation stays "
+        "canonical/deterministic so eval_loss is comparable across checkpoints.",
+    )
     parser.add_argument(
         "--time-budget-minutes",
         type=float,
@@ -118,6 +141,11 @@ def main() -> None:
     import logging
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    # huggingface_hub/urllib3 log an INFO line per HTTP request (model/tokenizer
+    # download HEAD/GET calls) -- harmless but adds noise; only training's own
+    # logger and Trainer's own periodic logging_steps output should be visible.
+    for noisy_logger in ("httpx", "httpcore", "huggingface_hub", "urllib3", "filelock"):
+        logging.getLogger(noisy_logger).setLevel(logging.WARNING)
     logger = logging.getLogger(LOGGER_NAME)
 
     args = parse_args()
@@ -138,6 +166,16 @@ def main() -> None:
     logger.info("Loading base checkpoint: %s", args.base_model)
     tokenizer = AutoTokenizer.from_pretrained(args.base_model)
     model = AutoModelForSeq2SeqLM.from_pretrained(args.base_model)
+    # sagawa/ReactionT5v2-* checkpoints ship config.tie_word_embeddings=True but
+    # lm_head.weight actually differs from shared.weight in the checkpoint, so
+    # transformers refuses to tie them at load time and prints a warning.
+    # Matching the config to that reality silences it. (Separately,
+    # encoder.embed_tokens/decoder.embed_tokens always alias the same `shared`
+    # module by T5's architecture -- save/reload logs a "missing keys" note for
+    # those two, which is expected and harmless; verified after a smoke run
+    # that the reloaded embeddings are non-random and reflect training, not a
+    # reinit.)
+    model.config.tie_word_embeddings = False
 
     data_files = {"train": str(args.train_file), "validation": str(args.val_file)}
     raw = load_dataset("json", data_files=data_files)
@@ -163,7 +201,35 @@ def main() -> None:
         model_inputs["labels"] = labels["input_ids"]
         return model_inputs
 
-    tokenized = raw.map(preprocess, batched=True, remove_columns=raw["train"].column_names)
+    validation_tokenized = raw["validation"].map(
+        preprocess, batched=True, remove_columns=raw["validation"].column_names
+    )
+
+    if args.no_augment:
+        train_tokenized = raw["train"].map(preprocess, batched=True, remove_columns=raw["train"].column_names)
+    else:
+        import numpy as np
+
+        from retro_eval.chemistry import randomize_smiles
+
+        rng = np.random.default_rng(args.seed)
+
+        def preprocess_augmented(examples):
+            product_smiles = [randomize_smiles(p, rng) or p for p in examples["product_smiles"]]
+            reactants_smiles = [randomize_smiles(r, rng) or r for r in examples["reactants_smiles"]]
+            model_inputs = tokenizer(product_smiles, max_length=args.max_source_length, truncation=True)
+            labels = tokenizer(text_target=reactants_smiles, max_length=args.max_target_length, truncation=True)
+            model_inputs["labels"] = labels["input_ids"]
+            return model_inputs
+
+        logger.info("SMILES augmentation ON: train split re-randomized on every access (online, per-epoch).")
+        train_raw = raw["train"].remove_columns(
+            [c for c in raw["train"].column_names if c not in ("product_smiles", "reactants_smiles")]
+        )
+        train_raw.set_transform(preprocess_augmented)
+        train_tokenized = train_raw
+
+    tokenized = {"train": train_tokenized, "validation": validation_tokenized}
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     training_args = Seq2SeqTrainingArguments(
@@ -180,6 +246,8 @@ def main() -> None:
         save_steps=args.save_steps,
         save_total_limit=args.save_total_limit,
         logging_steps=args.logging_steps,
+        disable_tqdm=not args.enable_tqdm,
+        log_level="warning",
         predict_with_generate=False,
         load_best_model_at_end=True,
         metric_for_best_model="eval_loss",
@@ -187,6 +255,7 @@ def main() -> None:
         optim="adafactor",
         report_to=[],
         seed=args.seed,
+        remove_unused_columns=False,
     )
 
     trainer = Seq2SeqTrainer(

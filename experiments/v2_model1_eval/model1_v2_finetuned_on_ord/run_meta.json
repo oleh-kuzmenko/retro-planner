@@ -1,0 +1,21 @@
+{
+  "model_slug": "model1_v2_finetuned_on_ord",
+  "script": "scripts/models/run_reactiont5.py",
+  "cli_args": {
+    "input": "data/v2_ord_eval_targets.json",
+    "model_slug": "model1_v2_finetuned_on_ord",
+    "t5_model": "/Users/Oleh/Documents/diploma/retro-planner-checkpoints/model1_reactant_v2/final",
+    "num_beams": 5,
+    "max_length": 150,
+    "device": "cpu",
+    "limit": null,
+    "experiment_id": "v2_model1_eval",
+    "experiments_root": "experiments"
+  },
+  "input_path": "data/v2_ord_eval_targets.json",
+  "input_sha256": "ecf1c095965fdee1daa09b6db24c514a610f375b031aace299577390de818e85",
+  "record_count": 300,
+  "status": "completed",
+  "started_at": "2026-07-28T09:47:28.923772+00:00",
+  "finished_at": "2026-07-28T10:01:36.869535+00:00"
+}

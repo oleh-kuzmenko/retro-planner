@@ -54,7 +54,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--learning-rate", type=float, default=5e-4)
     parser.add_argument("--save-steps", type=int, default=250)
     parser.add_argument("--eval-steps", type=int, default=250)
-    parser.add_argument("--logging-steps", type=int, default=25)
+    parser.add_argument(
+        "--logging-steps",
+        type=int,
+        default=200,
+        help="Kept high (was 25) -- Colab's browser tab can hang after a couple hours if "
+        "the notebook cell's output/DOM grows too large from frequent log lines and "
+        "per-step tqdm bar updates. The per-step progress bar itself is disabled "
+        "unconditionally (see --enable-tqdm) in favor of this periodic printout.",
+    )
+    parser.add_argument(
+        "--enable-tqdm",
+        action="store_true",
+        help="Re-enable the per-step progress bar (off by default -- see --logging-steps).",
+    )
     parser.add_argument(
         "--save-total-limit",
         type=int,
@@ -102,6 +115,8 @@ def main() -> None:
     import logging
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    for noisy_logger in ("httpx", "httpcore", "huggingface_hub", "urllib3", "filelock"):
+        logging.getLogger(noisy_logger).setLevel(logging.WARNING)
     logger = logging.getLogger(LOGGER_NAME)
 
     args = parse_args()
@@ -157,6 +172,8 @@ def main() -> None:
         save_steps=args.save_steps,
         save_total_limit=args.save_total_limit,
         logging_steps=args.logging_steps,
+        disable_tqdm=not args.enable_tqdm,
+        log_level="warning",
         predict_with_generate=False,
         load_best_model_at_end=True,
         metric_for_best_model="eval_loss",
