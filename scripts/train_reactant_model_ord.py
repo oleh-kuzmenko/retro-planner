@@ -12,15 +12,25 @@ against `data/v2_ord_eval_targets.json`, see `build_train_data_ord.py`).
 Designed for Google Colab T4 sessions capped at ~3 hours/day:
 
 - `--output-dir` should be a Google-Drive-mounted path (e.g.
-  `/content/drive/MyDrive/retro-planner-checkpoints/model1_reactant`), NOT
-  local Colab disk -- local `/content` is wiped between sessions.
-- The script auto-resumes from the latest checkpoint already in
-  `--output-dir`, via `transformers.trainer_utils.get_last_checkpoint`, so
-  re-running the exact same command on a fresh Colab session continues
-  training rather than restarting.
+  `/content/drive/MyDrive/retro-planner-checkpoints/model1_reactant`) --
+  this is where the *cross-session* resume checkpoint and the final model
+  end up, so they survive a Colab disconnect/session reset.
+- **Trainer itself checkpoints and rotates on local Colab disk**
+  (`--local-work-dir`, wiped between sessions), NOT directly on the
+  Drive-mounted path. Earlier versions had Trainer's own `save_total_limit`
+  rotation running straight on Drive, and Google Drive's FUSE mount moves
+  deleted files to Trash instead of freeing them -- besides not reclaiming
+  quota, this was observed to occasionally corrupt the rotation bookkeeping
+  (partially-restored/empty checkpoint folders, resume picking the wrong
+  one, or not resuming at all). Local disk has none of that: Trainer's
+  rotation is fast, reliable, and ordinary POSIX semantics. After every
+  save, a callback copies (overwrites in place, same filenames every time --
+  never deletes anything on Drive) the just-written local checkpoint to
+  `{output_dir}/latest_checkpoint`, which is the one and only thing this
+  script ever reads back from Drive to resume.
 - `--time-budget-minutes` stops training early (forcing an immediate
-  checkpoint save) before Colab's own session timeout, instead of losing a
-  partially-completed step.
+  checkpoint save + Drive sync) before Colab's own session timeout, instead
+  of losing a partially-completed step.
 
 Example (every day, same command -- first run starts training, later runs resume):
     python scripts/train_reactant_model_ord.py \\
@@ -52,7 +62,24 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional additional JSONL (e.g. data/v2_uspto_train/reactants_train.jsonl) mixed into training.",
     )
-    parser.add_argument("--output-dir", type=Path, required=True, help="Google-Drive-mounted path, not local disk.")
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        required=True,
+        help="Google-Drive-mounted path. Only ever written to as: overwrite-in-place "
+        "{output_dir}/latest_checkpoint (cross-session resume point) and one-time "
+        "{output_dir}/final -- never rotated/deleted, so Drive's Trash-on-delete "
+        "behavior never comes into play.",
+    )
+    parser.add_argument(
+        "--local-work-dir",
+        type=Path,
+        default=Path("/content/local_model1_work"),
+        help="Local (non-Drive) scratch directory where Trainer actually checkpoints "
+        "and rotates old checkpoints (fast, reliable, ordinary filesystem semantics). "
+        "Wiped between Colab sessions -- that's fine, --output-dir/latest_checkpoint "
+        "is what survives across sessions.",
+    )
     parser.add_argument("--max-source-length", type=int, default=150)
     parser.add_argument("--max-target-length", type=int, default=150)
     parser.add_argument(
@@ -164,39 +191,54 @@ class TimeBudgetCallback:
         return _Callback()
 
 
-def find_valid_last_checkpoint(output_dir: Path, logger) -> str | None:
-    """Like `transformers.trainer_utils.get_last_checkpoint`, but skips empty/corrupt folders.
+def is_valid_checkpoint_dir(path: Path) -> bool:
+    """Whether `path` has the minimum files needed to resume from it."""
+    if not path.is_dir():
+        return False
+    has_weights = any((path / name).exists() for name in ("model.safetensors", "pytorch_model.bin"))
+    has_trainer_state = (path / "trainer_state.json").exists()
+    return has_weights and has_trainer_state
 
-    Google Drive's FUSE mount in Colab moves deleted files to Drive's Trash
-    instead of freeing them, and has been observed to occasionally leave a
-    checkpoint's now-emptied directory shell behind (contents trashed, folder
-    not removed) instead of cleanly dropping the whole `checkpoint-N` folder.
-    `get_last_checkpoint` would happily "resume" from such an empty folder and
-    crash (or silently reinitialize) rather than falling back to the previous
-    real checkpoint. This walks checkpoint folders newest-first and returns
-    the first one that actually has model weights.
+
+class DriveSyncCallback:
+    """Copies the just-written local checkpoint out to a single fixed Drive folder.
+
+    HF checkpoint directories always use the same fixed filenames
+    (model.safetensors, optimizer.pt, trainer_state.json, ...) regardless of
+    step number, so copying into a fixed-name destination overwrites those
+    files in place -- a plain write, never a delete -- which sidesteps
+    Google Drive's Trash-on-delete behavior entirely. Only one checkpoint
+    ever lives on Drive at a time; local disk (--local-work-dir) is where
+    Trainer's own save_total_limit rotation actually happens.
     """
-    import re
 
-    if not output_dir.exists():
-        return None
+    def __init__(self, local_work_dir: Path, drive_resume_dir: Path, logger):
+        from transformers import TrainerCallback
 
-    candidates = sorted(
-        (p for p in output_dir.iterdir() if p.is_dir() and re.fullmatch(r"checkpoint-\d+", p.name)),
-        key=lambda p: int(p.name.split("-")[1]),
-        reverse=True,
-    )
-    for candidate in candidates:
-        has_weights = any((candidate / name).exists() for name in ("model.safetensors", "pytorch_model.bin"))
-        has_trainer_state = (candidate / "trainer_state.json").exists()
-        if has_weights and has_trainer_state:
-            return str(candidate)
-        logger.warning(
-            "Skipping %s: missing weights/trainer_state.json (likely a Drive-Trash artifact "
-            "from a previous rotation) -- trying the next most recent checkpoint.",
-            candidate,
-        )
-    return None
+        self._base = TrainerCallback
+        self.local_work_dir = local_work_dir
+        self.drive_resume_dir = drive_resume_dir
+        self.logger = logger
+
+    def build(self):
+        import shutil
+
+        local_work_dir = self.local_work_dir
+        drive_resume_dir = self.drive_resume_dir
+        logger = self.logger
+
+        class _Callback(self._base):
+            def on_save(self, args, state, control, **kwargs):
+                local_checkpoint = local_work_dir / f"checkpoint-{state.global_step}"
+                if not is_valid_checkpoint_dir(local_checkpoint):
+                    logger.warning("Expected local checkpoint %s not found; skipping Drive sync.", local_checkpoint)
+                    return control
+                drive_resume_dir.mkdir(parents=True, exist_ok=True)
+                shutil.copytree(local_checkpoint, drive_resume_dir, dirs_exist_ok=True)
+                logger.info("Synced checkpoint (step %d) to Drive: %s", state.global_step, drive_resume_dir)
+                return control
+
+        return _Callback()
 
 
 def main() -> None:
@@ -301,8 +343,9 @@ def main() -> None:
     tokenized = {"train": train_tokenized, "validation": validation_tokenized}
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
+    args.local_work_dir.mkdir(parents=True, exist_ok=True)
     training_args = Seq2SeqTrainingArguments(
-        output_dir=str(args.output_dir),
+        output_dir=str(args.local_work_dir),
         num_train_epochs=args.num_train_epochs,
         per_device_train_batch_size=args.per_device_train_batch_size,
         per_device_eval_batch_size=args.per_device_eval_batch_size,
@@ -336,12 +379,42 @@ def main() -> None:
         data_collator=DataCollatorForSeq2Seq(tokenizer, model=model),
     )
     trainer.add_callback(TimeBudgetCallback(args.time_budget_minutes).build())
+    drive_resume_dir = args.output_dir / "latest_checkpoint"
+    trainer.add_callback(DriveSyncCallback(args.local_work_dir, drive_resume_dir, logger).build())
 
-    last_checkpoint = find_valid_last_checkpoint(args.output_dir, logger)
+    from transformers.trainer_utils import get_last_checkpoint
+
+    last_checkpoint = get_last_checkpoint(str(args.local_work_dir))
     if last_checkpoint:
-        logger.info("Found existing checkpoint, resuming from: %s", last_checkpoint)
+        logger.info("Found local checkpoint (same-session restart), resuming from: %s", last_checkpoint)
+    elif is_valid_checkpoint_dir(drive_resume_dir):
+        last_checkpoint = str(drive_resume_dir)
+        logger.info("Found Drive checkpoint from a previous session, resuming from: %s", last_checkpoint)
+        # trainer_state.json's best_model_checkpoint points at the *previous*
+        # session's local_work_dir path, which no longer exists (local disk is
+        # wiped between sessions). If this session never finds a better eval_loss,
+        # load_best_model_at_end would try to load that stale path at the very
+        # end and crash. Since drive_resume_dir's weights are exactly what that
+        # stale path would have pointed to anyway, repointing it here is safe.
+        import json
+
+        state_path = drive_resume_dir / "trainer_state.json"
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        if state.get("best_model_checkpoint") and not Path(state["best_model_checkpoint"]).exists():
+            logger.info(
+                "trainer_state.json's best_model_checkpoint (%s) is from a previous "
+                "session's local disk; repointing it to %s.",
+                state["best_model_checkpoint"],
+                drive_resume_dir,
+            )
+            state["best_model_checkpoint"] = str(drive_resume_dir)
+            state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
     else:
-        logger.info("No existing checkpoint found in %s; starting fresh.", args.output_dir)
+        logger.info(
+            "No valid checkpoint in %s (local) or %s (Drive); starting fresh.",
+            args.local_work_dir,
+            drive_resume_dir,
+        )
 
     trainer.train(resume_from_checkpoint=last_checkpoint)
     trainer.save_model(str(args.output_dir / "final"))
