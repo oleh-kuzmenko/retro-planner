@@ -164,6 +164,41 @@ class TimeBudgetCallback:
         return _Callback()
 
 
+def find_valid_last_checkpoint(output_dir: Path, logger) -> str | None:
+    """Like `transformers.trainer_utils.get_last_checkpoint`, but skips empty/corrupt folders.
+
+    Google Drive's FUSE mount in Colab moves deleted files to Drive's Trash
+    instead of freeing them, and has been observed to occasionally leave a
+    checkpoint's now-emptied directory shell behind (contents trashed, folder
+    not removed) instead of cleanly dropping the whole `checkpoint-N` folder.
+    `get_last_checkpoint` would happily "resume" from such an empty folder and
+    crash (or silently reinitialize) rather than falling back to the previous
+    real checkpoint. This walks checkpoint folders newest-first and returns
+    the first one that actually has model weights.
+    """
+    import re
+
+    if not output_dir.exists():
+        return None
+
+    candidates = sorted(
+        (p for p in output_dir.iterdir() if p.is_dir() and re.fullmatch(r"checkpoint-\d+", p.name)),
+        key=lambda p: int(p.name.split("-")[1]),
+        reverse=True,
+    )
+    for candidate in candidates:
+        has_weights = any((candidate / name).exists() for name in ("model.safetensors", "pytorch_model.bin"))
+        has_trainer_state = (candidate / "trainer_state.json").exists()
+        if has_weights and has_trainer_state:
+            return str(candidate)
+        logger.warning(
+            "Skipping %s: missing weights/trainer_state.json (likely a Drive-Trash artifact "
+            "from a previous rotation) -- trying the next most recent checkpoint.",
+            candidate,
+        )
+    return None
+
+
 def main() -> None:
     import logging
 
@@ -186,7 +221,6 @@ def main() -> None:
         Seq2SeqTrainingArguments,
         set_seed,
     )
-    from transformers.trainer_utils import get_last_checkpoint
 
     set_seed(args.seed)
 
@@ -303,7 +337,7 @@ def main() -> None:
     )
     trainer.add_callback(TimeBudgetCallback(args.time_budget_minutes).build())
 
-    last_checkpoint = get_last_checkpoint(str(args.output_dir)) if args.output_dir.exists() else None
+    last_checkpoint = find_valid_last_checkpoint(args.output_dir, logger)
     if last_checkpoint:
         logger.info("Found existing checkpoint, resuming from: %s", last_checkpoint)
     else:
