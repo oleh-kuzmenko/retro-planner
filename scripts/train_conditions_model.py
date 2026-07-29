@@ -47,6 +47,17 @@ CONDITION_FIELDS = ("solvent", "catalyst", "temperature_celsius", "yield_percent
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--base-model", default="t5-small", help="Plain (non-chemical) T5 checkpoint, e.g. t5-small or t5-base.")
+    parser.add_argument(
+        "--resume-from-checkpoint",
+        type=Path,
+        default=None,
+        help="Explicit checkpoint or weights-only model folder to continue from -- e.g. a "
+        "previous Colab session's {output_dir}/final, downloaded and re-uploaded to this "
+        "session (possibly under a different Google account/Drive than last time). If the "
+        "folder contains trainer_state.json (a full Trainer checkpoint), resumes exactly; "
+        "otherwise it's loaded as the starting model for a fresh optimizer/step-count run. "
+        "Takes priority over automatic local/Drive latest_checkpoint detection.",
+    )
     parser.add_argument("--train-file", type=Path, default=Path("data/v2_ord_train/conditions_train.jsonl"))
     parser.add_argument("--val-file", type=Path, default=Path("data/v2_ord_train/conditions_val.jsonl"))
     parser.add_argument(
@@ -204,9 +215,27 @@ def main() -> None:
 
     set_seed(args.seed)
 
-    logger.info("Loading base checkpoint: %s", args.base_model)
-    tokenizer = AutoTokenizer.from_pretrained(args.base_model)
-    model = AutoModelForSeq2SeqLM.from_pretrained(args.base_model)
+    model_load_path = args.base_model
+    explicit_resume_checkpoint = None
+    if args.resume_from_checkpoint is not None:
+        if is_valid_checkpoint_dir(args.resume_from_checkpoint):
+            explicit_resume_checkpoint = str(args.resume_from_checkpoint)
+            logger.info(
+                "--resume-from-checkpoint %s is a full Trainer checkpoint; resuming exactly "
+                "(optimizer state, step count preserved).",
+                explicit_resume_checkpoint,
+            )
+        else:
+            model_load_path = str(args.resume_from_checkpoint)
+            logger.info(
+                "--resume-from-checkpoint %s has no trainer_state.json (a weights-only folder, "
+                "e.g. 'final'); loading it as the starting model for a fresh optimizer/step-count run.",
+                model_load_path,
+            )
+
+    logger.info("Loading base checkpoint: %s", model_load_path)
+    tokenizer = AutoTokenizer.from_pretrained(model_load_path)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_load_path)
 
     data_files = {"train": str(args.train_file), "validation": str(args.val_file)}
     raw = load_dataset("json", data_files=data_files)
@@ -265,34 +294,55 @@ def main() -> None:
     drive_resume_dir = args.output_dir / "latest_checkpoint"
     trainer.add_callback(DriveSyncCallback(args.local_work_dir, drive_resume_dir, logger).build())
 
-    from transformers.trainer_utils import get_last_checkpoint
-
-    last_checkpoint = get_last_checkpoint(str(args.local_work_dir))
-    if last_checkpoint:
-        logger.info("Found local checkpoint (same-session restart), resuming from: %s", last_checkpoint)
-    elif is_valid_checkpoint_dir(drive_resume_dir):
-        last_checkpoint = str(drive_resume_dir)
-        logger.info("Found Drive checkpoint from a previous session, resuming from: %s", last_checkpoint)
-        # See train_reactant_model_ord.py for why this repoint is needed: the
-        # previous session's local_work_dir path in best_model_checkpoint no
-        # longer exists once local disk is wiped between sessions.
-        state_path = drive_resume_dir / "trainer_state.json"
-        state = json.loads(state_path.read_text(encoding="utf-8"))
-        if state.get("best_model_checkpoint") and not Path(state["best_model_checkpoint"]).exists():
+    if args.resume_from_checkpoint is not None:
+        last_checkpoint = explicit_resume_checkpoint
+        if explicit_resume_checkpoint:
+            state_path = Path(explicit_resume_checkpoint) / "trainer_state.json"
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            if state.get("best_model_checkpoint") and not Path(state["best_model_checkpoint"]).exists():
+                logger.info(
+                    "trainer_state.json's best_model_checkpoint (%s) doesn't exist in this "
+                    "session/environment; repointing it to %s.",
+                    state["best_model_checkpoint"],
+                    explicit_resume_checkpoint,
+                )
+                state["best_model_checkpoint"] = explicit_resume_checkpoint
+                state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+        else:
             logger.info(
-                "trainer_state.json's best_model_checkpoint (%s) is from a previous "
-                "session's local disk; repointing it to %s.",
-                state["best_model_checkpoint"],
+                "--resume-from-checkpoint weights already loaded as the starting model; "
+                "beginning a fresh optimizer/step-count run from them."
+            )
+    else:
+        from transformers.trainer_utils import get_last_checkpoint
+
+        last_checkpoint = get_last_checkpoint(str(args.local_work_dir))
+        if last_checkpoint:
+            logger.info("Found local checkpoint (same-session restart), resuming from: %s", last_checkpoint)
+        elif is_valid_checkpoint_dir(drive_resume_dir):
+            last_checkpoint = str(drive_resume_dir)
+            logger.info("Found Drive checkpoint from a previous session, resuming from: %s", last_checkpoint)
+            # See train_reactant_model_ord.py for why this repoint is needed: the
+            # previous session's local_work_dir path in best_model_checkpoint no
+            # longer exists once local disk is wiped between sessions.
+            state_path = drive_resume_dir / "trainer_state.json"
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            if state.get("best_model_checkpoint") and not Path(state["best_model_checkpoint"]).exists():
+                logger.info(
+                    "trainer_state.json's best_model_checkpoint (%s) is from a previous "
+                    "session's local disk; repointing it to %s.",
+                    state["best_model_checkpoint"],
+                    drive_resume_dir,
+                )
+                state["best_model_checkpoint"] = str(drive_resume_dir)
+                state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+        else:
+            last_checkpoint = None
+            logger.info(
+                "No valid checkpoint in %s (local) or %s (Drive); starting fresh.",
+                args.local_work_dir,
                 drive_resume_dir,
             )
-            state["best_model_checkpoint"] = str(drive_resume_dir)
-            state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
-    else:
-        logger.info(
-            "No valid checkpoint in %s (local) or %s (Drive); starting fresh.",
-            args.local_work_dir,
-            drive_resume_dir,
-        )
 
     trainer.train(resume_from_checkpoint=last_checkpoint)
     trainer.save_model(str(args.output_dir / "final"))

@@ -54,6 +54,20 @@ LOGGER_NAME = "retro_eval.train_reactant_model_ord"
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--base-model", default="sagawa/ReactionT5v2-retrosynthesis")
+    parser.add_argument(
+        "--resume-from-checkpoint",
+        type=Path,
+        default=None,
+        help="Explicit checkpoint or weights-only model folder to continue from -- e.g. a "
+        "previous Colab session's {output_dir}/final, downloaded and re-uploaded to this "
+        "session (possibly under a different Google account/Drive than last time, which is "
+        "this project's actual workflow: Colab sessions aren't guaranteed to share the same "
+        "Drive, so automatic cross-session detection can't be relied on). If the folder "
+        "contains trainer_state.json (a full Trainer checkpoint), resumes exactly -- "
+        "optimizer state and step count preserved. Otherwise (e.g. a weights-only 'final' "
+        "folder) it's loaded as the starting model for a fresh optimizer/step-count run. "
+        "Takes priority over automatic local/Drive latest_checkpoint detection.",
+    )
     parser.add_argument("--train-file", type=Path, default=Path("data/v2_ord_train/reactants_train.jsonl"))
     parser.add_argument("--val-file", type=Path, default=Path("data/v2_ord_train/reactants_val.jsonl"))
     parser.add_argument(
@@ -266,9 +280,27 @@ def main() -> None:
 
     set_seed(args.seed)
 
-    logger.info("Loading base checkpoint: %s", args.base_model)
-    tokenizer = AutoTokenizer.from_pretrained(args.base_model)
-    model = AutoModelForSeq2SeqLM.from_pretrained(args.base_model)
+    model_load_path = args.base_model
+    explicit_resume_checkpoint = None
+    if args.resume_from_checkpoint is not None:
+        if is_valid_checkpoint_dir(args.resume_from_checkpoint):
+            explicit_resume_checkpoint = str(args.resume_from_checkpoint)
+            logger.info(
+                "--resume-from-checkpoint %s is a full Trainer checkpoint; resuming exactly "
+                "(optimizer state, step count preserved).",
+                explicit_resume_checkpoint,
+            )
+        else:
+            model_load_path = str(args.resume_from_checkpoint)
+            logger.info(
+                "--resume-from-checkpoint %s has no trainer_state.json (a weights-only folder, "
+                "e.g. 'final'); loading it as the starting model for a fresh optimizer/step-count run.",
+                model_load_path,
+            )
+
+    logger.info("Loading base checkpoint: %s", model_load_path)
+    tokenizer = AutoTokenizer.from_pretrained(model_load_path)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_load_path)
     # sagawa/ReactionT5v2-* checkpoints ship config.tie_word_embeddings=True but
     # lm_head.weight actually differs from shared.weight in the checkpoint, so
     # transformers refuses to tie them at load time and prints a warning.
@@ -382,39 +414,67 @@ def main() -> None:
     drive_resume_dir = args.output_dir / "latest_checkpoint"
     trainer.add_callback(DriveSyncCallback(args.local_work_dir, drive_resume_dir, logger).build())
 
-    from transformers.trainer_utils import get_last_checkpoint
+    if args.resume_from_checkpoint is not None:
+        # User-provided checkpoint takes priority over any automatic detection,
+        # regardless of whether it was a full-resume or weights-only case above --
+        # this is the actual cross-account/cross-Drive workflow: Colab sessions
+        # aren't guaranteed to share a Drive, so the user downloads a previous
+        # session's checkpoint and re-uploads it wherever this session can see it.
+        last_checkpoint = explicit_resume_checkpoint
+        if explicit_resume_checkpoint:
+            import json
 
-    last_checkpoint = get_last_checkpoint(str(args.local_work_dir))
-    if last_checkpoint:
-        logger.info("Found local checkpoint (same-session restart), resuming from: %s", last_checkpoint)
-    elif is_valid_checkpoint_dir(drive_resume_dir):
-        last_checkpoint = str(drive_resume_dir)
-        logger.info("Found Drive checkpoint from a previous session, resuming from: %s", last_checkpoint)
-        # trainer_state.json's best_model_checkpoint points at the *previous*
-        # session's local_work_dir path, which no longer exists (local disk is
-        # wiped between sessions). If this session never finds a better eval_loss,
-        # load_best_model_at_end would try to load that stale path at the very
-        # end and crash. Since drive_resume_dir's weights are exactly what that
-        # stale path would have pointed to anyway, repointing it here is safe.
-        import json
-
-        state_path = drive_resume_dir / "trainer_state.json"
-        state = json.loads(state_path.read_text(encoding="utf-8"))
-        if state.get("best_model_checkpoint") and not Path(state["best_model_checkpoint"]).exists():
+            state_path = Path(explicit_resume_checkpoint) / "trainer_state.json"
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            if state.get("best_model_checkpoint") and not Path(state["best_model_checkpoint"]).exists():
+                logger.info(
+                    "trainer_state.json's best_model_checkpoint (%s) doesn't exist in this "
+                    "session/environment; repointing it to %s.",
+                    state["best_model_checkpoint"],
+                    explicit_resume_checkpoint,
+                )
+                state["best_model_checkpoint"] = explicit_resume_checkpoint
+                state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+        else:
             logger.info(
-                "trainer_state.json's best_model_checkpoint (%s) is from a previous "
-                "session's local disk; repointing it to %s.",
-                state["best_model_checkpoint"],
+                "--resume-from-checkpoint weights already loaded as the starting model; "
+                "beginning a fresh optimizer/step-count run from them."
+            )
+    else:
+        from transformers.trainer_utils import get_last_checkpoint
+
+        last_checkpoint = get_last_checkpoint(str(args.local_work_dir))
+        if last_checkpoint:
+            logger.info("Found local checkpoint (same-session restart), resuming from: %s", last_checkpoint)
+        elif is_valid_checkpoint_dir(drive_resume_dir):
+            last_checkpoint = str(drive_resume_dir)
+            logger.info("Found Drive checkpoint from a previous session, resuming from: %s", last_checkpoint)
+            # trainer_state.json's best_model_checkpoint points at the *previous*
+            # session's local_work_dir path, which no longer exists (local disk is
+            # wiped between sessions). If this session never finds a better eval_loss,
+            # load_best_model_at_end would try to load that stale path at the very
+            # end and crash. Since drive_resume_dir's weights are exactly what that
+            # stale path would have pointed to anyway, repointing it here is safe.
+            import json
+
+            state_path = drive_resume_dir / "trainer_state.json"
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            if state.get("best_model_checkpoint") and not Path(state["best_model_checkpoint"]).exists():
+                logger.info(
+                    "trainer_state.json's best_model_checkpoint (%s) is from a previous "
+                    "session's local disk; repointing it to %s.",
+                    state["best_model_checkpoint"],
+                    drive_resume_dir,
+                )
+                state["best_model_checkpoint"] = str(drive_resume_dir)
+                state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+        else:
+            last_checkpoint = None
+            logger.info(
+                "No valid checkpoint in %s (local) or %s (Drive); starting fresh.",
+                args.local_work_dir,
                 drive_resume_dir,
             )
-            state["best_model_checkpoint"] = str(drive_resume_dir)
-            state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
-    else:
-        logger.info(
-            "No valid checkpoint in %s (local) or %s (Drive); starting fresh.",
-            args.local_work_dir,
-            drive_resume_dir,
-        )
 
     trainer.train(resume_from_checkpoint=last_checkpoint)
     trainer.save_model(str(args.output_dir / "final"))
