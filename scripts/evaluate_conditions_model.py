@@ -43,6 +43,18 @@ checkpoint, reporting:
   were always genuine correctness checks, unlike the solvent/catalyst
   "present" rate.
 
+Note on every `{field}_expected_count` denominator: it must count every row
+whose *reference* has that field populated, independent of whether this
+row's own generation happened to parse as JSON. An earlier version of this
+script computed all of the above (present/exact_match/any_overlap/same_group/
+temperature/yield counters) inside `if isinstance(parsed, dict): ...`, which
+silently dropped every JSON-invalid row (~5-6% of rows) from each per-field
+denominator instead of counting it as a miss -- inflating every reported
+rate by excluding exactly the rows the model failed hardest on. Caught by
+comparing this script's counts against `evaluate_conditions_model_topk.py`
+(which never gated on JSON validity) on the same test file; see the diploma
+methodology notes (Rozdil 3.5) for the before/after numbers.
+
 Example:
     python scripts/evaluate_conditions_model.py \\
         --model-dir /content/drive/MyDrive/retro-planner-checkpoints/model2_conditions/final \\
@@ -167,50 +179,64 @@ def main() -> None:
 
         record = {"product_smiles": row["product_smiles"], "raw_response": raw, "reference": row}
 
-        if isinstance(parsed, dict):
-            for field in CONDITION_FIELDS:
-                reference_value = row.get(field)
-                predicted_value = parsed.get(field)
-                reference_present = reference_value not in (None, "", "not specified")
-                predicted_present = predicted_value not in (None, "", "not specified")
-                if reference_present:
-                    totals[f"{field}_present_expected"] += 1
-                    if predicted_present:
-                        totals[f"{field}_present_predicted"] += 1
+        # NOTE: every denominator below ({field}_present_expected, {field}_expected,
+        # {field}_same_group_classifiable, temp/yield_expected) is computed from the
+        # REFERENCE row alone, unconditionally -- a row whose reference has a field
+        # populated counts toward that denominator whether or not this row's own
+        # generation happened to parse as JSON. An earlier version of this script
+        # only counted these denominators inside `if isinstance(parsed, dict)`,
+        # which silently dropped every JSON-invalid row from every per-field
+        # denominator instead of counting it as a miss -- inflating every rate by
+        # excluding exactly the rows most likely to be wrong. `parsed_dict` below
+        # is `parsed` when it's a dict, else `{}`, so a JSON-invalid row still
+        # contributes to each populated-reference-field's denominator with a
+        # `predicted_value`/`pred_set`/`pred_groups`/`pred_*` of "absent" -- i.e.
+        # scored as a miss, not excluded.
+        parsed_dict = parsed if isinstance(parsed, dict) else {}
 
-            for field in ("solvent", "catalyst"):
-                ref_set = normalize_components(row.get(field))
-                if ref_set is None:
-                    continue
-                match_totals[f"{field}_expected"] += 1
-                pred_set = normalize_components(parsed.get(field))
-                if pred_set is not None and pred_set == ref_set:
-                    match_totals[f"{field}_exact_match"] += 1
-                if pred_set is not None and (pred_set & ref_set):
-                    match_totals[f"{field}_any_overlap"] += 1
+        for field in CONDITION_FIELDS:
+            reference_value = row.get(field)
+            predicted_value = parsed_dict.get(field)
+            reference_present = reference_value not in (None, "", "not specified")
+            predicted_present = predicted_value not in (None, "", "not specified")
+            if reference_present:
+                totals[f"{field}_present_expected"] += 1
+                if predicted_present:
+                    totals[f"{field}_present_predicted"] += 1
 
-                classifier = GROUP_CLASSIFIERS[field]
-                ref_groups = component_groups(row.get(field), classifier)
-                if ref_groups is None:
-                    continue
-                match_totals[f"{field}_same_group_classifiable"] += 1
-                pred_groups = component_groups(parsed.get(field), classifier)
-                if pred_groups is not None and ref_groups <= pred_groups:
-                    match_totals[f"{field}_same_group_match"] += 1
+        for field in ("solvent", "catalyst"):
+            ref_set = normalize_components(row.get(field))
+            if ref_set is None:
+                continue
+            match_totals[f"{field}_expected"] += 1
+            pred_set = normalize_components(parsed_dict.get(field))
+            if pred_set is not None and pred_set == ref_set:
+                match_totals[f"{field}_exact_match"] += 1
+            if pred_set is not None and (pred_set & ref_set):
+                match_totals[f"{field}_any_overlap"] += 1
 
-            ref_temp = to_number(row.get("temperature_celsius"))
-            pred_temp = to_number(parsed.get("temperature_celsius"))
-            if ref_temp is not None:
-                temp_expected += 1
-                if pred_temp is not None and abs(pred_temp - ref_temp) <= TEMPERATURE_TOLERANCE_C:
-                    temp_within_tol += 1
+            classifier = GROUP_CLASSIFIERS[field]
+            ref_groups = component_groups(row.get(field), classifier)
+            if ref_groups is None:
+                continue
+            match_totals[f"{field}_same_group_classifiable"] += 1
+            pred_groups = component_groups(parsed_dict.get(field), classifier)
+            if pred_groups is not None and ref_groups <= pred_groups:
+                match_totals[f"{field}_same_group_match"] += 1
 
-            ref_yield = to_number(row.get("yield_percent"))
-            pred_yield = to_number(parsed.get("yield_percent"))
-            if ref_yield is not None:
-                yield_expected += 1
-                if pred_yield is not None and abs(pred_yield - ref_yield) <= YIELD_TOLERANCE_PCT:
-                    yield_within_tol += 1
+        ref_temp = to_number(row.get("temperature_celsius"))
+        pred_temp = to_number(parsed_dict.get("temperature_celsius"))
+        if ref_temp is not None:
+            temp_expected += 1
+            if pred_temp is not None and abs(pred_temp - ref_temp) <= TEMPERATURE_TOLERANCE_C:
+                temp_within_tol += 1
+
+        ref_yield = to_number(row.get("yield_percent"))
+        pred_yield = to_number(parsed_dict.get("yield_percent"))
+        if ref_yield is not None:
+            yield_expected += 1
+            if pred_yield is not None and abs(pred_yield - ref_yield) <= YIELD_TOLERANCE_PCT:
+                yield_within_tol += 1
 
         records.append(record)
 

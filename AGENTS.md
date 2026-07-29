@@ -31,7 +31,9 @@ two-stage system, rebuilt from scratch with leak-checked data:
   solvent/catalyst/temperature_celsius/yield_percent string from
   `PRODUCT: ... REACTANTS: ...` text input. Same checkpoint/resume design. Colab wrapper:
   `colab/06_train_conditions_model.ipynb`. Evaluated by `evaluate_conditions_model.py`
-  against the held-out `data/v2_ord_train/conditions_test.jsonl`.
+  (top-1) and `evaluate_conditions_model_topk.py` (top-1/3/5 via beam search, mirroring
+  `run_reactiont5_topk.py` for Model 1) against the held-out
+  `data/v2_ord_train/conditions_test.jsonl`.
 - Pipeline: target SMILES -> Model 1 -> RDKit validity check
   (`retro_eval.evaluation.is_valid_smiles`) -> Model 2 (product + validated reactants) ->
   conditions. No Qdrant, no external LLM API call, at inference time.

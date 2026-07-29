@@ -1,0 +1,21 @@
+{
+  "model_slug": "model1_v5_finetuned_on_uspto",
+  "script": "scripts/models/run_reactiont5.py",
+  "cli_args": {
+    "input": "data/v2_uspto_eval_targets.json",
+    "model_slug": "model1_v5_finetuned_on_uspto",
+    "t5_model": "/Users/Oleh/Documents/diploma/retro-planner-checkpoints/model1_reactant_v5/final",
+    "num_beams": 5,
+    "max_length": 150,
+    "device": "cpu",
+    "limit": null,
+    "experiment_id": "v2_model1_eval",
+    "experiments_root": "experiments"
+  },
+  "input_path": "data/v2_uspto_eval_targets.json",
+  "input_sha256": "b79e5880c90f2449090173c6771ab88c6d402d19c29da1389e665e73b35ad7da",
+  "record_count": 300,
+  "status": "completed",
+  "started_at": "2026-07-29T12:50:48.637547+00:00",
+  "finished_at": "2026-07-29T13:06:00.117959+00:00"
+}
