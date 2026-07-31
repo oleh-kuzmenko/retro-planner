@@ -26,6 +26,20 @@ two-stage system, rebuilt from scratch with leak-checked data:
   with HF Trainer's own resume mechanism (`get_last_checkpoint`), plus a
   `--time-budget-minutes` callback that force-saves and stops cleanly, so training survives
   Colab's ~3h/day session cap across multiple days. Colab wrapper: `colab/05_train_reactant_ord.ipynb`.
+  Two larger training pools were built to test whether more ORD data pushes past the v2 result
+  (same seed/eval-exclusion logic as the 60k pool in both cases -- 0 leakage verified against
+  `data/v2_ord_eval_targets.json`): `data/v2_ord_train_150k/` (147k train / 3k val) and
+  `data/v2_ord_train_250k/` (247k train / 3k val). The 150k run is training on Colab
+  (`colab/07_train_reactant_ord_150k.ipynb`, output `model1_reactant_ord150k` -- Kaggle's GPU
+  accelerator wasn't available yet at the time, needed phone verification first) and was healthy
+  through 11750+ steps (`eval_loss` decreasing smoothly, no v3-style divergence). Once Kaggle GPU
+  access was confirmed working, the 250k pool was set up to run there instead, for its 30h/week
+  (vs Colab's much shorter daily sessions) quota and longer max session length: Kaggle wrapper
+  `kaggle/02_train_reactant_ord_250k.ipynb` (`kaggle/01_train_reactant_ord_more_data.ipynb` is the
+  150k-pool version of the same wrapper, unused once training moved to Colab for that pool) --
+  same script, `--train-file`/`--val-file` pointed at an uploaded Kaggle Dataset instead of a
+  Drive mount (Kaggle has no live cross-session filesystem; resume goes through Kaggle's own
+  Dataset-versioning instead of Drive, see the notebooks' markdown cells).
 - **Model 2** (`train_conditions_model.py`): full fine-tune of a plain `t5-small`/`t5-base`
   (not chemically pretrained, unlike Model 1) predicting a JSON
   solvent/catalyst/temperature_celsius/yield_percent string from
