@@ -29,17 +29,40 @@ two-stage system, rebuilt from scratch with leak-checked data:
   Two larger training pools were built to test whether more ORD data pushes past the v2 result
   (same seed/eval-exclusion logic as the 60k pool in both cases -- 0 leakage verified against
   `data/v2_ord_eval_targets.json`): `data/v2_ord_train_150k/` (147k train / 3k val) and
-  `data/v2_ord_train_250k/` (247k train / 3k val). The 150k run is training on Colab
-  (`colab/07_train_reactant_ord_150k.ipynb`, output `model1_reactant_ord150k` -- Kaggle's GPU
-  accelerator wasn't available yet at the time, needed phone verification first) and was healthy
-  through 11750+ steps (`eval_loss` decreasing smoothly, no v3-style divergence). Once Kaggle GPU
-  access was confirmed working, the 250k pool was set up to run there instead, for its 30h/week
-  (vs Colab's much shorter daily sessions) quota and longer max session length: Kaggle wrapper
-  `kaggle/02_train_reactant_ord_250k.ipynb` (`kaggle/01_train_reactant_ord_more_data.ipynb` is the
-  150k-pool version of the same wrapper, unused once training moved to Colab for that pool) --
-  same script, `--train-file`/`--val-file` pointed at an uploaded Kaggle Dataset instead of a
-  Drive mount (Kaggle has no live cross-session filesystem; resume goes through Kaggle's own
-  Dataset-versioning instead of Drive, see the notebooks' markdown cells).
+  `data/v2_ord_train_250k/` (247k train / 3k val). Kaggle wrappers:
+  `kaggle/01_train_reactant_ord_more_data.ipynb` (150k) and `kaggle/02_train_reactant_ord_250k.ipynb`
+  (250k), both launching via `torchrun --nproc_per_node=2` for real `DistributedDataParallel` on
+  Kaggle's T4x2 (plain `python` falls back to `DataParallel`, which added overhead without a
+  speedup -- confirmed empirically). Colab fallback for the 150k pool:
+  `colab/07_train_reactant_ord_150k.ipynb` (single GPU, no DDP).
+
+  Three real bugs were found and fixed across the first two 150k attempts (numbers in
+  `RESULTS.md` sections 5-6):
+  1. **DDP write races**: `DriveSyncCallback`/final-save gated on `state.is_world_process_zero`,
+     which is unreliable when `transformers` doesn't recognize `ParallelMode.DISTRIBUTED` (both
+     ranks proceeded, racing to write the same files). Fixed by gating on `os.environ["RANK"]`
+     directly, which `torchrun` always sets correctly regardless of that detection layer.
+  2. **Inherited augmentation**: the first 150k run launched without `--no-augment`, silently
+     inheriting the script's default SMILES augmentation (prob=0.5) -- reproduced v3/v4's
+     accuracy regression on the bigger pool despite a healthy `eval_loss` curve.
+  3. **Wrong hyperparameters**: the *corrected* (no-augment) rerun still only matched v2's 60k
+     result (48.7% vs 50.7% ORD exact_match top-1), because it used the script's *current*
+     defaults (`lr=2e-5`, 2 epochs) rather than v2's actual proven config. Confirmed from v2's
+     own saved `training_args.bin`: v2 used `lr=5e-5`, 3 epochs -- those defaults were lowered
+     later during v3/v4's augmentation-overfitting debugging and never restored for the plain
+     case, so "more data" was never cleanly tested against the regimen that actually worked.
+
+  All three are fixed as of the current notebooks (`--no-augment --learning-rate 5e-5
+  --num-train-epochs 3`, `output_dir` suffixed `_v2cfg` to avoid confusion with the earlier
+  weaker-hyperparameter local downloads) -- a clean rerun has not yet been evaluated.
+
+  **Kaggle workflow note**: run notebooks as **Save & Run All (Commit)**, not an interactive
+  Draft Session -- a Draft Session was observed to reset (losing ~40% training progress) on
+  tab reload/idle, since Kaggle doesn't reliably keep them alive without an active connection.
+  Commit jobs run as background batch jobs independent of the browser. The local `kaggle` CLI
+  (`pip install --user kaggle`, credentials at the default location) can poll
+  `kaggle kernels status <user>/<slug>` and pull results with `kaggle kernels output` once
+  `COMPLETE`, without needing the browser at all.
 - **Model 2** (`train_conditions_model.py`): full fine-tune of a plain `t5-small`/`t5-base`
   (not chemically pretrained, unlike Model 1) predicting a JSON
   solvent/catalyst/temperature_celsius/yield_percent string from
