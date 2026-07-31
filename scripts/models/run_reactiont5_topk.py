@@ -18,6 +18,14 @@ Example:
         --input data/v2_ord_eval_targets.json \\
         --t5-model /content/drive/MyDrive/retro-planner-checkpoints/model1_reactant_v3/final \\
         --num-beams 10 --output topk_results.json
+
+--num-beam-groups/--diversity-penalty switch on HF's diverse beam search: `--num-beams`
+candidates are split into that many equal-size groups, and a token chosen by an earlier
+group is penalized (by `--diversity-penalty`) for later groups at the same decoding step.
+Plain beam search (the default here, groups=1) tends to fill the beam with near-duplicate
+variants of the top 1-2 hypotheses; diverse beam search trades a bit of per-candidate
+quality for genuinely different candidates, which is exactly what top-k accuracy rewards.
+`--num-beams` must be divisible by `--num-beam-groups`.
 """
 
 from __future__ import annotations
@@ -39,6 +47,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input", type=Path, required=True, help="USPTO/ORD-format eval-targets JSON.")
     parser.add_argument("--t5-model", required=True)
     parser.add_argument("--num-beams", type=int, default=10)
+    parser.add_argument("--num-beam-groups", type=int, default=1, help="1 = plain beam search (default).")
+    parser.add_argument("--diversity-penalty", type=float, default=0.0, help="Only used if --num-beam-groups > 1.")
     parser.add_argument("--max-length", type=int, default=150)
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--limit", type=int, default=None)
@@ -83,14 +93,21 @@ def main() -> None:
         reference = record["reactants_smiles"]
 
         inputs = tokenizer([product], return_tensors="pt").to(args.device)
+        generate_kwargs = dict(
+            num_beams=args.num_beams,
+            num_return_sequences=args.num_beams,
+            max_length=args.max_length,
+            min_length=1,
+        )
+        if args.num_beam_groups > 1:
+            generate_kwargs["num_beam_groups"] = args.num_beam_groups
+            generate_kwargs["diversity_penalty"] = args.diversity_penalty
+            # transformers >=4.6x moved group beam search to a community-maintained
+            # custom_generate repo (transformers-community/group-beam-search, HF-org
+            # maintained); trust_remote_code is required to fetch and run it.
+            generate_kwargs["trust_remote_code"] = True
         with torch.no_grad():
-            output_ids = model.generate(
-                **inputs,
-                num_beams=args.num_beams,
-                num_return_sequences=args.num_beams,
-                max_length=args.max_length,
-                min_length=1,
-            )
+            output_ids = model.generate(**inputs, **generate_kwargs)
         candidates_raw = [c.strip().replace(" ", "") for c in tokenizer.batch_decode(output_ids, skip_special_tokens=True)]
 
         seen_sets = set()
@@ -125,7 +142,13 @@ def main() -> None:
     gc.collect()
 
     n = len(records)
-    summary = {"total": n, "num_beams": args.num_beams, "top1_valid_rate": valid_top1 / n if n else 0.0}
+    summary = {
+        "total": n,
+        "num_beams": args.num_beams,
+        "num_beam_groups": args.num_beam_groups,
+        "diversity_penalty": args.diversity_penalty,
+        "top1_valid_rate": valid_top1 / n if n else 0.0,
+    }
     for k in ks:
         summary[f"exact_match_top{k}"] = exact_hits[k] / n if n else 0.0
         summary[f"core_exact_match_top{k}"] = core_hits[k] / n if n else 0.0
