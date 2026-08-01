@@ -182,6 +182,20 @@ class TimeBudgetCallback:
         return _Callback()
 
 
+def is_main_process() -> bool:
+    """Whether this process should do exclusive work (Drive sync, final save) under multi-GPU DDP.
+
+    See `train_reactant_model_ord.py`'s `is_main_process` for why `RANK` is checked
+    directly rather than trusting `Trainer.is_world_process_zero()`: on at least one
+    environment both processes reported themselves as world-process-zero and raced to
+    write the same files. Defaults to "0" (true) for a plain single-process `python`
+    launch (e.g. Colab), where `RANK` is never set.
+    """
+    import os
+
+    return os.environ.get("RANK", "0") == "0"
+
+
 def is_valid_checkpoint_dir(path: Path) -> bool:
     """Whether `path` has the minimum files needed to resume from it."""
     if not path.is_dir():
@@ -220,6 +234,11 @@ class DriveSyncCallback:
 
         class _Callback(self._base):
             def on_save(self, args, state, control, **kwargs):
+                if not is_main_process():
+                    # Under multi-GPU DDP (e.g. `torchrun --nproc_per_node=2`), every
+                    # rank runs this callback; only rank 0 should touch the Drive copy,
+                    # otherwise concurrent shutil.copytree calls race on the same files.
+                    return control
                 local_checkpoint = local_work_dir / f"checkpoint-{state.global_step}"
                 if not is_valid_checkpoint_dir(local_checkpoint):
                     logger.warning("Expected local checkpoint %s not found; skipping Drive sync.", local_checkpoint)
@@ -388,9 +407,12 @@ def main() -> None:
             )
 
     trainer.train(resume_from_checkpoint=last_checkpoint)
-    trainer.save_model(str(args.output_dir / "final"))
-    tokenizer.save_pretrained(str(args.output_dir / "final"))
-    logger.info("Training finished (or paused at time budget). Latest state saved under %s", args.output_dir)
+    if is_main_process():
+        # Same reasoning as DriveSyncCallback: under multi-GPU DDP, every rank would
+        # otherwise race to write the same "final" folder.
+        trainer.save_model(str(args.output_dir / "final"))
+        tokenizer.save_pretrained(str(args.output_dir / "final"))
+        logger.info("Training finished (or paused at time budget). Latest state saved under %s", args.output_dir)
 
 
 if __name__ == "__main__":
