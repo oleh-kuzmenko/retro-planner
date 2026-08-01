@@ -59,23 +59,14 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def decode_and_parse(raw: str) -> dict | None:
-    for candidate in (raw, "{" + raw + "}"):
-        try:
-            parsed = json.loads(candidate)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(parsed, dict):
-            return parsed
-    return None
-
-
 def fix_legacy_tokenizer_config(model_dir: Path) -> None:
     """Patch `extra_special_tokens` from a flat list (how this project's earlier
     training runs saved it) to the `{token: token}` dict form current `transformers`
-    expects. See `scripts/models/run_reactiont5_topk.py`'s copy of this function for
-    the full explanation; kept duplicated here rather than factored into a shared
-    module since both scripts are otherwise self-contained.
+    expects (`tokenization_utils_base.py`'s `_set_model_specific_special_tokens` calls
+    `.keys()` on it). Only touches local checkpoint directories -- HF Hub model ids
+    aren't a `Path` that `.is_dir()` would find. In-place: this is a forward-compat
+    format fix, not a behavior change (verified via round-trip tokenization: same
+    ids before/after for a plain SMILES string), so no need to keep the old file.
     """
     config_path = model_dir / "tokenizer_config.json"
     if not config_path.is_file():
@@ -90,12 +81,15 @@ def fix_legacy_tokenizer_config(model_dir: Path) -> None:
 
 def fix_tie_word_embeddings(model_dir: Path) -> None:
     """Fix `config.json`'s `tie_word_embeddings` from ground truth (do `lm_head.weight`
-    and `shared.weight` actually hold the same values?), rather than trusting the field.
-    Found by direct debugging on Model 1's variant-2 checkpoint: when the field says
-    `true` but the two tensors are in fact distinct, generation silently degenerates
-    into repeating one token. Confirmed the same bug independently on this Model 2
-    (ReactionT5-base) checkpoint before this fix existed -- both `lm_head.weight` and
-    `shared.weight` present and non-identical, `tie_word_embeddings` wrongly `true`.
+    and `shared.weight` actually hold the same values in the saved checkpoint?), rather
+    than trusting whatever the field says. Found by direct debugging: for checkpoints
+    where the field says `true` but the two tensors are in fact distinct, generation
+    silently degenerates into repeating one token -- some `transformers` versions
+    auto-detect and override this at load time (with a warning), but this was observed
+    NOT to happen reliably (confirmed: identical symptom reproduced and fixed this way
+    on a real checkpoint). No-ops (and doesn't load the ~750MB safetensors file) unless
+    `tie_word_embeddings` is currently `true`, since a `false` value is never wrong to
+    load with two separate tensors present.
     """
     config_path = model_dir / "config.json"
     safetensors_path = model_dir / "model.safetensors"
@@ -121,6 +115,17 @@ def fix_tie_word_embeddings(model_dir: Path) -> None:
             "(lm_head.weight and shared.weight are distinct in the saved checkpoint)",
             config_path,
         )
+
+
+def decode_and_parse(raw: str) -> dict | None:
+    for candidate in (raw, "{" + raw + "}"):
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return parsed
+    return None
 
 
 def main() -> None:
