@@ -70,6 +70,59 @@ def decode_and_parse(raw: str) -> dict | None:
     return None
 
 
+def fix_legacy_tokenizer_config(model_dir: Path) -> None:
+    """Patch `extra_special_tokens` from a flat list (how this project's earlier
+    training runs saved it) to the `{token: token}` dict form current `transformers`
+    expects. See `scripts/models/run_reactiont5_topk.py`'s copy of this function for
+    the full explanation; kept duplicated here rather than factored into a shared
+    module since both scripts are otherwise self-contained.
+    """
+    config_path = model_dir / "tokenizer_config.json"
+    if not config_path.is_file():
+        return
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    extra = config.get("extra_special_tokens")
+    if isinstance(extra, list):
+        config["extra_special_tokens"] = {tok: tok for tok in extra}
+        config_path.write_text(json.dumps(config), encoding="utf-8")
+        LOGGER.info("Patched legacy extra_special_tokens list->dict in %s", config_path)
+
+
+def fix_tie_word_embeddings(model_dir: Path) -> None:
+    """Fix `config.json`'s `tie_word_embeddings` from ground truth (do `lm_head.weight`
+    and `shared.weight` actually hold the same values?), rather than trusting the field.
+    Found by direct debugging on Model 1's variant-2 checkpoint: when the field says
+    `true` but the two tensors are in fact distinct, generation silently degenerates
+    into repeating one token. Confirmed the same bug independently on this Model 2
+    (ReactionT5-base) checkpoint before this fix existed -- both `lm_head.weight` and
+    `shared.weight` present and non-identical, `tie_word_embeddings` wrongly `true`.
+    """
+    config_path = model_dir / "config.json"
+    safetensors_path = model_dir / "model.safetensors"
+    if not config_path.is_file() or not safetensors_path.is_file():
+        return
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    if not config.get("tie_word_embeddings"):
+        return
+
+    from safetensors import safe_open
+
+    with safe_open(safetensors_path, framework="pt") as f:
+        keys = f.keys()
+        if "lm_head.weight" not in keys or "shared.weight" not in keys:
+            return
+        tied = bool((f.get_tensor("lm_head.weight") == f.get_tensor("shared.weight")).all())
+
+    if not tied:
+        config["tie_word_embeddings"] = False
+        config_path.write_text(json.dumps(config), encoding="utf-8")
+        LOGGER.info(
+            "Patched tie_word_embeddings true->false in %s "
+            "(lm_head.weight and shared.weight are distinct in the saved checkpoint)",
+            config_path,
+        )
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     from retro_eval.condition_similarity import component_groups
@@ -78,6 +131,11 @@ def main() -> None:
 
     import torch
     from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+
+    model_dir = Path(args.model_dir)
+    if model_dir.is_dir():
+        fix_legacy_tokenizer_config(model_dir)
+        fix_tie_word_embeddings(model_dir)
 
     rows = [json.loads(line) for line in args.test_file.read_text(encoding="utf-8").splitlines() if line.strip()]
     if args.limit:
