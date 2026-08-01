@@ -20,6 +20,7 @@ Example:
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 from pathlib import Path
 
@@ -74,7 +75,31 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Hugging Face allow pattern for ORD files, e.g. data/4d/*.pb.gz. Repeatable.",
     )
+    parser.add_argument(
+        "--exclude-file",
+        action="append",
+        default=None,
+        help=(
+            "Product_smiles in this file are excluded from sampling -- e.g. an "
+            "existing eval-targets JSON or a training pool's reactants_train.jsonl/"
+            "reactants_val.jsonl. Repeatable, so a new (larger) eval set can be built "
+            "leak-free against every training pool sampled so far, not just one."
+        ),
+    )
     return parser.parse_args()
+
+
+def load_excluded_products(path: Path) -> set[str]:
+    """Load `product_smiles` from either an eval-targets JSON array or a
+    reactants_{train,val}.jsonl pool file (one JSON object per line)."""
+    text = path.read_text(encoding="utf-8")
+    try:
+        records = json.loads(text)
+    except json.JSONDecodeError:
+        records = [json.loads(line) for line in text.splitlines() if line.strip()]
+    excluded = {r["product_smiles"] for r in records if r.get("product_smiles")}
+    LOGGER.info("Loaded %d product(s) to exclude from %s", len(excluded), path)
+    return excluded
 
 
 def main() -> None:
@@ -86,8 +111,20 @@ def main() -> None:
 
     ord_data_dir = resolve_ord_data_dir(args.ord_data_dir, args.ord_repo_id, args.ord_allow_pattern)
     max_per_source = args.max_per_source or max(1, args.count // 10)
+
+    excluded: set[str] = set()
+    for exclude_path in args.exclude_file or []:
+        excluded |= load_excluded_products(Path(exclude_path))
+    LOGGER.info("Total excluded product(s): %d", len(excluded))
+
+    def excluded_filtered_payloads():
+        for payload in iter_ord_payloads(ord_data_dir):
+            if payload.get("product_smiles") in excluded:
+                continue
+            yield payload
+
     targets = stratified_reservoir_sample(
-        iter_ord_payloads(ord_data_dir),
+        excluded_filtered_payloads(),
         args.count,
         max_per_source,
         group_field="source_dataset",
