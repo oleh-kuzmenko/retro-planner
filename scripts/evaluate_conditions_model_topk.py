@@ -54,6 +54,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-beams", type=int, default=10)
     parser.add_argument("--max-target-length", type=int, default=128)
     parser.add_argument("--device", default="cpu")
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=1,
+        help=(
+            "Records per generate() call. Mirrors run_reactiont5_topk.py's --batch-size: "
+            "batch=1 leaves a GPU mostly idle, raise this (e.g. 16-32) for a real speedup. "
+            "CPU runs typically see little benefit and can even slow down from padding "
+            "overhead, so leave at 1 there."
+        ),
+    )
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--output", type=Path, default=Path("conditions_topk_results.json"))
     return parser.parse_args()
@@ -169,9 +180,11 @@ def main() -> None:
     json_valid_top1 = 0
     detailed = []
 
-    for i, row in enumerate(rows):
-        prompt = format_input(row)
-        inputs = tokenizer([prompt], return_tensors="pt", truncation=True, max_length=256).to(args.device)
+    processed = 0
+    for batch_start in range(0, len(rows), args.batch_size):
+        batch = rows[batch_start : batch_start + args.batch_size]
+        prompts = [format_input(row) for row in batch]
+        inputs = tokenizer(prompts, return_tensors="pt", padding=True, truncation=True, max_length=256).to(args.device)
         with torch.no_grad():
             output_ids = model.generate(
                 **inputs,
@@ -180,76 +193,81 @@ def main() -> None:
                 max_length=args.max_target_length,
                 min_length=1,
             )
-        candidates_raw = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
+        decoded = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
 
-        seen = set()
-        deduped_raw = []
-        for candidate in candidates_raw:
-            if candidate in seen:
-                continue
-            seen.add(candidate)
-            deduped_raw.append(candidate)
+        for row_idx, row in enumerate(batch):
+            candidates_raw = decoded[row_idx * args.num_beams : (row_idx + 1) * args.num_beams]
 
-        parsed_candidates = [decode_and_parse(c) for c in deduped_raw]
-        if parsed_candidates and parsed_candidates[0] is not None:
-            json_valid_top1 += 1
-
-        for field in ("solvent", "catalyst"):
-            ref_value = row.get(field)
-            ref_set = normalize_components(ref_value)
-            classifier = GROUP_CLASSIFIERS[field]
-            ref_groups = component_groups(ref_value, classifier)
-
-            if ref_set is not None:
-                match_expected[field] += 1
-            if ref_groups is not None:
-                same_group_classifiable[field] += 1
-
-            exact_hit_at = None
-            group_hit_at = None
-            for rank, parsed in enumerate(parsed_candidates[: max(ks)], start=1):
-                if parsed is None:
+            seen = set()
+            deduped_raw = []
+            for candidate in candidates_raw:
+                if candidate in seen:
                     continue
-                pred_set = normalize_components(parsed.get(field))
-                if exact_hit_at is None and ref_set is not None and pred_set is not None and pred_set == ref_set:
-                    exact_hit_at = rank
-                pred_groups = component_groups(parsed.get(field), classifier)
-                if group_hit_at is None and ref_groups is not None and pred_groups is not None and ref_groups <= pred_groups:
-                    group_hit_at = rank
+                seen.add(candidate)
+                deduped_raw.append(candidate)
 
-            for k in ks:
-                if ref_set is not None and exact_hit_at is not None and exact_hit_at <= k:
-                    match_totals[f"{field}_exact_match_top{k}"] += 1
-                if ref_groups is not None and group_hit_at is not None and group_hit_at <= k:
-                    match_totals[f"{field}_same_group_top{k}"] += 1
+            parsed_candidates = [decode_and_parse(c) for c in deduped_raw]
+            if parsed_candidates and parsed_candidates[0] is not None:
+                json_valid_top1 += 1
 
-        for field, tolerance in (("temperature_celsius", TEMPERATURE_TOLERANCE_C), ("yield_percent", YIELD_TOLERANCE_PCT)):
-            ref_num = to_number(row.get(field))
-            if ref_num is None:
-                continue
-            numeric_expected[field] += 1
-            hit_at = None
-            for rank, parsed in enumerate(parsed_candidates[: max(ks)], start=1):
-                if parsed is None:
+            for field in ("solvent", "catalyst"):
+                ref_value = row.get(field)
+                ref_set = normalize_components(ref_value)
+                classifier = GROUP_CLASSIFIERS[field]
+                ref_groups = component_groups(ref_value, classifier)
+
+                if ref_set is not None:
+                    match_expected[field] += 1
+                if ref_groups is not None:
+                    same_group_classifiable[field] += 1
+
+                exact_hit_at = None
+                group_hit_at = None
+                for rank, parsed in enumerate(parsed_candidates[: max(ks)], start=1):
+                    if parsed is None:
+                        continue
+                    pred_set = normalize_components(parsed.get(field))
+                    if exact_hit_at is None and ref_set is not None and pred_set is not None and pred_set == ref_set:
+                        exact_hit_at = rank
+                    pred_groups = component_groups(parsed.get(field), classifier)
+                    if group_hit_at is None and ref_groups is not None and pred_groups is not None and ref_groups <= pred_groups:
+                        group_hit_at = rank
+
+                for k in ks:
+                    if ref_set is not None and exact_hit_at is not None and exact_hit_at <= k:
+                        match_totals[f"{field}_exact_match_top{k}"] += 1
+                    if ref_groups is not None and group_hit_at is not None and group_hit_at <= k:
+                        match_totals[f"{field}_same_group_top{k}"] += 1
+
+            for field, tolerance in (("temperature_celsius", TEMPERATURE_TOLERANCE_C), ("yield_percent", YIELD_TOLERANCE_PCT)):
+                ref_num = to_number(row.get(field))
+                if ref_num is None:
                     continue
-                pred_num = to_number(parsed.get(field))
-                if pred_num is not None and abs(pred_num - ref_num) <= tolerance:
-                    hit_at = rank
-                    break
-            for k in ks:
-                if hit_at is not None and hit_at <= k:
-                    numeric_within_tol[f"{field}_top{k}"] += 1
+                numeric_expected[field] += 1
+                hit_at = None
+                for rank, parsed in enumerate(parsed_candidates[: max(ks)], start=1):
+                    if parsed is None:
+                        continue
+                    pred_num = to_number(parsed.get(field))
+                    if pred_num is not None and abs(pred_num - ref_num) <= tolerance:
+                        hit_at = rank
+                        break
+                for k in ks:
+                    if hit_at is not None and hit_at <= k:
+                        numeric_within_tol[f"{field}_top{k}"] += 1
 
-        detailed.append(
-            {
-                "product_smiles": row["product_smiles"],
-                "reference": row,
-                "candidates_raw": deduped_raw,
-                "candidates_parsed": parsed_candidates,
-            }
-        )
-        if (i + 1) % 25 == 0:
-            LOGGER.info("Processed %d/%d", i + 1, len(rows))
+            detailed.append(
+                {
+                    "product_smiles": row["product_smiles"],
+                    "reference": row,
+                    "candidates_raw": deduped_raw,
+                    "candidates_parsed": parsed_candidates,
+                }
+            )
+
+        processed += len(batch)
+        if processed % 25 == 0 or processed == len(rows):
+            LOGGER.info("Processed %d/%d", processed, len(rows))
 
     del model, tokenizer
     gc.collect()

@@ -89,6 +89,44 @@ def fix_legacy_tokenizer_config(model_dir: Path) -> None:
         LOGGER.info("Patched legacy extra_special_tokens list->dict in %s", config_path)
 
 
+def fix_tie_word_embeddings(model_dir: Path) -> None:
+    """Fix `config.json`'s `tie_word_embeddings` from ground truth (do `lm_head.weight`
+    and `shared.weight` actually hold the same values in the saved checkpoint?), rather
+    than trusting whatever the field says. Found by direct debugging: for checkpoints
+    where the field says `true` but the two tensors are in fact distinct, generation
+    silently degenerates into repeating one token -- some `transformers` versions
+    auto-detect and override this at load time (with a warning), but this was observed
+    NOT to happen reliably (confirmed: identical symptom reproduced and fixed this way
+    on a real checkpoint). No-ops (and doesn't load the ~750MB safetensors file) unless
+    `tie_word_embeddings` is currently `true`, since a `false` value is never wrong to
+    load with two separate tensors present.
+    """
+    config_path = model_dir / "config.json"
+    safetensors_path = model_dir / "model.safetensors"
+    if not config_path.is_file() or not safetensors_path.is_file():
+        return
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    if not config.get("tie_word_embeddings"):
+        return
+
+    from safetensors import safe_open
+
+    with safe_open(safetensors_path, framework="pt") as f:
+        keys = f.keys()
+        if "lm_head.weight" not in keys or "shared.weight" not in keys:
+            return
+        tied = bool((f.get_tensor("lm_head.weight") == f.get_tensor("shared.weight")).all())
+
+    if not tied:
+        config["tie_word_embeddings"] = False
+        config_path.write_text(json.dumps(config), encoding="utf-8")
+        LOGGER.info(
+            "Patched tie_word_embeddings true->false in %s "
+            "(lm_head.weight and shared.weight are distinct in the saved checkpoint)",
+            config_path,
+        )
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     args = parse_args()
@@ -108,6 +146,7 @@ def main() -> None:
     model_dir = Path(args.t5_model)
     if model_dir.is_dir():
         fix_legacy_tokenizer_config(model_dir)
+        fix_tie_word_embeddings(model_dir)
 
     records = json.loads(args.input.read_text(encoding="utf-8"))
     if args.limit:
