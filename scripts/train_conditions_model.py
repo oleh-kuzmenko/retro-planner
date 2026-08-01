@@ -145,11 +145,22 @@ def ensure_full_char_coverage(tokenizer, model, texts, logger) -> int:
     character (e.g. t5-small's C4-pretrained vocabulary) -- `add_tokens` skips any
     string already present in the vocab, so `added` is 0 and nothing else in this
     function fires.
+
+    `mean_resizing=False` is required. The transformers default (`mean_resizing=True`)
+    initializes the new rows by sampling a multivariate normal fitted to the *existing*
+    embeddings' mean and covariance. On Kaggle's transformers version (newer lazy
+    "Materializing param" weight loader) this produced pathological large-norm rows:
+    the first held-out eval_loss started at 10.44 -- worse than uniform-random
+    (ln(vocab)=5.74) -- and never recovered below ~8.5 over 4 full epochs. The exact
+    same code/optimizer/lr on this machine's transformers learned normally (eval_loss
+    4.93 -> 3.48 in 120 Trainer steps), so the fault is that version-specific covariance
+    sampling, not the resize or the training recipe. `mean_resizing=False` skips the
+    covariance fit entirely (simple small-normal init), which is version-robust.
     """
     chars = sorted({ch for text in texts for ch in text})
     added = tokenizer.add_tokens(chars)
     if added:
-        model.resize_token_embeddings(len(tokenizer))
+        model.resize_token_embeddings(len(tokenizer), mean_resizing=False)
         logger.info(
             "Added %d new character token(s) to vocab (size now %d) to fix <unk> "
             "corruption of JSON/English targets: %s",
