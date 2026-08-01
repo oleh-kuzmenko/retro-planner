@@ -69,6 +69,26 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def fix_legacy_tokenizer_config(model_dir: Path) -> None:
+    """Patch `extra_special_tokens` from a flat list (how this project's earlier
+    training runs saved it) to the `{token: token}` dict form current `transformers`
+    expects (`tokenization_utils_base.py`'s `_set_model_specific_special_tokens` calls
+    `.keys()` on it). Only touches local checkpoint directories -- HF Hub model ids
+    aren't a `Path` that `.is_dir()` would find. In-place: this is a forward-compat
+    format fix, not a behavior change (verified via round-trip tokenization: same
+    ids before/after for a plain SMILES string), so no need to keep the old file.
+    """
+    config_path = model_dir / "tokenizer_config.json"
+    if not config_path.is_file():
+        return
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    extra = config.get("extra_special_tokens")
+    if isinstance(extra, list):
+        config["extra_special_tokens"] = {tok: tok for tok in extra}
+        config_path.write_text(json.dumps(config), encoding="utf-8")
+        LOGGER.info("Patched legacy extra_special_tokens list->dict in %s", config_path)
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     args = parse_args()
@@ -84,6 +104,10 @@ def main() -> None:
         split_fragments,
         strip_salts_and_catalysts,
     )
+
+    model_dir = Path(args.t5_model)
+    if model_dir.is_dir():
+        fix_legacy_tokenizer_config(model_dir)
 
     records = json.loads(args.input.read_text(encoding="utf-8"))
     if args.limit:
