@@ -121,6 +121,45 @@ def format_target(row: dict) -> str:
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
 
 
+def ensure_full_char_coverage(tokenizer, model, texts, logger) -> int:
+    """Add any character used in `texts` that the tokenizer would otherwise map to
+    `<unk>` as a new single-character token, then resize the model's embedding matrix
+    to match.
+
+    Found by direct debugging of the ReactionT5-base Model 2 attempt (RESULTS.md,
+    "Спроба: хімічно-передтренований базовий чекпоінт"): its 268-token vocabulary was
+    built purely from SMILES chemistry notation, so most JSON punctuation (`{`, `}`,
+    `"`, `:`, `,`) and most English letters -- both needed for this task's "not
+    specified" / JSON-structured targets -- silently collapse to `<unk>`, a many-to-one
+    mapping that destroys the training targets themselves. Teacher-forced `eval_loss`
+    stayed healthy throughout (0.14) because the model was correctly learning to
+    reproduce the *corrupted* (but self-consistent) `<unk>`-riddled targets; actual
+    generation was 0% valid on all 2285 held-out records.
+
+    `tokenizer.add_tokens` inserts each character into an added-tokens trie checked
+    before the SentencePiece model, so it is matched unconditionally regardless of the
+    surrounding SentencePiece merge/word-start-prefix ambiguity that caused some
+    characters to work in isolation but not embedded in a word (confirmed by direct
+    testing: single-character lookups showed 0 missing, but the same characters inside
+    "not specified" produced `<unk>`). A no-op for tokenizers that already cover every
+    character (e.g. t5-small's C4-pretrained vocabulary) -- `add_tokens` skips any
+    string already present in the vocab, so `added` is 0 and nothing else in this
+    function fires.
+    """
+    chars = sorted({ch for text in texts for ch in text})
+    added = tokenizer.add_tokens(chars)
+    if added:
+        model.resize_token_embeddings(len(tokenizer))
+        logger.info(
+            "Added %d new character token(s) to vocab (size now %d) to fix <unk> "
+            "corruption of JSON/English targets: %s",
+            added,
+            len(tokenizer),
+            chars,
+        )
+    return added
+
+
 class TimeBudgetCallback:
     def __init__(self, budget_minutes: float | None):
         from transformers import TrainerCallback
@@ -240,6 +279,10 @@ def main() -> None:
     data_files = {"train": str(args.train_file), "validation": str(args.val_file)}
     raw = load_dataset("json", data_files=data_files)
     logger.info("Train examples: %d | Validation examples: %d", len(raw["train"]), len(raw["validation"]))
+
+    all_rows = [row for split in ("train", "validation") for row in raw[split]]
+    all_texts = [format_input(row) for row in all_rows] + [format_target(row) for row in all_rows]
+    ensure_full_char_coverage(tokenizer, model, all_texts, logger)
 
     def preprocess(examples):
         inputs = [
