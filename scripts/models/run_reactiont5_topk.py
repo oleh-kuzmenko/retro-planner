@@ -51,6 +51,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--diversity-penalty", type=float, default=0.0, help="Only used if --num-beam-groups > 1.")
     parser.add_argument("--max-length", type=int, default=150)
     parser.add_argument("--device", default="cpu")
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=1,
+        help=(
+            "Products per generate() call. The default (1) matches this script's original "
+            "behavior. On GPU, batch=1 leaves the device mostly idle (confirmed: <10%% "
+            "utilization on a T4) since beam search for a single product is too small a "
+            "workload to saturate it -- raise this (e.g. 16-32) for a real GPU speedup. "
+            "CPU runs typically see little benefit and can even slow down from padding "
+            "overhead, so leave at 1 there."
+        ),
+    )
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--output", type=Path, required=True)
     return parser.parse_args()
@@ -88,55 +101,65 @@ def main() -> None:
     valid_top1 = 0
     detailed = []
 
-    for i, record in enumerate(records):
-        product = record["product_smiles"]
-        reference = record["reactants_smiles"]
+    generate_kwargs = dict(
+        num_beams=args.num_beams,
+        num_return_sequences=args.num_beams,
+        max_length=args.max_length,
+        min_length=1,
+    )
+    if args.num_beam_groups > 1:
+        generate_kwargs["num_beam_groups"] = args.num_beam_groups
+        generate_kwargs["diversity_penalty"] = args.diversity_penalty
+        # transformers >=4.6x moved group beam search to a community-maintained
+        # custom_generate repo (transformers-community/group-beam-search, HF-org
+        # maintained); trust_remote_code is required to fetch and run it.
+        generate_kwargs["trust_remote_code"] = True
 
-        inputs = tokenizer([product], return_tensors="pt").to(args.device)
-        generate_kwargs = dict(
-            num_beams=args.num_beams,
-            num_return_sequences=args.num_beams,
-            max_length=args.max_length,
-            min_length=1,
-        )
-        if args.num_beam_groups > 1:
-            generate_kwargs["num_beam_groups"] = args.num_beam_groups
-            generate_kwargs["diversity_penalty"] = args.diversity_penalty
-            # transformers >=4.6x moved group beam search to a community-maintained
-            # custom_generate repo (transformers-community/group-beam-search, HF-org
-            # maintained); trust_remote_code is required to fetch and run it.
-            generate_kwargs["trust_remote_code"] = True
+    processed = 0
+    for batch_start in range(0, len(records), args.batch_size):
+        batch = records[batch_start : batch_start + args.batch_size]
+        products = [r["product_smiles"] for r in batch]
+
+        inputs = tokenizer(products, return_tensors="pt", padding=True).to(args.device)
         with torch.no_grad():
             output_ids = model.generate(**inputs, **generate_kwargs)
-        candidates_raw = [c.strip().replace(" ", "") for c in tokenizer.batch_decode(output_ids, skip_special_tokens=True)]
+        decoded = [c.strip().replace(" ", "") for c in tokenizer.batch_decode(output_ids, skip_special_tokens=True)]
 
-        seen_sets = set()
-        deduped = []
-        for candidate in candidates_raw:
-            canonical_set = canonical_precursor_set(split_fragments(candidate))
-            key = canonical_set if canonical_set is not None else candidate
-            if key in seen_sets:
-                continue
-            seen_sets.add(key)
-            deduped.append(candidate)
+        for row_idx, record in enumerate(batch):
+            reference = record["reactants_smiles"]
+            candidates_raw = decoded[row_idx * args.num_beams : (row_idx + 1) * args.num_beams]
 
-        if deduped:
-            valid_top1 += is_valid_smiles(deduped[0])
+            seen_sets = set()
+            deduped = []
+            for candidate in candidates_raw:
+                canonical_set = canonical_precursor_set(split_fragments(candidate))
+                key = canonical_set if canonical_set is not None else candidate
+                if key in seen_sets:
+                    continue
+                seen_sets.add(key)
+                deduped.append(candidate)
 
-        for k in ks:
-            top_k = deduped[:k]
-            exact_hits[k] += any(is_exact_match(split_fragments(c), split_fragments(reference)) for c in top_k)
-            core_hits[k] += any(
-                is_exact_match(
-                    strip_salts_and_catalysts(split_fragments(c)),
-                    strip_salts_and_catalysts(split_fragments(reference)),
+            if deduped:
+                valid_top1 += is_valid_smiles(deduped[0])
+
+            for k in ks:
+                top_k = deduped[:k]
+                exact_hits[k] += any(is_exact_match(split_fragments(c), split_fragments(reference)) for c in top_k)
+                core_hits[k] += any(
+                    is_exact_match(
+                        strip_salts_and_catalysts(split_fragments(c)),
+                        strip_salts_and_catalysts(split_fragments(reference)),
+                    )
+                    for c in top_k
                 )
-                for c in top_k
+
+            detailed.append(
+                {"product_smiles": record["product_smiles"], "reactants_smiles": reference, "candidates": deduped}
             )
 
-        detailed.append({"product_smiles": product, "reactants_smiles": reference, "candidates": deduped})
-        if (i + 1) % 25 == 0:
-            LOGGER.info("Processed %d/%d", i + 1, len(records))
+        processed += len(batch)
+        if processed % 25 == 0 or processed == len(records):
+            LOGGER.info("Processed %d/%d", processed, len(records))
 
     del model, tokenizer
     gc.collect()
