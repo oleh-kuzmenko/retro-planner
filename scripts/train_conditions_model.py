@@ -136,15 +136,16 @@ def ensure_full_char_coverage(tokenizer, model, texts, logger) -> int:
     reproduce the *corrupted* (but self-consistent) `<unk>`-riddled targets; actual
     generation was 0% valid on all 2285 held-out records.
 
-    `tokenizer.add_tokens` inserts each character into an added-tokens trie checked
-    before the SentencePiece model, so it is matched unconditionally regardless of the
-    surrounding SentencePiece merge/word-start-prefix ambiguity that caused some
-    characters to work in isolation but not embedded in a word (confirmed by direct
-    testing: single-character lookups showed 0 missing, but the same characters inside
-    "not specified" produced `<unk>`). A no-op for tokenizers that already cover every
-    character (e.g. t5-small's C4-pretrained vocabulary) -- `add_tokens` skips any
-    string already present in the vocab, so `added` is 0 and nothing else in this
-    function fires.
+    Only characters that genuinely tokenize to `<unk>` in isolation are added. An
+    earlier version added *every* distinct character via `tokenizer.add_tokens(chars)`
+    and relied on it skipping ones "already present" -- but for a SentencePiece
+    tokenizer the vocab keys are metaspace-prefixed pieces (`"▁a"`), not bare
+    characters, so `add_tokens("a")` treated every bare char as new. On t5-small (whose
+    C4 vocab represents all these characters fine) that wrongly added 50+ redundant
+    bare-char tokens, shadowing the model's learned sub-word tokenization. The correct
+    test is whether the character actually encodes to the unk id: on t5-small that
+    leaves just `{` and `}` (the only two genuinely missing), on ReactionT5 the ~30
+    JSON/English characters that matter.
 
     `mean_resizing=False` is required. The transformers default (`mean_resizing=True`)
     initializes the new rows by sampling a multivariate normal fitted to the *existing*
@@ -158,7 +159,9 @@ def ensure_full_char_coverage(tokenizer, model, texts, logger) -> int:
     covariance fit entirely (simple small-normal init), which is version-robust.
     """
     chars = sorted({ch for text in texts for ch in text})
-    added = tokenizer.add_tokens(chars)
+    unk_id = tokenizer.unk_token_id
+    missing = [c for c in chars if unk_id in tokenizer(c, add_special_tokens=False)["input_ids"]]
+    added = tokenizer.add_tokens(missing)
     if added:
         model.resize_token_embeddings(len(tokenizer), mean_resizing=False)
         logger.info(
@@ -166,7 +169,7 @@ def ensure_full_char_coverage(tokenizer, model, texts, logger) -> int:
             "corruption of JSON/English targets: %s",
             added,
             len(tokenizer),
-            chars,
+            missing,
         )
     return added
 
