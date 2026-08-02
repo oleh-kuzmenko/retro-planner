@@ -1,27 +1,15 @@
-# Experiments report
+# Experiments
 
-Порівняння підходів до one-step ретросинтезу на фіксованих тест-наборах по 100 реакцій.
+Committed evaluation results (JSON) behind the tables in [`../RESULTS.md`](../RESULTS.md).
+Each file is a `run_reactiont5_topk.py` / `evaluate_conditions_model_topk.py` /
+`ensemble_topk.py` output: a `summary` block plus, for the topk runs, per-record
+`records`.
 
-**Метрики** (усі — частка від 100 тестових реакцій):
-- **exact_match** — передбачений реагент(и) точно збігається з еталоном (canonical SMILES).
-- **core_exact_match** — збігається реакційне ядро (без урахування другорядних груп/солей/стереохімії), м'якший критерій.
-- **valid** — частка передбачень, які є валідним SMILES (незалежно від правильності).
+| Folder | What |
+|---|---|
+| `v2_baselines/` | Published `ReactionT5v2` checkpoints (with / without USPTO fine-tuning) on ORD and USPTO — the "existing solutions" table |
+| `v2_model1_eval/` | Model 1 (reactant) variant-2 top-k evals on ORD and USPTO |
+| `v2_model1_topk/` | Model 1 top-k: every training variant (57k/150k/300k/root-aligned), the variant-2+4 ensemble, and the round-trip / diverse-beam checks that did not beat it |
+| `v2_model2_topk/` | Model 2 (conditions) t5-small — summaries for the 41,139- and 138,869-reaction training sets on the shared 7,714-reaction test |
 
-## Результати (exact_match / core_exact_match / valid, зі 100)
-
-| Модель | ORD | USPTO |
-|---|---|---|
-| ReactionT5v2 | 31% / 52% / 100% | 90% / 90% / 100% |
-| ChemLLM-20B (GGUF, Q4_K_M) | 1% / 2% / 45% | 2% / 2% / 41% |
-| CoT (GPT-OSS-120B, без RAG) | 3% / 4% / 94% | 11% / 11% / 94% |
-| RAG + CoT | 3% / 3% / 100% | 20% / 25% / 95% |
-| Hybrid (T5 + RAG + rerank) | 27% / 48% / 100% | 71% / 76% / 100% |
-| Hybrid, застарілий слабкий індекс (`_archive`) | 24% / 38% / 100% | — |
-
-## LoRA fine-tune (Qwen2.5-7B), чесні held-out спліти
-
-| Модель | Тест-набір | exact_match / core / valid |
-|---|---|---|
-| ReactionT5v2 | канонічний USPTO-50k test-спліт (`uspto_test_holdout`) | 91% / 92% / 100% |
-| Qwen2.5-7B + LoRA | власний held-out спліт (`uspto_lora`) | 35% / 35% / 97% |
-| Qwen2.5-7B + LoRA | ORD, крос-датасет (`lora_ord_eval`) | 7% / 10% / 95% |
+See `RESULTS.md` for the numbers and their interpretation.

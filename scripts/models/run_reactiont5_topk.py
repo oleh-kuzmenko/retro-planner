@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Evaluate a ReactionT5-family checkpoint with top-1/top-3/top-5 (not just top-1) accuracy.
 
-`run_reactiont5.py` (step 2) only keeps the single best beam. Most published
+Most published
 retrosynthesis results report top-k accuracy (a prediction counts as correct
 if the reference appears anywhere in the top k beam candidates) precisely
 because a chemist reviewing a short list of candidate routes is a realistic

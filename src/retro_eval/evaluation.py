@@ -1,8 +1,8 @@
 """Retrosynthesis prediction metrics: RDKit validity and exact match.
 
-Pure, provider-agnostic functions shared by every `scripts/models/run_*.py`
-runner and by `scripts/aggregate_results.py`; kept dependency-free (no LLM
-provider, no Qdrant) so they can be unit tested in isolation.
+Pure functions shared by the Model 1 evaluation scripts (`run_reactiont5_topk.py`,
+`ensemble_topk.py`, `rerank_roundtrip.py`); kept dependency-free (RDKit only) so they
+can be unit tested in isolation.
 """
 
 from __future__ import annotations

@@ -17,8 +17,7 @@ source of truth:
   into train/val/test.
 
 Every eval target already sampled into `--eval-targets-file` is excluded
-before sampling, by product_smiles, using the same helper
-`index_ord_to_qdrant.py` uses -- so there is no leakage between this train
+before sampling, by product_smiles, so there is no leakage between this train
 pool and the fixed eval set used to score Model 1.
 
 Example:

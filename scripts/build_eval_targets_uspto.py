@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""Step 1 (USPTO): write a fixed JSON test set, held out for every model comparison stage.
+"""USPTO-50K: write a fixed JSON test set for the independent generalization test.
 
-Every stage (ReactionT5v2, ChemLLM, Qwen2.5-7B+LoRA, Llama-70B+RAG+CoT) runs
-against the exact same file this produces, so `index_uspto_to_qdrant.py`
-excludes it from the RAG index by default -- these targets stay unseen.
+Held out from training; mirrors `build_eval_targets_ord.py`.
 
 Targets are a seeded random sample (`--seed`), not just the first N unique
 products in dataset order, mirroring `build_eval_targets_ord.py`.

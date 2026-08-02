@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ORD parsing shared by `build_eval_targets_ord.py` and `index_ord_to_qdrant.py`."""
+"""ORD parsing shared by `build_eval_targets_ord.py` and `build_train_data_ord.py`."""
 
 from __future__ import annotations
 

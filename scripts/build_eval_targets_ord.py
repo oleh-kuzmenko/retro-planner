@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Step 1 (ORD): write a fixed JSON test set, held out for every model comparison stage.
+"""ORD: write a fixed JSON test set for Model 1, held out from training.
 
-Every stage (ReactionT5v2, ChemLLM, Qwen2.5-7B+LoRA, Llama-70B+RAG+CoT) runs
-against the exact same file this produces, so `index_ord_to_qdrant.py`
-excludes it from the RAG index by default -- these targets stay unseen.
+`build_train_data_ord.py` excludes every product in this file from the training
+pool by default, so these targets stay unseen.
 
 Targets are drawn via `stratified_reservoir_sample`, capped per ORD source
 file (`--max-per-source`), rather than the first N unique-product reactions

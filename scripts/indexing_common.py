@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-"""Shared Qdrant indexing helpers for the per-source indexing CLIs.
+"""Source-agnostic sampling/IO helpers shared by the ORD and USPTO data builders.
 
-`index_uspto_to_qdrant.py` and `index_ord_to_qdrant.py` each build the same
-two Qdrant collections (product Morgan fingerprints + reaction-transform
-fingerprints) from one dataset, excluding whatever reactions are listed in an
-eval-targets file (produced separately by `build_eval_targets_uspto.py` /
-`build_eval_targets_ord.py`) so those held-out targets stay unseen. This
-module holds the logic that does not depend on which source is being read.
+Stratified reservoir sampling, eval-target exclusion, JSONL/JSON writing and RDKit
+warning suppression used by `build_train_data_{ord,uspto}.py` and
+`build_eval_targets_{ord,uspto}.py` -- the logic that does not depend on which source
+is being read.
 """
 
 from __future__ import annotations

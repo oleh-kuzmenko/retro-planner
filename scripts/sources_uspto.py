@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""USPTO-50K parsing shared by `build_eval_targets_uspto.py` and `index_uspto_to_qdrant.py`."""
+"""USPTO-50K parsing shared by `build_eval_targets_uspto.py` and `build_train_data_uspto.py`."""
 
 from __future__ import annotations
 

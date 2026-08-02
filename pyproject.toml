@@ -5,35 +5,28 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "retro-eval"
 version = "0.1.0"
-description = "CLI research toolkit for comparing retrosynthesis-prediction approaches: ReactionT5v2, ChemLLM, a trained Qwen2.5-7B+LoRA, and Qdrant RAG + LLM-API CoT."
+description = "Retrosynthesis of organic compounds: a fine-tuned ReactionT5v2 for reactant prediction and a t5-small for reaction-condition prediction, trained and evaluated on ORD (USPTO-50K as an independent generalization test)."
 readme = "README.MD"
 requires-python = ">=3.10"
 dependencies = [
     "numpy",
-    "openai",
-    "qdrant-client",
     "rdkit",
 ]
 
 [project.optional-dependencies]
+# ORD/USPTO data building (build_train_data_*.py, build_eval_targets_*.py)
 indexing = [
     "datasets",
     "huggingface_hub",
     "ord-schema",
     "tqdm",
 ]
+# Training and evaluation (train_*.py, evaluate_*.py, run_reactiont5_topk.py)
 local-models = [
     "torch",
     "transformers",
-    "peft",
     "accelerate",
-    "bitsandbytes",
     "sentencepiece",
-    "llama-cpp-python",
-]
-eval-runner = [
-    "tenacity",
-    "tqdm",
 ]
 test = [
     "pytest",
