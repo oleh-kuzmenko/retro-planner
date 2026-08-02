@@ -1,0 +1,41 @@
+{
+ "total": 7714,
+ "num_beams": 10,
+ "json_valid_rate_top1": 0.9311641171895255,
+ "solvent_expected_count": 6879,
+ "solvent_same_group_classifiable_count": 6538,
+ "solvent_exact_match_top1": 0.24116877453118185,
+ "solvent_same_group_top1": 0.3342000611807892,
+ "solvent_exact_match_top3": 0.37447303387120223,
+ "solvent_same_group_top3": 0.4772101560110125,
+ "solvent_exact_match_top5": 0.45617095508068034,
+ "solvent_same_group_top5": 0.589171000305904,
+ "catalyst_expected_count": 1268,
+ "catalyst_same_group_classifiable_count": 1142,
+ "catalyst_exact_match_top1": 0.15772870662460567,
+ "catalyst_same_group_top1": 0.2136602451838879,
+ "catalyst_exact_match_top3": 0.1750788643533123,
+ "catalyst_same_group_top3": 0.2329246935201401,
+ "catalyst_exact_match_top5": 0.19794952681388012,
+ "catalyst_same_group_top5": 0.2600700525394046,
+ "temperature_celsius_expected_count": 2158,
+ "temperature_celsius_within_tol_top1": 0.027340129749768304,
+ "temperature_celsius_within_tol_top3": 0.037534754402224285,
+ "temperature_celsius_within_tol_top5": 0.05375347544022243,
+ "yield_percent_expected_count": 4678,
+ "yield_percent_within_tol_top1": 0.0,
+ "yield_percent_within_tol_top3": 0.0008550662676357417,
+ "yield_percent_within_tol_top5": 0.010902094912355708,
+ "_same_bucket": {
+  "temperature_celsius": {
+   "same_bucket_top1": 0.0366079703429101,
+   "same_bucket_top3": 0.04958294717330862,
+   "same_bucket_top5": 0.06580166821130677
+  },
+  "yield_percent": {
+   "same_bucket_top1": 0.0,
+   "same_bucket_top3": 0.0010688328345446773,
+   "same_bucket_top5": 0.01261222744762719
+  }
+ }
+}
