@@ -41,7 +41,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from evaluate_conditions_model import GROUP_CLASSIFIERS, TEMPERATURE_TOLERANCE_C, YIELD_TOLERANCE_PCT, normalize_components, to_number
+from evaluate_conditions_model import (
+    GROUP_CLASSIFIERS,
+    NUMERIC_BUCKET_EDGES,
+    TEMPERATURE_TOLERANCE_C,
+    YIELD_TOLERANCE_PCT,
+    normalize_components,
+    same_bucket,
+    to_number,
+)
 from train_conditions_model import CONDITION_FIELDS, format_input
 
 LOGGER = logging.getLogger("retro_eval.evaluate_conditions_model_topk")
@@ -175,6 +183,7 @@ def main() -> None:
     same_group_classifiable = {field: 0 for field in ("solvent", "catalyst")}
 
     numeric_within_tol = {f"{field}_top{k}": 0 for field in ("temperature_celsius", "yield_percent") for k in ks}
+    numeric_same_bucket = {f"{field}_top{k}": 0 for field in ("temperature_celsius", "yield_percent") for k in ks}
     numeric_expected = {field: 0 for field in ("temperature_celsius", "yield_percent")}
 
     json_valid_top1 = 0
@@ -244,17 +253,24 @@ def main() -> None:
                 if ref_num is None:
                     continue
                 numeric_expected[field] += 1
-                hit_at = None
+                edges = NUMERIC_BUCKET_EDGES[field]
+                tol_hit_at = None
+                bucket_hit_at = None
                 for rank, parsed in enumerate(parsed_candidates[: max(ks)], start=1):
                     if parsed is None:
                         continue
                     pred_num = to_number(parsed.get(field))
-                    if pred_num is not None and abs(pred_num - ref_num) <= tolerance:
-                        hit_at = rank
-                        break
+                    if pred_num is None:
+                        continue
+                    if tol_hit_at is None and abs(pred_num - ref_num) <= tolerance:
+                        tol_hit_at = rank
+                    if bucket_hit_at is None and same_bucket(pred_num, ref_num, edges):
+                        bucket_hit_at = rank
                 for k in ks:
-                    if hit_at is not None and hit_at <= k:
+                    if tol_hit_at is not None and tol_hit_at <= k:
                         numeric_within_tol[f"{field}_top{k}"] += 1
+                    if bucket_hit_at is not None and bucket_hit_at <= k:
+                        numeric_same_bucket[f"{field}_top{k}"] += 1
 
             detailed.append(
                 {
@@ -294,6 +310,9 @@ def main() -> None:
         for k in ks:
             summary[f"{field}_within_tol_top{k}"] = (
                 numeric_within_tol[f"{field}_top{k}"] / expected if expected else None
+            )
+            summary[f"{field}_same_bucket_top{k}"] = (
+                numeric_same_bucket[f"{field}_top{k}"] / expected if expected else None
             )
 
     LOGGER.info("Summary: %s", json.dumps(summary, indent=2))

@@ -74,7 +74,30 @@ from retro_eval.condition_similarity import catalyst_group, component_groups, so
 TEMPERATURE_TOLERANCE_C = 10.0
 YIELD_TOLERANCE_PCT = 10.0
 
+# Coarse regime buckets: the numeric analog of solvent/catalyst `same_group`. A prediction
+# in the same practical regime as the reference (even if outside the strict +/-10 tolerance)
+# still conveys the right synthetic decision, so we report bucket agreement alongside the
+# tolerance rate -- just as solvent/catalyst report same_group alongside exact_match. Edges
+# reflect common synthetic-chemistry regimes (temperature) and yield quality tiers.
+TEMPERATURE_BUCKET_EDGES = (0.0, 30.0, 80.0, 150.0)  # <0 | 0-30 | 30-80 | 80-150 | >150 (C)
+YIELD_BUCKET_EDGES = (25.0, 50.0, 75.0)  # <25 | 25-50 | 50-75 | >75 (%)
+
 GROUP_CLASSIFIERS = {"solvent": solvent_group, "catalyst": catalyst_group}
+NUMERIC_BUCKET_EDGES = {
+    "temperature_celsius": TEMPERATURE_BUCKET_EDGES,
+    "yield_percent": YIELD_BUCKET_EDGES,
+}
+
+
+def bucket_index(value: float, edges) -> int:
+    """Index of the half-open bucket `value` falls into (0 = below the first edge)."""
+    import bisect
+
+    return bisect.bisect_right(edges, value)
+
+
+def same_bucket(pred: float | None, ref: float | None, edges) -> bool:
+    return pred is not None and ref is not None and bucket_index(pred, edges) == bucket_index(ref, edges)
 
 LOGGER = logging.getLogger("retro_eval.evaluate_conditions_model")
 
