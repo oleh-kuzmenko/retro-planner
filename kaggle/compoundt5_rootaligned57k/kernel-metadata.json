@@ -1,0 +1,21 @@
+{
+  "id": "kuzmenkooleh/retro-planner-model1-compoundt5-rootaligned57k",
+  "title": "retro-planner-model1-compoundt5-rootaligned57k",
+  "code_file": "../14_train_reactant_compoundt5_rootaligned57k.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "keywords": [
+    "gpu"
+  ],
+  "dataset_sources": [
+    "kuzmenkooleh/retro-planner-ord-rootaligned-57k"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}
