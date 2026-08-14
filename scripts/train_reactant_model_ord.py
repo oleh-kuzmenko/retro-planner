@@ -48,6 +48,8 @@ import argparse
 import time
 from pathlib import Path
 
+from retro_eval.tokenizer_coverage import ensure_full_char_coverage
+
 LOGGER_NAME = "retro_eval.train_reactant_model_ord"
 
 
@@ -346,6 +348,20 @@ def main() -> None:
 
     logger.info("Train examples: %d | Validation examples: %d", len(raw["train"]), len(raw["validation"]))
 
+    # A no-op for the ReactionT5 bases (their SMILES vocab already covers ORD/USPTO),
+    # but required for `sagawa/CompoundT5`: that vocab was trained on ZINC20 single
+    # molecules and has no `.` fragment separator, so a multi-reactant target would be
+    # unrepresentable. Column access rather than row iteration -- the 300k pool has
+    # 297,000 rows. Augmentation only reorders/rewrites the same SMILES characters, so
+    # the canonical text is the right coverage sample either way.
+    all_texts = [
+        smiles
+        for split in ("train", "validation")
+        for column in ("product_smiles", "reactants_smiles")
+        for smiles in raw[split][column]
+    ]
+    ensure_full_char_coverage(tokenizer, model, all_texts, logger)
+
     def preprocess(examples):
         model_inputs = tokenizer(
             examples["product_smiles"],
@@ -433,6 +449,12 @@ def main() -> None:
         train_dataset=tokenized["train"],
         eval_dataset=tokenized["validation"],
         data_collator=DataCollatorForSeq2Seq(tokenizer, model=model),
+        # Makes Trainer write the tokenizer into every intermediate checkpoint. Only
+        # `final` got it before (line ~524), which was harmless while the tokenizer was
+        # always identical to the base checkpoint's -- but ensure_full_char_coverage can
+        # now grow the vocab, and a resumed/evaluated `latest_checkpoint` carrying
+        # resized embeddings with the un-resized base tokenizer would mismatch silently.
+        processing_class=tokenizer,
     )
     trainer.add_callback(TimeBudgetCallback(args.time_budget_minutes).build())
     drive_resume_dir = args.output_dir / "latest_checkpoint"

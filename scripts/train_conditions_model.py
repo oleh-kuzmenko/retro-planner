@@ -39,6 +39,8 @@ import json
 import time
 from pathlib import Path
 
+from retro_eval.tokenizer_coverage import ensure_full_char_coverage
+
 LOGGER_NAME = "retro_eval.train_conditions_model"
 
 CONDITION_FIELDS = ("solvent", "catalyst", "temperature_celsius", "yield_percent")
@@ -119,59 +121,6 @@ def format_input(row: dict) -> str:
 def format_target(row: dict) -> str:
     payload = {field: row.get(field) if row.get(field) not in (None, "") else "not specified" for field in CONDITION_FIELDS}
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-
-
-def ensure_full_char_coverage(tokenizer, model, texts, logger) -> int:
-    """Add any character used in `texts` that the tokenizer would otherwise map to
-    `<unk>` as a new single-character token, then resize the model's embedding matrix
-    to match.
-
-    Found by direct debugging of the ReactionT5-base Model 2 attempt (RESULTS.md,
-    "Спроба: хімічно-передтренований базовий чекпоінт"): its 268-token vocabulary was
-    built purely from SMILES chemistry notation, so most JSON punctuation (`{`, `}`,
-    `"`, `:`, `,`) and most English letters -- both needed for this task's "not
-    specified" / JSON-structured targets -- silently collapse to `<unk>`, a many-to-one
-    mapping that destroys the training targets themselves. Teacher-forced `eval_loss`
-    stayed healthy throughout (0.14) because the model was correctly learning to
-    reproduce the *corrupted* (but self-consistent) `<unk>`-riddled targets; actual
-    generation was 0% valid on all 2285 held-out records.
-
-    Only characters that genuinely tokenize to `<unk>` in isolation are added. An
-    earlier version added *every* distinct character via `tokenizer.add_tokens(chars)`
-    and relied on it skipping ones "already present" -- but for a SentencePiece
-    tokenizer the vocab keys are metaspace-prefixed pieces (`"▁a"`), not bare
-    characters, so `add_tokens("a")` treated every bare char as new. On t5-small (whose
-    C4 vocab represents all these characters fine) that wrongly added 50+ redundant
-    bare-char tokens, shadowing the model's learned sub-word tokenization. The correct
-    test is whether the character actually encodes to the unk id: on t5-small that
-    leaves just `{` and `}` (the only two genuinely missing), on ReactionT5 the ~30
-    JSON/English characters that matter.
-
-    `mean_resizing=False` is required. The transformers default (`mean_resizing=True`)
-    initializes the new rows by sampling a multivariate normal fitted to the *existing*
-    embeddings' mean and covariance. On Kaggle's transformers version (newer lazy
-    "Materializing param" weight loader) this produced pathological large-norm rows:
-    the first held-out eval_loss started at 10.44 -- worse than uniform-random
-    (ln(vocab)=5.74) -- and never recovered below ~8.5 over 4 full epochs. The exact
-    same code/optimizer/lr on this machine's transformers learned normally (eval_loss
-    4.93 -> 3.48 in 120 Trainer steps), so the fault is that version-specific covariance
-    sampling, not the resize or the training recipe. `mean_resizing=False` skips the
-    covariance fit entirely (simple small-normal init), which is version-robust.
-    """
-    chars = sorted({ch for text in texts for ch in text})
-    unk_id = tokenizer.unk_token_id
-    missing = [c for c in chars if unk_id in tokenizer(c, add_special_tokens=False)["input_ids"]]
-    added = tokenizer.add_tokens(missing)
-    if added:
-        model.resize_token_embeddings(len(tokenizer), mean_resizing=False)
-        logger.info(
-            "Added %d new character token(s) to vocab (size now %d) to fix <unk> "
-            "corruption of JSON/English targets: %s",
-            added,
-            len(tokenizer),
-            missing,
-        )
-    return added
 
 
 class TimeBudgetCallback:
