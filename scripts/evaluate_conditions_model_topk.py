@@ -50,7 +50,14 @@ from evaluate_conditions_model import (
     same_bucket,
     to_number,
 )
-from train_conditions_model import CONDITION_FIELDS, format_input
+from train_conditions_model import (
+    COMPACT_MISSING,
+    COMPACT_SEPARATOR,
+    CONDITION_FIELDS,
+    FORMAT_MARKER_FILE,
+    TARGET_FORMATS,
+    format_input,
+)
 
 LOGGER = logging.getLogger("retro_eval.evaluate_conditions_model_topk")
 
@@ -74,6 +81,13 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--target-format",
+        choices=("auto", *TARGET_FORMATS),
+        default="auto",
+        help="How to parse generations. `auto` reads the marker the trainer wrote next to the "
+        "checkpoint, falling back to `json` for checkpoints saved before that marker existed.",
+    )
     parser.add_argument("--output", type=Path, default=Path("conditions_topk_results.json"))
     return parser.parse_args()
 
@@ -136,7 +150,15 @@ def fix_tie_word_embeddings(model_dir: Path) -> None:
         )
 
 
-def decode_and_parse(raw: str) -> dict | None:
+def decode_and_parse(raw: str, target_format: str = "json") -> dict | None:
+    if target_format == "compact":
+        parts = raw.split(COMPACT_SEPARATOR)
+        if len(parts) != len(CONDITION_FIELDS):
+            return None
+        return {
+            field: None if value.strip() in ("", COMPACT_MISSING) else value.strip()
+            for field, value in zip(CONDITION_FIELDS, parts)
+        }
     for candidate in (raw, "{" + raw + "}"):
         try:
             parsed = json.loads(candidate)
@@ -145,6 +167,16 @@ def decode_and_parse(raw: str) -> dict | None:
         if isinstance(parsed, dict):
             return parsed
     return None
+
+
+def resolve_target_format(model_dir: Path, requested: str) -> str:
+    """Honour an explicit `--target-format`, else read the marker the trainer wrote."""
+    if requested != "auto":
+        return requested
+    marker = model_dir / FORMAT_MARKER_FILE
+    if marker.is_dir() or not marker.exists():
+        return "json"
+    return json.loads(marker.read_text(encoding="utf-8")).get("target_format", "json")
 
 
 def main() -> None:
@@ -160,6 +192,9 @@ def main() -> None:
     if model_dir.is_dir():
         fix_legacy_tokenizer_config(model_dir)
         fix_tie_word_embeddings(model_dir)
+
+    target_format = resolve_target_format(model_dir, args.target_format)
+    LOGGER.info("Parsing generations as target_format=%s", target_format)
 
     rows = [json.loads(line) for line in args.test_file.read_text(encoding="utf-8").splitlines() if line.strip()]
     if args.limit:
@@ -215,7 +250,7 @@ def main() -> None:
                 seen.add(candidate)
                 deduped_raw.append(candidate)
 
-            parsed_candidates = [decode_and_parse(c) for c in deduped_raw]
+            parsed_candidates = [decode_and_parse(c, target_format) for c in deduped_raw]
             if parsed_candidates and parsed_candidates[0] is not None:
                 json_valid_top1 += 1
 
@@ -289,7 +324,14 @@ def main() -> None:
     gc.collect()
 
     n = len(rows)
-    summary = {"total": n, "num_beams": args.num_beams, "json_valid_rate_top1": json_valid_top1 / n if n else 0.0}
+    # json_valid_rate_top1 keeps its name across formats: it is the share of records whose
+    # rank-0 generation parsed into four fields, whatever the serialization.
+    summary = {
+        "total": n,
+        "num_beams": args.num_beams,
+        "target_format": target_format,
+        "json_valid_rate_top1": json_valid_top1 / n if n else 0.0,
+    }
 
     for field in ("solvent", "catalyst"):
         expected = match_expected[field]

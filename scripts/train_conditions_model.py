@@ -10,11 +10,27 @@ ORD, leak-checked against `data/v2_ord_eval_targets.json`, see
 a product + reactants pair.
 
 Input format:  "predict conditions: PRODUCT: <product_smiles> REACTANTS: <reactants_smiles>"
-Target format: a compact JSON string, e.g.
+Target format: selected by `--target-format`.
+
+- `json` (default, what the t5-small runs in RESULTS.md used):
     {"solvent": "...", "catalyst": "...", "temperature_celsius": "...", "yield_percent": "..."}
-Missing fields in the source row are written as "not specified", matching
-this project's earlier condition-model evaluation convention (json validity,
-has_solvent_or_reagents, etc. -- see `evaluate_conditions_model.py`).
+  Missing fields are written as "not specified", matching this project's earlier
+  condition-model evaluation convention (json validity, has_solvent_or_reagents,
+  etc. -- see `evaluate_conditions_model.py`).
+- `compact`: the four values separated by `|`, missing ones written as `?`:
+    CO|[Pd]|25.0|85.0
+  Field names and braces carry no information the field order does not already
+  carry, but they dominate the target: the JSON form of that example is 53
+  tokens under t5-small's vocabulary against 13 for the compact one. The gap is
+  decisive for a chemically pretrained base, whose vocabulary holds SMILES and
+  not English -- `sagawa/CompoundT5` tokenizes the same JSON target into 74
+  tokens of which 48 are `<unk>`, against 16 tokens and 9 `<unk>` for the
+  compact form, and those 9 are repaired by `ensure_full_char_coverage` below.
+  That `<unk>` corruption, not the base itself, is what made an earlier
+  ReactionT5-based conditions run emit 0% parseable output.
+
+The chosen format is recorded in `{output_dir}/final/conditions_format.json` so
+the evaluation scripts parse generations the same way they were written.
 
 Same Google Colab T4 (~3h/day) design as `train_reactant_model_ord.py`:
 --output-dir must be Google-Drive-mounted; Trainer itself checkpoints and
@@ -44,6 +60,13 @@ from retro_eval.tokenizer_coverage import ensure_full_char_coverage
 LOGGER_NAME = "retro_eval.train_conditions_model"
 
 CONDITION_FIELDS = ("solvent", "catalyst", "temperature_celsius", "yield_percent")
+
+TARGET_FORMATS = ("json", "compact")
+# `|` never occurs in SMILES nor in ORD's condition strings (which join multiple
+# components with ", "), so it separates the four fields unambiguously.
+COMPACT_SEPARATOR = "|"
+COMPACT_MISSING = "?"
+FORMAT_MARKER_FILE = "conditions_format.json"
 
 
 def parse_args() -> argparse.Namespace:
@@ -81,6 +104,14 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--max-source-length", type=int, default=256)
     parser.add_argument("--max-target-length", type=int, default=128)
+    parser.add_argument(
+        "--target-format",
+        choices=TARGET_FORMATS,
+        default="json",
+        help="How the four condition fields are serialized as the generation target. "
+        "`json` reproduces the t5-small runs already in RESULTS.md; `compact` drops the "
+        "field names and braces, which a SMILES-only vocabulary cannot represent.",
+    )
     parser.add_argument("--num-train-epochs", type=float, default=4.0)
     parser.add_argument("--per-device-train-batch-size", type=int, default=32)
     parser.add_argument("--per-device-eval-batch-size", type=int, default=32)
@@ -118,7 +149,13 @@ def format_input(row: dict) -> str:
     return f"predict conditions: PRODUCT: {row['product_smiles']} REACTANTS: {row['reactants_smiles']}"
 
 
-def format_target(row: dict) -> str:
+def format_target(row: dict, target_format: str = "json") -> str:
+    if target_format == "compact":
+        values = [
+            str(row.get(field)) if row.get(field) not in (None, "") else COMPACT_MISSING
+            for field in CONDITION_FIELDS
+        ]
+        return COMPACT_SEPARATOR.join(values)
     payload = {field: row.get(field) if row.get(field) not in (None, "") else "not specified" for field in CONDITION_FIELDS}
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
 
@@ -263,7 +300,9 @@ def main() -> None:
     logger.info("Train examples: %d | Validation examples: %d", len(raw["train"]), len(raw["validation"]))
 
     all_rows = [row for split in ("train", "validation") for row in raw[split]]
-    all_texts = [format_input(row) for row in all_rows] + [format_target(row) for row in all_rows]
+    all_texts = [format_input(row) for row in all_rows] + [
+        format_target(row, args.target_format) for row in all_rows
+    ]
     ensure_full_char_coverage(tokenizer, model, all_texts, logger)
 
     def preprocess(examples):
@@ -272,7 +311,7 @@ def main() -> None:
             for p, r in zip(examples["product_smiles"], examples["reactants_smiles"])
         ]
         targets = [
-            format_target(dict(zip(examples.keys(), values)))
+            format_target(dict(zip(examples.keys(), values)), args.target_format)
             for values in zip(*examples.values())
         ]
         model_inputs = tokenizer(inputs, max_length=args.max_source_length, truncation=True)
@@ -375,6 +414,10 @@ def main() -> None:
         # otherwise race to write the same "final" folder.
         trainer.save_model(str(args.output_dir / "final"))
         tokenizer.save_pretrained(str(args.output_dir / "final"))
+        # Generations are only parseable if the reader knows how they were written.
+        (args.output_dir / "final" / FORMAT_MARKER_FILE).write_text(
+            json.dumps({"target_format": args.target_format}), encoding="utf-8"
+        )
         logger.info("Training finished (or paused at time budget). Latest state saved under %s", args.output_dir)
 
 
