@@ -1,0 +1,21 @@
+{
+  "id": "kuzmenkooleh/retro-planner-a5-compoundt5-uspto-rsmiles10",
+  "title": "retro-planner-a5-compoundt5-uspto-rsmiles10",
+  "code_file": "../22_A5_compoundt5_uspto_rsmiles10.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "keywords": [
+    "gpu"
+  ],
+  "dataset_sources": [
+    "kuzmenkooleh/retro-planner-uspto50k-rsmiles10"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}
