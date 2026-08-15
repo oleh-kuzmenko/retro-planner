@@ -152,7 +152,14 @@ def fix_tie_word_embeddings(model_dir: Path) -> None:
 
 def decode_and_parse(raw: str, target_format: str = "json") -> dict | None:
     if target_format == "compact":
-        parts = raw.split(COMPACT_SEPARATOR)
+        # Spaces are decoding noise, never data: SMILES contain none, and the only
+        # spaces in a reference value follow the ", " that joins components, which
+        # `normalize_components` collapses anyway. They appear because every token
+        # `ensure_full_char_coverage` adds is decoded as its own segment, and
+        # SentencePiece re-prefixes the segment that follows it -- `[Pd]` comes back
+        # as `[Pd ]`, which RDKit will not parse. `run_reactiont5_topk.py:189` strips
+        # them the same way for Model 1.
+        parts = raw.replace(" ", "").split(COMPACT_SEPARATOR)
         if len(parts) != len(CONDITION_FIELDS):
             return None
         return {
