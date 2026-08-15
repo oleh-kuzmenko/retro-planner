@@ -1,0 +1,21 @@
+{
+  "id": "kuzmenkooleh/retro-planner-a2-compoundt5-uspto-ra",
+  "title": "retro-planner-a2-compoundt5-uspto-ra",
+  "code_file": "../19_A2_compoundt5_uspto_rootaligned.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "keywords": [
+    "gpu"
+  ],
+  "dataset_sources": [
+    "kuzmenkooleh/retro-planner-uspto50k-rootaligned"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}
