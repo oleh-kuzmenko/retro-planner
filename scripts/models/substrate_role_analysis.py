@@ -55,22 +55,47 @@ RDLogger.DisableLog("rdApp.*")
 # salt, a base or a catalyst; none of them survive into the product as themselves.
 METALS = frozenset("Li Na K Mg Ca Zn Cu Pd Pt Ni Fe Al Ti Sn Cs Rb Ag Au Hg Mn Co Cr".split())
 
-MIN_MCS_ATOMS = 5
+# 3, not 5. A 5-atom floor threw away exactly the reagents that do donate: allyl bromide
+# gives a 3-atom allyl group, acetyl chloride a 3-atom acetyl, phosgene its chlorine. The
+# 70% fraction is what rejects coincidental matches, and it holds for all three (3 of 4
+# heavy atoms).
+MIN_MCS_ATOMS = 3
 MIN_MCS_FRACTION = 0.7
 
-# Injected negatives for --validate: real reagents that donate nothing. The organic ones
-# are the hard cases -- a triphenylphosphine shares two or three rings with many products.
-INJECTED_REAGENTS = (
-    "c1ccc(P(c2ccccc2)c2ccccc2)cc1",      # PPh3
-    "CCN(C(C)C)C(C)C",                    # DIPEA
-    "CCN(CC)CC",                          # NEt3
-    "CCN=C=NCCCN(C)C",                    # EDC
-    "C1CCC(N=C=NC2CCCCC2)CC1",            # DCC
-    "On1nnc2ccccc21",                     # HOBt
-    "CN(C)c1ccncc1",                      # DMAP
-    "c1c[nH]cn1",                         # imidazole
-    "Cc1ccc(S(=O)(=O)O)cc1",              # TsOH
-    "[Na+]", "[K+]", "O=C([O-])[O-]", "[OH-]", "[H-]", "O", "CO", "C1CCOC1",
+# Solvents, bases and coupling agents are named outright rather than left to the MCS test,
+# which passed pyridine, benzene and toluene as substrates whenever they shared an aromatic
+# ring with the product. Every entry here donates nothing by construction.
+KNOWN_REAGENTS = frozenset(
+    Chem.MolToSmiles(Chem.MolFromSmiles(s))
+    for s in (
+        # solvents
+        "O", "CO", "CCO", "CC(C)O", "C1CCOC1", "CN(C)C=O", "CS(C)=O", "ClCCl",
+        "ClC(Cl)Cl", "ClC(Cl)(Cl)Cl", "Cc1ccccc1", "c1ccccc1", "CCOC(C)=O", "CC#N",
+        "C1COCCO1", "CCOCC", "CCCCCC", "CCCCCCC", "CC(C)=O", "CN1CCCC1=O",
+        # bases and amines
+        "c1ccncc1", "CCN(CC)CC", "CCN(C(C)C)C(C)C", "CN(C)c1ccncc1", "c1c[nH]cn1", "N",
+        # acids used as media
+        "O=C(O)C(F)(F)F", "Cl", "Cc1ccc(S(=O)(=O)O)cc1",
+        # coupling agents
+        "CCN=C=NCCCN(C)C", "C1CCC(N=C=NC2CCCCC2)CC1", "On1nnc2ccccc21",
+        "c1ccc(P(c2ccccc2)c2ccccc2)cc1",
+    )
+)
+
+# Validation negatives, deliberately **disjoint from KNOWN_REAGENTS**: bases and ligands
+# that donate nothing but are not named in the rule, so they test the MCS branch rather
+# than the lookup. Scoring against the named list would be circular.
+HELDOUT_REAGENTS = (
+    "C1CCC2=NCCCN2CC1",                   # DBU
+    "CN1CCOCC1",                          # N-methylmorpholine
+    "Cc1cccc(C)n1",                       # 2,6-lutidine
+    "C1CN2CCN1CC2",                       # DABCO
+    "CN(C)CCN(C)C",                       # TMEDA
+    "Cn1ccnc1",                           # N-methylimidazole
+    "c1ccc2ncccc2c1",                     # quinoline
+    "c1ccc(-c2ccccn2)nc1",                # 2,2'-bipyridine
+    "C1CN2CCC1CC2",                       # quinuclidine
+    "Cc1ccccc1P(c1ccccc1C)c1ccccc1C",     # tri-o-tolylphosphine
 )
 
 ATOM_MAP = re.compile(r":(\d+)\]")
@@ -99,6 +124,8 @@ def is_substrate(fragment: str, product: str) -> bool:
         return False
     heavy = frag.GetNumHeavyAtoms()
     if heavy == 1:
+        return False
+    if fragment in KNOWN_REAGENTS:
         return False
     shared = rdFMCS.FindMCS(
         [frag, prod], timeout=2, ringMatchesRingOnly=True, completeRingsOnly=False
@@ -171,7 +198,7 @@ def validate(sample_size: int, seed: int) -> None:
             clean = strip_maps(fragment)
             if clean:
                 pairs.append((clean, product, True))
-        for reagent in random.sample(INJECTED_REAGENTS, 2):
+        for reagent in random.sample(HELDOUT_REAGENTS, 2):
             pairs.append((canonical(reagent), product, False))
 
     tp = fp = fn = tn = 0
