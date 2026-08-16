@@ -90,6 +90,12 @@ def parse_args() -> argparse.Namespace:
         "checkpoint, falling back to `json` for checkpoints saved before that marker existed.",
     )
     parser.add_argument(
+        "--force-numeric",
+        action="store_true",
+        help="For numeric fields, rank only the candidates that actually carry a number, so "
+        "abstention never occupies a top-k slot. See the comment at the scoring loop.",
+    )
+    parser.add_argument(
         "--max-source-length",
         type=int,
         default=256,
@@ -259,6 +265,17 @@ def main() -> None:
     match_expected = {field: 0 for field in string_fields}
     same_group_classifiable = {field: 0 for field in string_fields}
 
+    # Conditional accuracy answers "which catalyst", counted only where the record has one --
+    # 941 of 5,687. It says nothing about "is a catalyst needed at all", which the model gets
+    # right in 88.9% of records against a 83.5% always-silent baseline. So the record-level
+    # counters below score every record: correct silence where the reference is empty, exact
+    # match where it is not, and zero when the two disagree about whether the field applies.
+    # Report it beside `{field}_absent_share` -- on catalyst the record-level number sits
+    # *below* that trivial baseline, and quoting it alone would overstate the system.
+    record_level = {f"{field}_top{k}": 0 for field in string_fields for k in ks}
+    record_absent = {field: 0 for field in string_fields}
+    record_silence_ok = {field: 0 for field in string_fields}
+
     numeric_within_tol = {f"{field}_top{k}": 0 for field in numeric_fields for k in ks}
     numeric_same_bucket = {f"{field}_top{k}": 0 for field in numeric_fields for k in ks}
     numeric_expected = {field: 0 for field in numeric_fields}
@@ -331,6 +348,18 @@ def main() -> None:
                     if ref_groups is not None and group_hit_at is not None and group_hit_at <= k:
                         match_totals[f"{field}_same_group_top{k}"] += 1
 
+                if ref_set is None:
+                    record_absent[field] += 1
+                    top1 = parsed_candidates[0] if parsed_candidates else None
+                    if top1 is not None and normalize_components(top1.get(field)) is None:
+                        record_silence_ok[field] += 1
+                        for k in ks:
+                            record_level[f"{field}_top{k}"] += 1
+                else:
+                    for k in ks:
+                        if exact_hit_at is not None and exact_hit_at <= k:
+                            record_level[f"{field}_top{k}"] += 1
+
             tolerances = {"temperature_celsius": TEMPERATURE_TOLERANCE_C, "yield_percent": YIELD_TOLERANCE_PCT}
             for field in numeric_fields:
                 tolerance = tolerances[field]
@@ -341,7 +370,19 @@ def main() -> None:
                 edges = NUMERIC_BUCKET_EDGES[field]
                 tol_hit_at = None
                 bucket_hit_at = None
-                for rank, parsed in enumerate(parsed_candidates[: max(ks)], start=1):
+                # Under --force-numeric the ranking skips candidates that abstain, so rank 1
+                # is the model's best *number* rather than its best answer. Temperature is
+                # populated in 27.5% of training rows, which makes `?` the loss-minimizing
+                # output: the model abstained on 85.6% of top-1 generations while being
+                # accurate when it did commit (median error 0 C). The number was already in
+                # the beam list -- forcing the choice lifted top-1 from 6.1% to 27.9% with no
+                # retraining. Both readings are real: abstention is the right behaviour when
+                # a wrong number is worse than none, forcing is the right one when the user
+                # needs a starting point regardless.
+                ranked = parsed_candidates[: max(ks)]
+                if args.force_numeric:
+                    ranked = [p for p in ranked if p is not None and to_number(p.get(field)) is not None]
+                for rank, parsed in enumerate(ranked, start=1):
                     if parsed is None:
                         continue
                     pred_num = to_number(parsed.get(field))
@@ -381,6 +422,7 @@ def main() -> None:
         "num_beams": args.num_beams,
         "target_format": target_format,
         "condition_fields": list(fields),
+        "force_numeric": bool(args.force_numeric),
         "json_valid_rate_top1": json_valid_top1 / n if n else 0.0,
     }
 
@@ -389,6 +431,12 @@ def main() -> None:
         classifiable = same_group_classifiable[field]
         summary[f"{field}_expected_count"] = expected
         summary[f"{field}_same_group_classifiable_count"] = classifiable
+        summary[f"{field}_absent_share"] = record_absent[field] / n if n else None
+        summary[f"{field}_silence_correct"] = (
+            record_silence_ok[field] / record_absent[field] if record_absent[field] else None
+        )
+        for k in ks:
+            summary[f"{field}_record_level_top{k}"] = record_level[f"{field}_top{k}"] / n if n else None
         for k in ks:
             summary[f"{field}_exact_match_top{k}"] = (
                 match_totals[f"{field}_exact_match_top{k}"] / expected if expected else None

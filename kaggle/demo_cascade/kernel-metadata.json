@@ -1,0 +1,17 @@
+{
+  "id": "kuzmenkooleh/retro-planner-demo-cascade",
+  "title": "retro-planner-demo-cascade",
+  "code_file": "demo_cascade.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "dataset_sources": [
+    "kuzmenkooleh/retro-planner-model2-conditions-t5small-300k-ckpt"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}
