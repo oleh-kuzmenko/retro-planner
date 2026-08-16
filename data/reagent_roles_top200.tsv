@@ -1,0 +1,201 @@
+smiles	role	name	ambiguous
+O=C([O-])[O-]	reagent	карбонат	
+O=C([O-])O	reagent	гідрокарбонат	
+CC(=O)O	reagent	оцтова кислота	yes
+CC(=O)[O-]	reagent	ацетат	
+CI	substrate	метилйодид	
+CC(C)(C)[O-]	reagent	трет-бутоксид	
+CC(=O)OC(C)=O	substrate	оцтовий ангідрид	
+CS(=O)(=O)Cl	substrate	мезилхлорид	
+CC(=O)O[BH-](OC(C)=O)OC(C)=O	reagent	натрій триацетоксиборогідрид	
+CN(C)C(On1nnc2cccnc21)=[N+](C)C	reagent	HATU	
+C[O-]	reagent	метоксид	yes
+O=C(Cl)C(=O)Cl	substrate	оксалілхлорид	yes
+O=C1CCC(=O)N1Br	substrate	NBS	
+[BH3-]C#N	reagent	ціаноборогідрид	
+CN1CCOCC1	reagent	N-метилморфолін	
+CN(C)C(On1nnc2ccccc21)=[N+](C)C	reagent	HBTU	
+C=O	substrate	формальдегід	
+CCCC[N+](CCCC)(CCCC)CCCC	reagent	тетрабутиламоній	
+CN	substrate	метиламін	
+C1CCNCC1	substrate	піперидин	yes
+CC(=O)Cl	substrate	ацетилхлорид	
+C[Si](C)(C)[N-][Si](C)(C)C	reagent	HMDS-аніон	
+O=C(n1ccnc1)n1ccnc1	substrate	CDI	yes
+ClCCCl	reagent	1,2-дихлоретан	
+O=C(OO)c1cccc(Cl)c1	substrate	mCPBA	yes
+C1COCCN1	substrate	морфолін	yes
+BrCc1ccccc1	substrate	бензилбромід	
+CNC	substrate	диметиламін	
+C1CCC2=NCCCN2CC1	reagent	DBU	
+CC(C)NC(C)C	reagent	діізопропіламін	
+[C-]#N	substrate	ціанід	
+CC(C)[N-]C(C)C	reagent	LDA	
+Cc1ccc(S(=O)(=O)Cl)cc1	substrate	тозилхлорид	
+c1cc[nH+]cc1	reagent	піридиній	
+O=C=O	substrate	діоксид вуглецю	yes
+CCOC(=O)Cl	substrate	етилхлороформіат	
+CC(C)(C)[Si](C)(C)Cl	substrate	TBSCl	
+CC[O-]	reagent	етоксид	yes
+O=C(Cl)c1ccccc1	substrate	бензоїлхлорид	
+Cc1ccc(N)nc1	substrate	2-аміно-5-метилпіридин	
+[C-]#[N+]C1CCCCC1	substrate	циклогексилізоціанід	
+C[Si](C)(C)Cl	substrate	TMSCl	
+CS(=O)(=O)O	reagent	метансульфокислота	yes
+O=CO	substrate	мурашина кислота	yes
+CC[SiH](CC)CC	reagent	триетилсилан	
+C1CCNC1	substrate	піролідин	yes
+CCI	substrate	етилйодид	
+Nc1ccccc1	substrate	анілін	
+CN1CCNCC1	substrate	N-метилпіперазин	
+CCOC(=O)N=NC(=O)OCC	reagent	DEAD	
+O=C[O-]	reagent	форміат	
+O=C(O)CC(O)(CC(=O)O)C(=O)O	reagent	лимонна кислота	
+NCc1ccccc1	substrate	бензиламін	
+On1nnc2cccnc21	reagent	HOAt	
+CN(C)[P+](On1nnc2ccccc21)(N(C)C)N(C)C	reagent	BOP	
+NCCN	substrate	етилендіамін	
+CCOC(=O)CBr	substrate	етилбромацетат	
+O=C1CCC(=O)N1Cl	substrate	NCS	
+O=C(Cl)OCc1ccccc1	substrate	Cbz-Cl	
+O=C(Cl)CCl	substrate	хлорацетилхлорид	
+NC(N)=O	substrate	сечовина	
+C=CCBr	substrate	алілбромід	
+Oc1ccccc1	substrate	фенол	
+c1ccc(P(c2ccccc2)c2ccc3ccccc3c2-c2c(P(c3ccccc3)c3ccccc3)ccc3ccccc23)cc1	reagent	BINAP	
+O=Cc1ccccc1	substrate	бензальдегід	
+OCCO	substrate	етиленгліколь	yes
+O=C(O)C(=O)O	reagent	щавлева кислота	yes
+CC(C)COC(=O)Cl	substrate	ізобутилхлороформіат	
+OB(O)c1ccccc1	substrate	фенілборна кислота	
+COC(=O)Cl	substrate	метилхлороформіат	
+NC1CC1	substrate	циклопропіламін	
+CC(C)(C)OC(=O)N1CCNCC1	substrate	Boc-піперазин	
+NCCO	substrate	етаноламін	
+CC(C)(C)C(=O)Cl	substrate	півалоїлхлорид	
+CCNCC	substrate	діетиламін	yes
+[N-]=[N+]=NP(=O)(c1ccccc1)c1ccccc1	substrate	DPPA	
+COS(=O)(=O)OC	substrate	диметилсульфат	
+COC(OC)N(C)C	substrate	DMF-DMA	
+CC1(C)c2cccc(P(c3ccccc3)c3ccccc3)c2Oc2c(P(c3ccccc3)c3ccccc3)cccc21	reagent	Xantphos	
+Cc1ccc(S(=O)(=O)[O-])cc1	reagent	тозилат	
+O=C(Cl)Cl	substrate	фосген	yes
+CC(=O)OI1(OC(C)=O)(OC(C)=O)OC(=O)c2ccccc21	reagent	періодинан Десса-Мартіна	
+CC(C)(C#N)N=NC(C)(C)C#N	reagent	AIBN	
+Nc1nccs1	substrate	2-амінотіазол	
+C#C[Si](C)(C)C	substrate	TMS-ацетилен	
+CN(C)CCN(C)C	reagent	TMEDA	
+OCc1ccccc1	substrate	бензиловий спирт	
+COc1ccc(P2(=S)SP(=S)(c3ccc(OC)cc3)S2)cc1	substrate	реагент Лавессона	
+CC(C)(C)O	reagent	трет-бутанол	yes
+O=C1NC(=O)c2ccccc21	substrate	фталімід	
+COCCOC	reagent	диметоксіетан	
+NC(N)=S	substrate	тіосечовина	
+Oc1cccc2[nH]nnc12	reagent	HOBt	
+CC(C)N	substrate	ізопропіламін	
+CCOC(=O)/N=N/C(=O)OCC	reagent	DEAD (E)	
+CCN	substrate	етиламін	
+C1CNCCN1	substrate	піперазин	
+Cc1ccccc1P(c1ccccc1C)c1ccccc1C	reagent	три-о-толілфосфін	
+O=C(OC(Cl)(Cl)Cl)OC(Cl)(Cl)Cl	substrate	трифосген	
+CSC	reagent	диметилсульфід	
+CNOC	substrate	N,O-диметилгідроксиламін	
+S=C=S	substrate	сірковуглець	
+CCOC(OCC)OCC	substrate	триетилортоформіат	
+BrC(Br)(Br)Br	substrate	тетрабромметан	
+O=C(OOC(=O)c1ccccc1)c1ccccc1	reagent	бензоїлпероксид	
+CC(C)OC(=O)/N=N/C(=O)OC(C)C	reagent	DIAD	
+O=S(=O)(Cl)c1ccccc1	substrate	бензолсульфохлорид	
+COC(=O)CBr	substrate	метилбромацетат	
+CC(C)OC(=O)N=NC(=O)OC(C)C	reagent	DIAD (Z)	
+BrCCBr	substrate	1,2-диброметан	yes
+c1ccc2c(c1)nnn2O[P+](N1CCCC1)(N1CCCC1)N1CCCC1	reagent	PyBOP	
+C[N+]1([O-])CCOCC1	reagent	NMO	
+COc1ccccc1	reagent	анізол	yes
+N#C[S-]	substrate	тіоціанат	
+ClCCCBr	substrate	1-бром-3-хлорпропан	
+C1=COCCC1	substrate	дигідропіран	
+O=C(O)/C=C/C(=O)O	reagent	фумарова кислота	yes
+CN(C)c1ccccn1	reagent	2-диметиламінопіридин	
+COC(OC)OC	substrate	триметилортоформіат	
+O=C(OC(=O)C(F)(F)F)C(F)(F)F	substrate	TFAA	
+C1COCCOCCOCCOCCOCCO1	reagent	18-краун-6	
+CCCCP(CCCC)CCCC	reagent	трибутилфосфін	
+CCOC(=O)CC(=O)OCC	substrate	діетилмалонат	
+CC(=O)N(C)C	reagent	диметилацетамід	
+Cc1cccc(C)n1	reagent	2,6-лутидин	
+O=C1CCC(=O)N1I	substrate	NIS	
+COc1cc2nccc(Cl)c2cc1OC	substrate	4-хлор-6,7-диметоксихінолін	
+N#CC1=C(C#N)C(=O)C(Cl)=C(Cl)C1=O	reagent	DDQ	
+O=C(Cl)Oc1ccccc1	substrate	фенілхлороформіат	
+C=[N+]=[N-]	substrate	діазометан	
+CC(C)(C)OC(=O)CBr	substrate	трет-бутилбромацетат	
+ClCc1ccccc1	substrate	бензилхлорид	
+C[Si](C)(C)C=[N+]=[N-]	substrate	TMS-діазометан	
+COCCl	substrate	MOM-Cl	
+O=S(=O)(OS(=O)(=O)C(F)(F)F)C(F)(F)F	substrate	трифліковий ангідрид	
+O=C=Nc1ccccc1	substrate	фенілізоціанат	
+COB(OC)OC	substrate	триметилборат	
+CC(C)(C)OC(=O)OC(=O)OC(C)(C)C	substrate	Boc2O	
+CC(C)(C)N	substrate	трет-бутиламін	
+Sc1ccccc1	substrate	тіофенол	
+CC=O	substrate	ацетальдегід	
+O=S(=O)(O)C(F)(F)F	reagent	трифлікова кислота	yes
+CON	substrate	O-метилгідроксиламін	
+CCCCO	reagent	бутанол	yes
+CCOC(=O)CC(C)=O	substrate	етилацетоацетат	
+CC(C)N=C=NC(C)C	reagent	DIC	
+C1CN2CCN1CC2	reagent	DABCO	
+CC(C)OC(C)C	reagent	діізопропіловий етер	
+ClC(c1ccccc1)(c1ccccc1)c1ccccc1	substrate	тритилхлорид	
+C=CC(=O)Cl	substrate	акрилоїлхлорид	
+CC(C)I	substrate	ізопропілйодид	
+CNN	substrate	метилгідразин	
+C[S-]	substrate	метантіолат	
+Brc1ccccn1	substrate	2-бромпіридин	
+CCN(CC)S(F)(F)F	substrate	DAST	
+C#CCBr	substrate	пропаргілбромід	
+CC(C)OB(OC(C)C)OC(C)C	substrate	триізопропілборат	
+O=C(O)/C=C\C(=O)O	reagent	малеїнова кислота	yes
+O=C=NS(=O)(=O)Cl	substrate	хлорсульфонілізоціанат	
+CCC(=O)Cl	substrate	пропіонілхлорид	
+C=CC(=O)OC	substrate	метилакрилат	
+O=C(Cl)Oc1ccc([N+](=O)[O-])cc1	substrate	4-нітрофенілхлороформіат	
+COC(=O)CC(C)=O	substrate	метилацетоацетат	
+C[Si](C)(C)Br	substrate	TMSBr	
+CCOC(=O)C(=O)OCC	substrate	діетилоксалат	
+Nc1ccccc1N	substrate	о-фенілендіамін	
+N#CBr	substrate	бромціан	
+CC(C)C(=O)Cl	substrate	ізобутирилхлорид	
+O=C(O)[C@@H]1CCCN1	substrate	пролін	yes
+O=S(=O)([O-])C(F)(F)F	reagent	трифлат	
+CCCN	substrate	пропіламін	
+C[Si](C)(C)I	substrate	TMSI	
+Nc1ccccn1	substrate	2-амінопіридин	
+CN=C=O	substrate	метилізоціанат	
+O=C1CCC(=O)N1O	reagent	N-гідроксисукцинімід	yes
+CCBr	substrate	етилбромід	
+CC(C)(C)[Si](Cl)(c1ccccc1)c1ccccc1	substrate	TBDPSCl	
+NCCc1c[nH]c2ccc(Cl)cc12	substrate	5-хлортриптамін	
+ClCC1CO1	substrate	епіхлоргідрин	
+NC1CCCCC1	substrate	циклогексиламін	
+CC(C)c1cc(C(C)C)c(-c2ccccc2P(C2CCCCC2)C2CCCCC2)c(C(C)C)c1	reagent	XPhos	
+O=[N+]([O-])c1ccccc1F	substrate	1-фтор-2-нітробензен	
+COCCBr	substrate	2-бромоетилметиловий етер	
+N#CN	substrate	ціанамід	
+O=C1CCC(=O)O1	substrate	бурштиновий ангідрид	
+O=Cc1ccc(O)cc1	substrate	4-гідроксибензальдегід	
+c1nc[nH]n1	substrate	1,2,4-триазол	
+C[N+](=O)[O-]	substrate	нітрометан	yes
+CC(C)(C)ON=O	substrate	трет-бутилнітрит	yes
+O=C(O)c1ccccc1	substrate	бензойна кислота	
+CC(C)(C)OC(=O)N1CCC(=O)CC1	substrate	Boc-4-піперидон	
+COCCN	substrate	2-метоксіетиламін	
+CCS	substrate	етантіол	
+CCCCN	substrate	бутиламін	
+O=C(Br)CBr	substrate	бромацетилбромід	
+CCCI	substrate	пропілйодид	
+C[N+](C)(C)c1ccccc1	reagent	фенілтриметиламоній	
+COC(C)(C)C	reagent	MTBE	
+CC(Cl)OC(=O)Cl	substrate	1-хлоретилхлороформіат	
+NCCc1ccccc1	substrate	фенетиламін	

@@ -20,15 +20,26 @@ product -- where a chemist would call it a reagent; the definition is kept becau
 objective and source-independent, and because USPTO's own atom maps agree with it (the
 first test record maps exactly the half of Boc2O that is transferred).
 
-**Applying it without atom maps.** ORD carries none (0 of 2,000 sampled rows), so the
-rule is a proxy: ions, metal-containing species and carbon-free molecules are reagents
-outright, and everything else is a substrate when its maximum common substructure with
-the product covers at least 5 atoms and at least 70% of the fragment.
+**Applying it without atom maps.** ORD carries none (0 of 2,000 sampled rows), so the rule
+is a proxy, in four layers, chemistry before geometry:
 
-`--validate` measures that proxy where ground truth exists. USPTO-50K has no negatives
-at all, so they are injected: two frequent ORD auxiliaries per record, which by
-construction donate nothing. Hard negatives are included on purpose -- PPh3, DIPEA, EDC,
-DCC, HOBt and DMAP all share substructure with ordinary products.
+1. hand labels win outright, in both directions -- `KNOWN_REAGENTS` and the curated file;
+2. carbon-free nucleophiles USPTO itself keeps (ammonia, hydrazine, azide) are substrates,
+   catalyst metals are reagents, and a main-group organometallic with a carbon skeleton is
+   a substrate whatever its geometry says -- the pinacol half of a boronate outweighs the
+   aryl it donates;
+3. single atoms and carbon-free species are reagents;
+4. everything left is a substrate when its maximum common substructure with the product
+   covers at least 3 atoms and at least half the fragment.
+
+Two ways to check it, both here. `--validate` scores the geometric branch against injected
+negatives that are deliberately absent from every list, so the lookup cannot score itself.
+The stronger test is that the whole rule should be nearly a no-op on USPTO-50K, whose
+reactant sides are already exactly the substrates: it now wrongly drops 1.6% of fragments
+there, against 11.1% before the hand labels were made authoritative. What remains is
+genuine ambiguity -- DMF donating a formyl in a Vilsmeier reaction, methanol esterifying --
+where one molecule plays different roles in different records and no per-species label can
+be right for both.
 
 Usage:
     python scripts/models/substrate_role_analysis.py --validate
@@ -51,16 +62,19 @@ from rdkit.Chem import rdFMCS
 
 RDLogger.DisableLog("rdApp.*")
 
-# Transition and alkali metals seen on ORD reactant sides. A fragment carrying one is a
-# salt, a base or a catalyst; none of them survive into the product as themselves.
-METALS = frozenset("Li Na K Mg Ca Zn Cu Pd Pt Ni Fe Al Ti Sn Cs Rb Ag Au Hg Mn Co Cr".split())
+# Metals split by what they do. A carbonate or a palladium complex never survives into the
+# product; a Grignard, an organozinc or a boronate hands over its carbon skeleton and is
+# exactly the coupling partner USPTO-50K keeps on its reactant side.
+CATALYST_METALS = frozenset("Na K Ca Cs Rb Pd Pt Ni Fe Al Ti Ag Au Hg Mn Co Cr Ru Rh Ir".split())
+NUCLEOPHILE_METALS = frozenset("Mg Zn Li Sn B Cu".split())
+METALS = CATALYST_METALS | NUCLEOPHILE_METALS
 
 # 3, not 5. A 5-atom floor threw away exactly the reagents that do donate: allyl bromide
 # gives a 3-atom allyl group, acetyl chloride a 3-atom acetyl, phosgene its chlorine. The
 # 70% fraction is what rejects coincidental matches, and it holds for all three (3 of 4
 # heavy atoms).
 MIN_MCS_ATOMS = 3
-MIN_MCS_FRACTION = 0.7
+MIN_MCS_FRACTION = 0.5
 
 # Solvents, bases and coupling agents are named outright rather than left to the MCS test,
 # which passed pyridine, benzene and toluene as substrates whenever they shared an aromatic
@@ -73,7 +87,7 @@ KNOWN_REAGENTS = frozenset(
         "ClC(Cl)Cl", "ClC(Cl)(Cl)Cl", "Cc1ccccc1", "c1ccccc1", "CCOC(C)=O", "CC#N",
         "C1COCCO1", "CCOCC", "CCCCCC", "CCCCCCC", "CC(C)=O", "CN1CCCC1=O",
         # bases and amines
-        "c1ccncc1", "CCN(CC)CC", "CCN(C(C)C)C(C)C", "CN(C)c1ccncc1", "c1c[nH]cn1", "N",
+        "c1ccncc1", "CCN(CC)CC", "CCN(C(C)C)C(C)C", "CN(C)c1ccncc1",
         # acids used as media
         "O=C(O)C(F)(F)F", "Cl", "Cc1ccc(S(=O)(=O)O)cc1",
         # coupling agents
@@ -100,6 +114,39 @@ HELDOUT_REAGENTS = (
 
 ATOM_MAP = re.compile(r":(\d+)\]")
 
+# The 200 most frequent species the MCS branch decides, labelled by hand. The rule alone
+# cannot separate a carbonate from a methyl iodide -- both are small and share little with
+# the product -- so the frequent half of that branch is settled by chemistry rather than by
+# geometry. Rare species are left to the rule: 32.7% of the branch occurs exactly once, and
+# a molecule appearing once in 138,869 reactions is not a shelf reagent.
+CURATED_ROLES_FILE = Path(__file__).resolve().parents[2] / "data" / "reagent_roles_top200.tsv"
+
+
+def _load_curated_roles() -> tuple[frozenset[str], frozenset[str]]:
+    """Both directions are authoritative. A curated `substrate` has to override the
+    geometric test, not merely skip the reagent list: methyl iodide donates 2 heavy atoms
+    and Boc2O donates 6 of its 15, so both fail a fraction-of-fragment threshold that was
+    built to describe skeletons."""
+    if not CURATED_ROLES_FILE.exists():
+        return frozenset(), frozenset()
+    reagents, substrates = set(), set()
+    for line in CURATED_ROLES_FILE.read_text(encoding="utf-8").splitlines()[1:]:
+        if not line.strip():
+            continue
+        smiles, role = line.split("\t")[:2]
+        (reagents if role == "reagent" else substrates).add(smiles)
+    return frozenset(reagents), frozenset(substrates)
+
+
+CURATED_REAGENTS, CURATED_SUBSTRATES = _load_curated_roles()
+
+# Carbon-free species that nevertheless donate: USPTO-50K keeps every one of these on its
+# reactant side, so the carbon test cannot be the last word.
+INORGANIC_NUCLEOPHILES = frozenset(
+    Chem.MolToSmiles(Chem.MolFromSmiles(s))
+    for s in ("N", "NN", "[N-]=[N+]=[N-]", "NO", "ON", "[SH-]", "S", "O=S(=O)([O-])[O-]", "[N-]=[N+]=N")
+)
+
 
 @lru_cache(maxsize=None)
 def _mol(smiles: str):
@@ -117,15 +164,24 @@ def is_substrate(fragment: str, product: str) -> bool:
     frag, prod = _mol(fragment), _mol(product)
     if frag is None or prod is None:
         return False
-    symbols = {atom.GetSymbol() for atom in frag.GetAtoms()}
-    if symbols & METALS:
+    # Hand labels first, in both directions -- they are chemistry, the rest is geometry.
+    if fragment in KNOWN_REAGENTS or fragment in CURATED_REAGENTS:
         return False
-    if not any(atom.GetSymbol() == "C" for atom in frag.GetAtoms()):
+    if fragment in CURATED_SUBSTRATES or fragment in INORGANIC_NUCLEOPHILES:
+        return True
+    symbols = {atom.GetSymbol() for atom in frag.GetAtoms()}
+    has_carbon = any(atom.GetSymbol() == "C" for atom in frag.GetAtoms())
+    if symbols & CATALYST_METALS:
+        return False
+    # An organoboron or organozinc is a substrate whatever its geometry says: the pinacol
+    # half of a boronate is larger than the aryl it donates, so the fraction test would
+    # reject the very partner that makes the bond.
+    if (symbols & NUCLEOPHILE_METALS) and has_carbon:
+        return True
+    if not has_carbon:
         return False
     heavy = frag.GetNumHeavyAtoms()
     if heavy == 1:
-        return False
-    if fragment in KNOWN_REAGENTS:
         return False
     shared = rdFMCS.FindMCS(
         [frag, prod], timeout=2, ringMatchesRingOnly=True, completeRingsOnly=False
