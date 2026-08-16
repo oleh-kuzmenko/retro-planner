@@ -90,6 +90,13 @@ def parse_args() -> argparse.Namespace:
         "checkpoint, falling back to `json` for checkpoints saved before that marker existed.",
     )
     parser.add_argument(
+        "--max-source-length",
+        type=int,
+        default=256,
+        help="Must match training. Substrate-only inputs run to 234 tokens at p99 under "
+        "CompoundT5's vocabulary, so a shorter cap silently drops reactants from the prompt.",
+    )
+    parser.add_argument(
         "--condition-fields",
         default=None,
         help="Comma-separated fields the checkpoint emits. Defaults to the list in the format "
@@ -228,7 +235,7 @@ def main() -> None:
     target_format = resolve_target_format(model_dir, args.target_format)
     fields = resolve_condition_fields(model_dir, args.condition_fields)
     LOGGER.info("Parsing generations as target_format=%s over fields %s", target_format, ", ".join(fields))
-    string_fields = tuple(f for f in ("solvent", "catalyst") if f in fields)
+    string_fields = tuple(f for f in ("reagents", "solvent", "catalyst") if f in fields)
     numeric_fields = tuple(f for f in ("temperature_celsius", "yield_percent") if f in fields)
 
     rows = [json.loads(line) for line in args.test_file.read_text(encoding="utf-8").splitlines() if line.strip()]
@@ -263,7 +270,9 @@ def main() -> None:
     for batch_start in range(0, len(rows), args.batch_size):
         batch = rows[batch_start : batch_start + args.batch_size]
         prompts = [format_input(row) for row in batch]
-        inputs = tokenizer(prompts, return_tensors="pt", padding=True, truncation=True, max_length=256).to(args.device)
+        inputs = tokenizer(
+            prompts, return_tensors="pt", padding=True, truncation=True, max_length=args.max_source_length
+        ).to(args.device)
         with torch.no_grad():
             output_ids = model.generate(
                 **inputs,
@@ -292,8 +301,12 @@ def main() -> None:
             for field in string_fields:
                 ref_value = row.get(field)
                 ref_set = normalize_components(ref_value)
-                classifier = GROUP_CLASSIFIERS[field]
-                ref_groups = component_groups(ref_value, classifier)
+                # `reagents` has no group taxonomy: solvents and catalysts fall into a few
+                # dozen chemical families where a near-miss is still useful to a chemist,
+                # but a base, a coupling agent and a halide source share no such axis.
+                # It is scored on exact match only, and its same_group counters stay at 0.
+                classifier = GROUP_CLASSIFIERS.get(field)
+                ref_groups = component_groups(ref_value, classifier) if classifier else None
 
                 if ref_set is not None:
                     match_expected[field] += 1
@@ -308,7 +321,7 @@ def main() -> None:
                     pred_set = normalize_components(parsed.get(field))
                     if exact_hit_at is None and ref_set is not None and pred_set is not None and pred_set == ref_set:
                         exact_hit_at = rank
-                    pred_groups = component_groups(parsed.get(field), classifier)
+                    pred_groups = component_groups(parsed.get(field), classifier) if classifier else None
                     if group_hit_at is None and ref_groups is not None and pred_groups is not None and ref_groups <= pred_groups:
                         group_hit_at = rank
 

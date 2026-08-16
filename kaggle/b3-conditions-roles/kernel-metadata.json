@@ -1,0 +1,21 @@
+{
+  "id": "kuzmenkoiryna/retro-planner-b3-conditions-roles",
+  "title": "retro-planner-b3-conditions-roles",
+  "code_file": "../27_B3_conditions_roles.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "keywords": [
+    "gpu"
+  ],
+  "dataset_sources": [
+    "kuzmenkoiryna/retro-planner-ord-conditions-roles"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

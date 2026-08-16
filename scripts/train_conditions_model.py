@@ -59,7 +59,12 @@ from retro_eval.tokenizer_coverage import ensure_full_char_coverage
 
 LOGGER_NAME = "retro_eval.train_conditions_model"
 
-CONDITION_FIELDS = ("solvent", "catalyst", "temperature_celsius", "yield_percent")
+# `reagents` first: it is the longest field and the one the decoder is least able to guess
+# from a prefix, so it gets the full attention budget rather than what is left after three
+# other fields. It carries the stoichiometric species -- bases, coupling agents, halide
+# sources -- that ORD writes on the reactant side and that neither model predicted before
+# (`scripts/build_conditions_roles.py`).
+CONDITION_FIELDS = ("reagents", "solvent", "catalyst", "temperature_celsius", "yield_percent")
 
 TARGET_FORMATS = ("json", "compact")
 # `|` never occurs in SMILES nor in ORD's condition strings (which join multiple
