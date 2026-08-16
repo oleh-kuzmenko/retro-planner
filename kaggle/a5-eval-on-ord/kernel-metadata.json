@@ -1,0 +1,21 @@
+{
+  "id": "kuzmenkooleh/retro-planner-a5-eval-on-ord",
+  "title": "retro-planner-a5-eval-on-ord",
+  "code_file": "../24_A5_eval_on_ord.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "keywords": [
+    "gpu"
+  ],
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": [
+    "kuzmenkooleh/retro-planner-a5-compoundt5-uspto-rsmiles10"
+  ],
+  "model_sources": []
+}
