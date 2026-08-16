@@ -1,0 +1,21 @@
+{
+  "id": "kuzmenkoiryna/retro-planner-b2-conditions-t5small-3f",
+  "title": "retro-planner-b2-conditions-t5small-3f",
+  "code_file": "../26_B2_conditions_t5small_3fields.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "keywords": [
+    "gpu"
+  ],
+  "dataset_sources": [
+    "kuzmenkoiryna/retro-planner-ord-conditions"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}
