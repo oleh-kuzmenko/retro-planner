@@ -57,6 +57,7 @@ from train_conditions_model import (
     FORMAT_MARKER_FILE,
     TARGET_FORMATS,
     format_input,
+    parse_condition_fields,
 )
 
 LOGGER = logging.getLogger("retro_eval.evaluate_conditions_model_topk")
@@ -87,6 +88,12 @@ def parse_args() -> argparse.Namespace:
         default="auto",
         help="How to parse generations. `auto` reads the marker the trainer wrote next to the "
         "checkpoint, falling back to `json` for checkpoints saved before that marker existed.",
+    )
+    parser.add_argument(
+        "--condition-fields",
+        default=None,
+        help="Comma-separated fields the checkpoint emits. Defaults to the list in the format "
+        "marker, and to all four for checkpoints saved before the marker carried one.",
     )
     parser.add_argument("--output", type=Path, default=Path("conditions_topk_results.json"))
     return parser.parse_args()
@@ -150,7 +157,9 @@ def fix_tie_word_embeddings(model_dir: Path) -> None:
         )
 
 
-def decode_and_parse(raw: str, target_format: str = "json") -> dict | None:
+def decode_and_parse(
+    raw: str, target_format: str = "json", fields: tuple[str, ...] = CONDITION_FIELDS
+) -> dict | None:
     if target_format == "compact":
         # Spaces are decoding noise, never data: SMILES contain none, and the only
         # spaces in a reference value follow the ", " that joins components, which
@@ -160,11 +169,11 @@ def decode_and_parse(raw: str, target_format: str = "json") -> dict | None:
         # as `[Pd ]`, which RDKit will not parse. `run_reactiont5_topk.py:189` strips
         # them the same way for Model 1.
         parts = raw.replace(" ", "").split(COMPACT_SEPARATOR)
-        if len(parts) != len(CONDITION_FIELDS):
+        if len(parts) != len(fields):
             return None
         return {
             field: None if value.strip() in ("", COMPACT_MISSING) else value.strip()
-            for field, value in zip(CONDITION_FIELDS, parts)
+            for field, value in zip(fields, parts)
         }
     for candidate in (raw, "{" + raw + "}"):
         try:
@@ -176,14 +185,30 @@ def decode_and_parse(raw: str, target_format: str = "json") -> dict | None:
     return None
 
 
+def read_format_marker(model_dir: Path) -> dict:
+    marker = model_dir / FORMAT_MARKER_FILE
+    if marker.is_dir() or not marker.exists():
+        return {}
+    return json.loads(marker.read_text(encoding="utf-8"))
+
+
 def resolve_target_format(model_dir: Path, requested: str) -> str:
     """Honour an explicit `--target-format`, else read the marker the trainer wrote."""
     if requested != "auto":
         return requested
-    marker = model_dir / FORMAT_MARKER_FILE
-    if marker.is_dir() or not marker.exists():
-        return "json"
-    return json.loads(marker.read_text(encoding="utf-8")).get("target_format", "json")
+    return read_format_marker(model_dir).get("target_format", "json")
+
+
+def resolve_condition_fields(model_dir: Path, requested: str | None) -> tuple[str, ...]:
+    """Which fields the checkpoint was trained to emit, in CONDITION_FIELDS order.
+
+    Checkpoints trained before `--condition-fields` existed carry no `fields` key, and
+    those all predicted the full four, so the fallback is CONDITION_FIELDS. Getting this
+    wrong is not a soft failure: under `compact` the field count is what splits the
+    generation, so a mismatch makes every record unparseable.
+    """
+    spec = requested or ",".join(read_format_marker(model_dir).get("fields", CONDITION_FIELDS))
+    return parse_condition_fields(spec)
 
 
 def main() -> None:
@@ -201,7 +226,10 @@ def main() -> None:
         fix_tie_word_embeddings(model_dir)
 
     target_format = resolve_target_format(model_dir, args.target_format)
-    LOGGER.info("Parsing generations as target_format=%s", target_format)
+    fields = resolve_condition_fields(model_dir, args.condition_fields)
+    LOGGER.info("Parsing generations as target_format=%s over fields %s", target_format, ", ".join(fields))
+    string_fields = tuple(f for f in ("solvent", "catalyst") if f in fields)
+    numeric_fields = tuple(f for f in ("temperature_celsius", "yield_percent") if f in fields)
 
     rows = [json.loads(line) for line in args.test_file.read_text(encoding="utf-8").splitlines() if line.strip()]
     if args.limit:
@@ -217,16 +245,16 @@ def main() -> None:
 
     match_totals = {
         f"{field}_{kind}_top{k}": 0
-        for field in ("solvent", "catalyst")
+        for field in string_fields
         for kind in ("exact_match", "same_group")
         for k in ks
     }
-    match_expected = {field: 0 for field in ("solvent", "catalyst")}
-    same_group_classifiable = {field: 0 for field in ("solvent", "catalyst")}
+    match_expected = {field: 0 for field in string_fields}
+    same_group_classifiable = {field: 0 for field in string_fields}
 
-    numeric_within_tol = {f"{field}_top{k}": 0 for field in ("temperature_celsius", "yield_percent") for k in ks}
-    numeric_same_bucket = {f"{field}_top{k}": 0 for field in ("temperature_celsius", "yield_percent") for k in ks}
-    numeric_expected = {field: 0 for field in ("temperature_celsius", "yield_percent")}
+    numeric_within_tol = {f"{field}_top{k}": 0 for field in numeric_fields for k in ks}
+    numeric_same_bucket = {f"{field}_top{k}": 0 for field in numeric_fields for k in ks}
+    numeric_expected = {field: 0 for field in numeric_fields}
 
     json_valid_top1 = 0
     detailed = []
@@ -257,11 +285,11 @@ def main() -> None:
                 seen.add(candidate)
                 deduped_raw.append(candidate)
 
-            parsed_candidates = [decode_and_parse(c, target_format) for c in deduped_raw]
+            parsed_candidates = [decode_and_parse(c, target_format, fields) for c in deduped_raw]
             if parsed_candidates and parsed_candidates[0] is not None:
                 json_valid_top1 += 1
 
-            for field in ("solvent", "catalyst"):
+            for field in string_fields:
                 ref_value = row.get(field)
                 ref_set = normalize_components(ref_value)
                 classifier = GROUP_CLASSIFIERS[field]
@@ -290,7 +318,9 @@ def main() -> None:
                     if ref_groups is not None and group_hit_at is not None and group_hit_at <= k:
                         match_totals[f"{field}_same_group_top{k}"] += 1
 
-            for field, tolerance in (("temperature_celsius", TEMPERATURE_TOLERANCE_C), ("yield_percent", YIELD_TOLERANCE_PCT)):
+            tolerances = {"temperature_celsius": TEMPERATURE_TOLERANCE_C, "yield_percent": YIELD_TOLERANCE_PCT}
+            for field in numeric_fields:
+                tolerance = tolerances[field]
                 ref_num = to_number(row.get(field))
                 if ref_num is None:
                     continue
@@ -332,15 +362,16 @@ def main() -> None:
 
     n = len(rows)
     # json_valid_rate_top1 keeps its name across formats: it is the share of records whose
-    # rank-0 generation parsed into four fields, whatever the serialization.
+    # rank-0 generation parsed into the expected number of fields, whatever the serialization.
     summary = {
         "total": n,
         "num_beams": args.num_beams,
         "target_format": target_format,
+        "condition_fields": list(fields),
         "json_valid_rate_top1": json_valid_top1 / n if n else 0.0,
     }
 
-    for field in ("solvent", "catalyst"):
+    for field in string_fields:
         expected = match_expected[field]
         classifiable = same_group_classifiable[field]
         summary[f"{field}_expected_count"] = expected
@@ -353,7 +384,7 @@ def main() -> None:
                 match_totals[f"{field}_same_group_top{k}"] / classifiable if classifiable else None
             )
 
-    for field in ("temperature_celsius", "yield_percent"):
+    for field in numeric_fields:
         expected = numeric_expected[field]
         summary[f"{field}_expected_count"] = expected
         for k in ks:

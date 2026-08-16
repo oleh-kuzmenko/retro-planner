@@ -10,14 +10,14 @@ ORD, leak-checked against `data/v2_ord_eval_targets.json`, see
 a product + reactants pair.
 
 Input format:  "predict conditions: PRODUCT: <product_smiles> REACTANTS: <reactants_smiles>"
-Target format: selected by `--target-format`.
+Target format: selected by `--target-format`; which fields it carries by `--condition-fields`.
 
 - `json` (default, what the t5-small runs in RESULTS.md used):
     {"solvent": "...", "catalyst": "...", "temperature_celsius": "...", "yield_percent": "..."}
   Missing fields are written as "not specified", matching this project's earlier
   condition-model evaluation convention (json validity, has_solvent_or_reagents,
   etc. -- see `evaluate_conditions_model.py`).
-- `compact`: the four values separated by `|`, missing ones written as `?`:
+- `compact`: the values separated by `|`, missing ones written as `?`:
     CO|[Pd]|25.0|85.0
   Field names and braces carry no information the field order does not already
   carry, but they dominate the target: the JSON form of that example is 53
@@ -63,7 +63,7 @@ CONDITION_FIELDS = ("solvent", "catalyst", "temperature_celsius", "yield_percent
 
 TARGET_FORMATS = ("json", "compact")
 # `|` never occurs in SMILES nor in ORD's condition strings (which join multiple
-# components with ", "), so it separates the four fields unambiguously.
+# components with ", "), so it separates the fields unambiguously.
 COMPACT_SEPARATOR = "|"
 COMPACT_MISSING = "?"
 FORMAT_MARKER_FILE = "conditions_format.json"
@@ -112,6 +112,17 @@ def parse_args() -> argparse.Namespace:
         "`json` reproduces the t5-small runs already in RESULTS.md; `compact` drops the "
         "field names and braces, which a SMILES-only vocabulary cannot represent.",
     )
+    parser.add_argument(
+        "--condition-fields",
+        default=",".join(CONDITION_FIELDS),
+        help="Comma-separated subset of the condition fields to predict, in any order "
+        "(they are always emitted in CONDITION_FIELDS order). Dropping a field removes it "
+        "from the target entirely rather than writing it as missing -- used to drop "
+        "`yield_percent`, which is not a function of the reactant set: it was populated in "
+        "60.7%% of training rows, yet the four-field model emitted a number for only 61 of "
+        "5687 test records and abstained on 5234, i.e. it learned that abstaining beats any "
+        "guess. The evaluator reads the field list back from the format marker.",
+    )
     parser.add_argument("--num-train-epochs", type=float, default=4.0)
     parser.add_argument("--per-device-train-batch-size", type=int, default=32)
     parser.add_argument("--per-device-eval-batch-size", type=int, default=32)
@@ -149,14 +160,25 @@ def format_input(row: dict) -> str:
     return f"predict conditions: PRODUCT: {row['product_smiles']} REACTANTS: {row['reactants_smiles']}"
 
 
-def format_target(row: dict, target_format: str = "json") -> str:
+def parse_condition_fields(spec: str) -> tuple[str, ...]:
+    """Resolve a comma-separated `--condition-fields` value, keeping CONDITION_FIELDS order."""
+    requested = [name.strip() for name in spec.split(",") if name.strip()]
+    unknown = [name for name in requested if name not in CONDITION_FIELDS]
+    if unknown:
+        raise ValueError(f"Unknown condition field(s) {unknown}; choose from {list(CONDITION_FIELDS)}")
+    if not requested:
+        raise ValueError("--condition-fields must name at least one field")
+    return tuple(field for field in CONDITION_FIELDS if field in requested)
+
+
+def format_target(row: dict, target_format: str = "json", fields: tuple[str, ...] = CONDITION_FIELDS) -> str:
     if target_format == "compact":
         values = [
             str(row.get(field)) if row.get(field) not in (None, "") else COMPACT_MISSING
-            for field in CONDITION_FIELDS
+            for field in fields
         ]
         return COMPACT_SEPARATOR.join(values)
-    payload = {field: row.get(field) if row.get(field) not in (None, "") else "not specified" for field in CONDITION_FIELDS}
+    payload = {field: row.get(field) if row.get(field) not in (None, "") else "not specified" for field in fields}
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
 
 
@@ -299,9 +321,12 @@ def main() -> None:
     raw = load_dataset("json", data_files=data_files)
     logger.info("Train examples: %d | Validation examples: %d", len(raw["train"]), len(raw["validation"]))
 
+    fields = parse_condition_fields(args.condition_fields)
+    logger.info("Predicting %d condition field(s): %s", len(fields), ", ".join(fields))
+
     all_rows = [row for split in ("train", "validation") for row in raw[split]]
     all_texts = [format_input(row) for row in all_rows] + [
-        format_target(row, args.target_format) for row in all_rows
+        format_target(row, args.target_format, fields) for row in all_rows
     ]
     ensure_full_char_coverage(tokenizer, model, all_texts, logger)
 
@@ -311,7 +336,7 @@ def main() -> None:
             for p, r in zip(examples["product_smiles"], examples["reactants_smiles"])
         ]
         targets = [
-            format_target(dict(zip(examples.keys(), values)), args.target_format)
+            format_target(dict(zip(examples.keys(), values)), args.target_format, fields)
             for values in zip(*examples.values())
         ]
         model_inputs = tokenizer(inputs, max_length=args.max_source_length, truncation=True)
@@ -416,7 +441,7 @@ def main() -> None:
         tokenizer.save_pretrained(str(args.output_dir / "final"))
         # Generations are only parseable if the reader knows how they were written.
         (args.output_dir / "final" / FORMAT_MARKER_FILE).write_text(
-            json.dumps({"target_format": args.target_format}), encoding="utf-8"
+            json.dumps({"target_format": args.target_format, "fields": list(fields)}), encoding="utf-8"
         )
         logger.info("Training finished (or paused at time budget). Latest state saved under %s", args.output_dir)
 
