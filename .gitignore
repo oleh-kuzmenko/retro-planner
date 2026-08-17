@@ -25,3 +25,10 @@ data/v2_uspto_train/
 data/v2_uspto_train_rootaligned/
 data/v2_uspto_train_rsmiles5/
 data/v2_uspto_train_rsmiles10/
+data/v2_ord_roles/
+data/v2_ord_roles_temp/
+
+# Model weights downloaded back from Kaggle: half a gigabyte, and the kernel keeps
+# its own copy. Only the top-k prediction dumps under experiments/v2_model2_roles/
+# are committed, because the paired significance tests need them.
+experiments/t2_temp141k/
