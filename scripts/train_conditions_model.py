@@ -269,6 +269,32 @@ class TimeBudgetCallback:
         return _Callback()
 
 
+def materialize_writable_checkpoint(checkpoint: Path, local_work_dir: Path, logger) -> Path:
+    """Return a writable copy of `checkpoint`, or the original if it is already writable.
+
+    Resuming rewrites `best_model_checkpoint` inside `trainer_state.json`, so the checkpoint
+    directory has to be writable. It is not when it arrives as another kernel's output under
+    Kaggle's read-only `/kaggle/input`, and the run dies several minutes in with
+    `OSError: [Errno 30] Read-only file system`.
+    """
+    import os
+    import shutil
+
+    if os.access(checkpoint, os.W_OK):
+        return checkpoint
+    destination = local_work_dir / f"resume_checkpoint_rank{os.environ.get('RANK', '0')}"
+    if destination.exists():
+        shutil.rmtree(destination)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    logger.info("Resume checkpoint %s is read-only; copying it to %s.", checkpoint, destination)
+    shutil.copytree(checkpoint, destination)
+    # copytree preserves permission bits, so a source that is read-only by mode rather than
+    # by mount would produce an equally unwritable copy.
+    for path in (destination, *destination.rglob("*")):
+        path.chmod(path.stat().st_mode | 0o200 | (0o100 if path.is_dir() else 0))
+    return destination
+
+
 def is_main_process() -> bool:
     """Whether this process should do exclusive work (Drive sync, final save) under multi-GPU DDP.
 
@@ -465,6 +491,15 @@ def main() -> None:
     if args.resume_from_checkpoint is not None:
         last_checkpoint = explicit_resume_checkpoint
         if explicit_resume_checkpoint:
+            # A checkpoint handed over from another Kaggle kernel arrives under
+            # /kaggle/input, which is mounted read-only, and the repoint below writes to
+            # trainer_state.json. Copy it somewhere writable first. The copy is per-rank so
+            # that two DDP processes never write the same files; the source is identical, so
+            # so are the copies.
+            explicit_resume_checkpoint = str(
+                materialize_writable_checkpoint(Path(explicit_resume_checkpoint), args.local_work_dir, logger)
+            )
+            last_checkpoint = explicit_resume_checkpoint
             state_path = Path(explicit_resume_checkpoint) / "trainer_state.json"
             state = json.loads(state_path.read_text(encoding="utf-8"))
             if state.get("best_model_checkpoint") and not Path(state["best_model_checkpoint"]).exists():
