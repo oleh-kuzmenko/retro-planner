@@ -1,0 +1,17 @@
+{
+  "id": "kuzmenkoiryna/retro-planner-m2-conditions-mixed-resume",
+  "title": "retro-planner-m2-conditions-mixed-resume",
+  "code_file": "../32_M2_conditions_mixed_resume.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "keywords": ["gpu"],
+  "dataset_sources": ["kuzmenkoiryna/retro-planner-ord-conditions-mixed"],
+  "competition_sources": [],
+  "kernel_sources": ["kuzmenkoiryna/retro-planner-m2-conditions-mixed"],
+  "model_sources": []
+}

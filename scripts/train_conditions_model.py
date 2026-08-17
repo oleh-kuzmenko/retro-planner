@@ -168,6 +168,16 @@ def parse_args() -> argparse.Namespace:
         "optim=adafactor to keep each checkpoint's disk footprint down.",
     )
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--ignore-data-skip",
+        action="store_true",
+        help="On resume, start from the current position in the data stream instead of "
+        "replaying the batches already consumed. Trainer's default replays them, which costs "
+        "real minutes once a run is thousands of steps in -- the batches are still collated, "
+        "only the forward pass is skipped. The price is that the resumed epoch sees a "
+        "different sample order than it would have; with a shuffled sampler that is a "
+        "reordering, not a change of the data.",
+    )
     parser.add_argument("--time-budget-minutes", type=float, default=None)
     return parser.parse_args()
 
@@ -438,6 +448,7 @@ def main() -> None:
         optim="adafactor",
         report_to=[],
         seed=args.seed,
+        ignore_data_skip=args.ignore_data_skip,
     )
 
     trainer = Seq2SeqTrainer(

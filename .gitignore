@@ -35,3 +35,4 @@ data/v2_ord_roles_mixed/
 # its own copy. Only the top-k prediction dumps under experiments/v2_model2_roles/
 # are committed, because the paired significance tests need them.
 experiments/t2_temp141k/
+experiments/m2_mixed/
