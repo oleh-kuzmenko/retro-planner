@@ -261,7 +261,29 @@ class TimeBudgetCallback:
 
         class _Callback(self._base):
             def on_step_end(self, args, state, control, **kwargs):
-                if budget_seconds is not None and (time.monotonic() - start) >= budget_seconds:
+                if budget_seconds is None:
+                    return control
+                # Every rank runs its own clock, and torchrun starts them a second or two
+                # apart, so "elapsed >= budget" turns true at different steps on different
+                # ranks. Trainer does not synchronise `control`, so the rank that leaves the
+                # loop first never issues the next collective and the other one waits on an
+                # ALLREDUCE until NCCL's 30-minute watchdog kills the job -- which is exactly
+                # how the first resumed M2 run died, 31 minutes after its last checkpoint.
+                # The decision is therefore made collectively, on a step boundary all ranks
+                # share.
+                if state.global_step % 50:
+                    return control
+                expired = (time.monotonic() - start) >= budget_seconds
+
+                import torch
+                import torch.distributed as dist
+
+                if dist.is_available() and dist.is_initialized():
+                    flag = torch.tensor([1.0 if expired else 0.0], device=args.device)
+                    dist.all_reduce(flag, op=dist.ReduceOp.MAX)
+                    expired = bool(flag.item())
+
+                if expired:
                     control.should_save = True
                     control.should_training_stop = True
                 return control
