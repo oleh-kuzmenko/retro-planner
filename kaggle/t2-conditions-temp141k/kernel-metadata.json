@@ -1,0 +1,17 @@
+{
+  "id": "kuzmenkoiryna/retro-planner-t2-conditions-temp141k",
+  "title": "retro-planner-t2-conditions-temp141k",
+  "code_file": "../30_T2_conditions_temp141k.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "keywords": ["gpu"],
+  "dataset_sources": ["kuzmenkoiryna/retro-planner-ord-conditions-temp141k"],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}
