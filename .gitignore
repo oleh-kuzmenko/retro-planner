@@ -27,6 +27,9 @@ data/v2_uspto_train_rsmiles5/
 data/v2_uspto_train_rsmiles10/
 data/v2_ord_roles/
 data/v2_ord_roles_temp/
+data/v2_ord_roles_temp141k/
+data/v2_ord_roles_900k/
+data/v2_ord_roles_mixed/
 
 # Model weights downloaded back from Kaggle: half a gigabyte, and the kernel keeps
 # its own copy. Only the top-k prediction dumps under experiments/v2_model2_roles/

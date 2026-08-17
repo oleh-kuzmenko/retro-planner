@@ -128,6 +128,17 @@ def parse_args() -> argparse.Namespace:
         "5687 test records and abstained on 5234, i.e. it learned that abstaining beats any "
         "guess. The evaluator reads the field list back from the format marker.",
     )
+    parser.add_argument(
+        "--always-fields",
+        default="",
+        help="Comma-separated fields the model must never abstain on (e.g. "
+        "'solvent,temperature_celsius'). Such a field is never written as `?`: a row that "
+        "does not record it produces a shorter target without that slot, and the input "
+        "carries a schema code saying which layout is expected -- the task-prefix scheme of "
+        "T5 (Raffel et al., 2020) as used for chemistry in T5Chem (Lu and Zhang, 2022). At "
+        "inference the full code is always requested, so the model emits every mandatory "
+        "field. See `row_fields` for why `?` and row-dropping both fail here.",
+    )
     parser.add_argument("--num-train-epochs", type=float, default=4.0)
     parser.add_argument("--per-device-train-batch-size", type=int, default=32)
     parser.add_argument("--per-device-eval-batch-size", type=int, default=32)
@@ -161,8 +172,47 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def format_input(row: dict) -> str:
-    return f"predict conditions: PRODUCT: {row['product_smiles']} REACTANTS: {row['reactants_smiles']}"
+# One letter per field that the model must never be allowed to skip. The letters are joined
+# in CONDITION_FIELDS order, so a row whose solvent and temperature are both recorded gets
+# the schema code "ST" and one with only a solvent gets "S".
+SCHEMA_CODES = {"reagents": "R", "solvent": "S", "catalyst": "C", "temperature_celsius": "T", "yield_percent": "Y"}
+EMPTY_SCHEMA = "0"
+
+
+def schema_code(row: dict, always_fields: tuple[str, ...]) -> str:
+    """Which of the mandatory fields this row can actually supervise."""
+    known = [SCHEMA_CODES[field] for field in always_fields if row.get(field) not in (None, "")]
+    return "".join(known) or EMPTY_SCHEMA
+
+
+def full_schema_code(always_fields: tuple[str, ...]) -> str:
+    """The code used at inference: every mandatory field present, so the model must emit them."""
+    return "".join(SCHEMA_CODES[field] for field in always_fields) or EMPTY_SCHEMA
+
+
+def row_fields(row: dict, fields: tuple[str, ...], always_fields: tuple[str, ...]) -> tuple[str, ...]:
+    """The target layout for one row: a mandatory field the record lacks is left out entirely.
+
+    A field can be missing from ORD's record for two different reasons, and the difference
+    decides how it must be written down. A catalyst is often genuinely absent, so `?` is the
+    true answer and the model has to learn to produce it. A temperature is never absent from
+    the reaction -- ORD simply did not log it -- and a solvent almost never is. Writing `?`
+    there teaches the model to abstain on a field that always has an answer, and since `?` is
+    the majority value for temperature (74% of rows), abstention becomes the loss-minimizing
+    answer: the earlier B3 run stayed silent on 86.5% of test records. Dropping such rows
+    instead costs the other fields their training data -- the earlier T2 run, trained only on
+    rows carrying a temperature, scored 9.6% on the catalyst outside that subset against
+    B3's 29.3%.
+
+    So the row keeps all of its supervision, and the fields it cannot supervise simply do not
+    appear in its target. The input's schema code says which layout to produce.
+    """
+    return tuple(field for field in fields if field not in always_fields or row.get(field) not in (None, ""))
+
+
+def format_input(row: dict, schema: str = "") -> str:
+    marker = f"[{schema}] " if schema else ""
+    return f"predict conditions: {marker}PRODUCT: {row['product_smiles']} REACTANTS: {row['reactants_smiles']}"
 
 
 def parse_condition_fields(spec: str) -> tuple[str, ...]:
@@ -329,20 +379,33 @@ def main() -> None:
     fields = parse_condition_fields(args.condition_fields)
     logger.info("Predicting %d condition field(s): %s", len(fields), ", ".join(fields))
 
+    always_fields = parse_condition_fields(args.always_fields) if args.always_fields.strip() else ()
+    unlisted = [field for field in always_fields if field not in fields]
+    if unlisted:
+        raise ValueError(f"--always-fields names {unlisted}, which --condition-fields does not predict")
+    if always_fields:
+        counts: dict[str, int] = {}
+        for row in raw["train"]:
+            counts[schema_code(row, always_fields)] = counts.get(schema_code(row, always_fields), 0) + 1
+        logger.info(
+            "Mandatory field(s) %s | schema codes in train: %s | inference code: %s",
+            ", ".join(always_fields),
+            ", ".join(f"{code} {count}" for code, count in sorted(counts.items(), key=lambda kv: -kv[1])),
+            full_schema_code(always_fields),
+        )
+
     all_rows = [row for split in ("train", "validation") for row in raw[split]]
-    all_texts = [format_input(row) for row in all_rows] + [
-        format_target(row, args.target_format, fields) for row in all_rows
+    all_texts = [format_input(row, schema_code(row, always_fields)) for row in all_rows] + [
+        format_target(row, args.target_format, row_fields(row, fields, always_fields)) for row in all_rows
     ]
     ensure_full_char_coverage(tokenizer, model, all_texts, logger)
 
     def preprocess(examples):
-        inputs = [
-            format_input({"product_smiles": p, "reactants_smiles": r})
-            for p, r in zip(examples["product_smiles"], examples["reactants_smiles"])
-        ]
+        rows = [dict(zip(examples.keys(), values)) for values in zip(*examples.values())]
+        inputs = [format_input(row, schema_code(row, always_fields)) for row in rows]
         targets = [
-            format_target(dict(zip(examples.keys(), values)), args.target_format, fields)
-            for values in zip(*examples.values())
+            format_target(row, args.target_format, row_fields(row, fields, always_fields))
+            for row in rows
         ]
         model_inputs = tokenizer(inputs, max_length=args.max_source_length, truncation=True)
         labels = tokenizer(text_target=targets, max_length=args.max_target_length, truncation=True)
@@ -446,7 +509,14 @@ def main() -> None:
         tokenizer.save_pretrained(str(args.output_dir / "final"))
         # Generations are only parseable if the reader knows how they were written.
         (args.output_dir / "final" / FORMAT_MARKER_FILE).write_text(
-            json.dumps({"target_format": args.target_format, "fields": list(fields)}), encoding="utf-8"
+            json.dumps(
+                {
+                    "target_format": args.target_format,
+                    "fields": list(fields),
+                    "always_fields": list(always_fields),
+                }
+            ),
+            encoding="utf-8",
         )
         logger.info("Training finished (or paused at time budget). Latest state saved under %s", args.output_dir)
 

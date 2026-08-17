@@ -57,6 +57,7 @@ from train_conditions_model import (
     FORMAT_MARKER_FILE,
     TARGET_FORMATS,
     format_input,
+    full_schema_code,
     parse_condition_fields,
 )
 
@@ -224,6 +225,18 @@ def resolve_condition_fields(model_dir: Path, requested: str | None) -> tuple[st
     return parse_condition_fields(spec)
 
 
+def resolve_always_fields(model_dir: Path) -> tuple[str, ...]:
+    """Mandatory fields, if the checkpoint was trained with a schema prefix.
+
+    Their presence changes the prompt: training wrote one schema code per row, and at
+    inference the full code is always asked for, which is what makes the model emit the
+    mandatory fields instead of `?`. Checkpoints trained before the scheme existed carry no
+    such key and keep the bare prompt.
+    """
+    spec = read_format_marker(model_dir).get("always_fields") or []
+    return parse_condition_fields(",".join(spec)) if spec else ()
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     from retro_eval.condition_similarity import component_groups
@@ -240,7 +253,11 @@ def main() -> None:
 
     target_format = resolve_target_format(model_dir, args.target_format)
     fields = resolve_condition_fields(model_dir, args.condition_fields)
+    always_fields = resolve_always_fields(model_dir)
+    prompt_schema = full_schema_code(always_fields) if always_fields else ""
     LOGGER.info("Parsing generations as target_format=%s over fields %s", target_format, ", ".join(fields))
+    if always_fields:
+        LOGGER.info("Prompting with schema code [%s]: %s must be answered", prompt_schema, ", ".join(always_fields))
     string_fields = tuple(f for f in ("reagents", "solvent", "catalyst") if f in fields)
     numeric_fields = tuple(f for f in ("temperature_celsius", "yield_percent") if f in fields)
 
@@ -286,7 +303,7 @@ def main() -> None:
     processed = 0
     for batch_start in range(0, len(rows), args.batch_size):
         batch = rows[batch_start : batch_start + args.batch_size]
-        prompts = [format_input(row) for row in batch]
+        prompts = [format_input(row, prompt_schema) for row in batch]
         inputs = tokenizer(
             prompts, return_tensors="pt", padding=True, truncation=True, max_length=args.max_source_length
         ).to(args.device)
