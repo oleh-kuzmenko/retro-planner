@@ -3,9 +3,15 @@
 
 Model 1 proposes substrates for a target product, an RDKit validity filter drops
 candidates that are not parseable molecules, and Model 2 reads the product together
-with Model 1's best surviving candidate and proposes the conditions. Nothing here is
-a measurement -- the quantitative results come from the two evaluation scripts -- so
-the run is deliberately tiny and stays on the CPU.
+with the surviving candidates -- all of them or only the best, per --model2-input --
+and proposes the conditions. Nothing here is a measurement -- the quantitative results
+come from the two evaluation scripts -- so the run is deliberately tiny and stays on
+the CPU.
+
+The two stages must agree on how the reactant side is written. A USPTO-trained Model 1
+emits substrates only; an ORD-trained one emits ORD's whole vessel charge.
+--reference-field picks the reference written in the same convention, so the
+demonstration compares the prediction rather than the two sources' recording habits.
 
 The targets are named explicitly rather than picked by score: they are read from the
 clean conditions test set by product SMILES, which keeps the choice auditable and
@@ -17,7 +23,8 @@ Example:
         --model2-dir experiments/m2_mixed/model2_conditions_mixed/final \
         --test-file data/v2_ord_roles/conditions_test_clean.jsonl \
         --product "CCCCCCCCCCCCN1CCCC1" \
-        --output assets/demo/demo_cascade_v3.json
+        --reference-field full_reactants_smiles --model2-input best \
+        --output assets/demo/demo_cascade_v6.json
 """
 
 from __future__ import annotations
@@ -43,6 +50,23 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--product", action="append", required=True, help="Target product SMILES; repeat for several.")
     parser.add_argument("--num-beams", type=int, default=10)
     parser.add_argument("--keep", type=int, default=3, help="Candidates kept per stage in the written record.")
+    parser.add_argument(
+        "--reference-field",
+        choices=("reactants_smiles", "full_reactants_smiles"),
+        default=None,
+        help="Which reactant-side record the demonstration shows as the reference. Left unset it "
+        "is read from Model 2's format marker, so the reference is written in the convention both "
+        "stages already agreed on; otherwise the comparison would show the two sources' recording "
+        "habits instead of the prediction.",
+    )
+    parser.add_argument(
+        "--model2-input",
+        choices=("merged", "best"),
+        default="merged",
+        help="What the second stage reads: `merged` concatenates the kept candidate sets, `best` "
+        "passes only the top one. `best` keeps the served input the same shape as Model 2 saw in "
+        "training; `merged` hands it every surviving hypothesis at once.",
+    )
     parser.add_argument("--output", type=Path, required=True)
     return parser.parse_args()
 
@@ -83,6 +107,10 @@ def main() -> None:
             raise SystemExit(f"product not found in {args.test_file}: {product}")
         targets.append(rows[product])
 
+    marker = json.loads((args.model2_dir / "conditions_format.json").read_text())
+    reference_field = args.reference_field or marker.get("reactants_field", "reactants_smiles")
+    print(f"Еталонний бік: {reference_field}")
+
     print(f"Модель 1: {args.model1_dir}")
     tokenizer1 = AutoTokenizer.from_pretrained(str(args.model1_dir))
     model1 = AutoModelForSeq2SeqLM.from_pretrained(str(args.model1_dir)).eval()
@@ -100,7 +128,7 @@ def main() -> None:
         records.append(
             {
                 "product_smiles": row["product_smiles"],
-                "reference_substrates": row["reactants_smiles"],
+                "reference_substrates": row[reference_field],
                 "reference_conditions": {field: row.get(field) for field in CONDITION_FIELDS},
                 "candidates_generated": len(seen),
                 "candidates_valid": len(valid),
@@ -111,29 +139,42 @@ def main() -> None:
     print(f"Модель 2: {args.model2_dir}")
     tokenizer2 = AutoTokenizer.from_pretrained(str(args.model2_dir))
     model2 = AutoModelForSeq2SeqLM.from_pretrained(str(args.model2_dir)).eval()
-    marker = json.loads((args.model2_dir / "conditions_format.json").read_text())
     always = parse_condition_fields(",".join(marker.get("always_fields") or [])) if marker.get("always_fields") else ()
     schema = full_schema_code(always) if always else ""
     fields = parse_condition_fields(",".join(marker["fields"]))
 
+    answered = [r for r in records if r["predicted_substrates"]]
+    for record in answered:
+        kept = record["predicted_substrates"]
+        record["model2_input_substrates"] = kept[0]
+        record["model2_input"] = ".".join(kept) if args.model2_input == "merged" else kept[0]
+
     prompts = [
-        format_input({"product_smiles": r["product_smiles"], "reactants_smiles": r["predicted_substrates"][0]}, schema)
-        for r in records
-        if r["predicted_substrates"]
+        format_input({"product_smiles": r["product_smiles"], "reactants_smiles": r["model2_input"]}, schema)
+        for r in answered
     ]
     stage2 = generate(model2, tokenizer2, prompts, args.num_beams, 256)
 
-    for record, candidates in zip([r for r in records if r["predicted_substrates"]], stage2):
+    for record, candidates in zip(answered, stage2):
         parsed = []
         for candidate in candidates:
             value = decode_and_parse(candidate, marker.get("target_format", "compact"), fields)
             if value is not None and value not in parsed:
                 parsed.append(value)
         record["predicted_conditions"] = parsed[: args.keep]
-        record["model2_input_substrates"] = record["predicted_substrates"][0]
+        record["predicted_conditions_raw"] = candidates
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps({"num_beams": args.num_beams, "records": records}, ensure_ascii=False, indent=1))
+    provenance = {
+        "model1_dir": str(args.model1_dir),
+        "model2_dir": str(args.model2_dir),
+        "test_file": str(args.test_file),
+        "num_beams": args.num_beams,
+        "reference_field": reference_field,
+        "model2_input_mode": args.model2_input,
+        "condition_fields": list(fields),
+    }
+    args.output.write_text(json.dumps({**provenance, "records": records}, ensure_ascii=False, indent=1))
     print(f"записано {args.output}")
 
     for record in records:
