@@ -9,7 +9,9 @@ ORD, leak-checked against `data/v2_ord_eval_targets.json`, see
 `build_train_data_ord.py`) to predict solvent/catalyst/temperature/yield from
 a product + reactants pair.
 
-Input format:  "predict conditions: PRODUCT: <product_smiles> REACTANTS: <reactants_smiles>"
+Input format:  "predict conditions: PRODUCT: <product_smiles> REACTANTS: <reactants>"
+               where <reactants> is whichever of `reactants_smiles` (substrates only) or
+               `full_reactants_smiles` (ORD's whole vessel charge) --reactants-field names.
 Target format: selected by `--target-format`; which fields it carries by `--condition-fields`.
 
 - `json` (default, what the t5-small runs in RESULTS.md used):
@@ -72,6 +74,12 @@ TARGET_FORMATS = ("json", "compact")
 COMPACT_SEPARATOR = "|"
 COMPACT_MISSING = "?"
 FORMAT_MARKER_FILE = "conditions_format.json"
+
+# ORD writes the whole vessel charge on the reactant side; `scripts/build_conditions_roles.py`
+# stores the substrates-only view alongside it, so one corpus carries both and the input side
+# is a flag rather than a rebuild. The first entry is the default, for backward compatibility
+# with checkpoints trained before the flag existed.
+REACTANTS_FIELDS = ("reactants_smiles", "full_reactants_smiles")
 
 
 def parse_args() -> argparse.Namespace:
@@ -167,6 +175,23 @@ def parse_args() -> argparse.Namespace:
         help="Kept low for Google Drive's free-tier ~15GB quota; combined with "
         "optim=adafactor to keep each checkpoint's disk footprint down.",
     )
+    parser.add_argument(
+        "--reactants-field",
+        choices=REACTANTS_FIELDS,
+        default=REACTANTS_FIELDS[0],
+        help="Which reactant-side record goes into the input. `reactants_smiles` is the "
+        "substrates-only view written by scripts/build_conditions_roles.py, whose shape matches "
+        "Model 1's output; `full_reactants_smiles` is ORD's whole vessel charge, which carries "
+        "the stoichiometric species as context instead of as a target.",
+    )
+    parser.add_argument(
+        "--group-by-length",
+        action="store_true",
+        help="Batch examples of similar length together. The collator pads to the longest "
+        "member of each batch, so with a mean source near 123 tokens against a p95 near 202 a "
+        "randomly drawn batch pads most of its rows well past their own length. Grouping cuts "
+        "that waste; it changes the sample order, not the data.",
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument(
         "--ignore-data-skip",
@@ -220,9 +245,9 @@ def row_fields(row: dict, fields: tuple[str, ...], always_fields: tuple[str, ...
     return tuple(field for field in fields if field not in always_fields or row.get(field) not in (None, ""))
 
 
-def format_input(row: dict, schema: str = "") -> str:
+def format_input(row: dict, schema: str = "", reactants_field: str = REACTANTS_FIELDS[0]) -> str:
     marker = f"[{schema}] " if schema else ""
-    return f"predict conditions: {marker}PRODUCT: {row['product_smiles']} REACTANTS: {row['reactants_smiles']}"
+    return f"predict conditions: {marker}PRODUCT: {row['product_smiles']} REACTANTS: {row[reactants_field]}"
 
 
 def parse_condition_fields(spec: str) -> tuple[str, ...]:
@@ -436,6 +461,7 @@ def main() -> None:
 
     fields = parse_condition_fields(args.condition_fields)
     logger.info("Predicting %d condition field(s): %s", len(fields), ", ".join(fields))
+    logger.info("Reactant side of the input: %s", args.reactants_field)
 
     always_fields = parse_condition_fields(args.always_fields) if args.always_fields.strip() else ()
     unlisted = [field for field in always_fields if field not in fields]
@@ -453,14 +479,18 @@ def main() -> None:
         )
 
     all_rows = [row for split in ("train", "validation") for row in raw[split]]
-    all_texts = [format_input(row, schema_code(row, always_fields)) for row in all_rows] + [
+    all_texts = [
+        format_input(row, schema_code(row, always_fields), args.reactants_field) for row in all_rows
+    ] + [
         format_target(row, args.target_format, row_fields(row, fields, always_fields)) for row in all_rows
     ]
     ensure_full_char_coverage(tokenizer, model, all_texts, logger)
 
     def preprocess(examples):
         rows = [dict(zip(examples.keys(), values)) for values in zip(*examples.values())]
-        inputs = [format_input(row, schema_code(row, always_fields)) for row in rows]
+        inputs = [
+            format_input(row, schema_code(row, always_fields), args.reactants_field) for row in rows
+        ]
         targets = [
             format_target(row, args.target_format, row_fields(row, fields, always_fields))
             for row in rows
@@ -474,6 +504,27 @@ def main() -> None:
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     args.local_work_dir.mkdir(parents=True, exist_ok=True)
+    # The name for length bucketing moved between major versions: transformers 4.x called it
+    # `group_by_length`, and 5.x dropped it, keeping only the seq2seq `sortish_sampler`, which
+    # buckets by length the same way. Ask the installed dataclass which one it has rather than
+    # pinning a version -- Colab and Kaggle images move independently of this repo.
+    length_grouping: dict[str, bool] = {}
+    if args.group_by_length:
+        import dataclasses
+
+        supported = {field.name for field in dataclasses.fields(Seq2SeqTrainingArguments)}
+        for name in ("group_by_length", "sortish_sampler"):
+            if name in supported:
+                length_grouping[name] = True
+                logger.info("Length bucketing enabled via %s", name)
+                break
+        else:
+            logger.warning(
+                "--group-by-length requested but transformers %s exposes neither "
+                "group_by_length nor sortish_sampler; training without it.",
+                __import__("transformers").__version__,
+            )
+
     training_args = Seq2SeqTrainingArguments(
         output_dir=str(args.local_work_dir),
         num_train_epochs=args.num_train_epochs,
@@ -497,6 +548,7 @@ def main() -> None:
         report_to=[],
         seed=args.seed,
         ignore_data_skip=args.ignore_data_skip,
+        **length_grouping,
     )
 
     trainer = Seq2SeqTrainer(
@@ -582,6 +634,7 @@ def main() -> None:
                     "target_format": args.target_format,
                     "fields": list(fields),
                     "always_fields": list(always_fields),
+                    "reactants_field": args.reactants_field,
                 }
             ),
             encoding="utf-8",

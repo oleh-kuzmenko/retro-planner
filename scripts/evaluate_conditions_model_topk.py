@@ -55,6 +55,7 @@ from train_conditions_model import (
     COMPACT_SEPARATOR,
     CONDITION_FIELDS,
     FORMAT_MARKER_FILE,
+    REACTANTS_FIELDS,
     TARGET_FORMATS,
     format_input,
     full_schema_code,
@@ -237,6 +238,20 @@ def resolve_always_fields(model_dir: Path) -> tuple[str, ...]:
     return parse_condition_fields(",".join(spec)) if spec else ()
 
 
+def resolve_reactants_field(model_dir: Path) -> str:
+    """Which reactant-side record the checkpoint was trained on.
+
+    A model trained on ORD's whole vessel charge and evaluated on the substrates-only view
+    (or the reverse) is being asked a different question than it was taught, and the drop
+    would read as a training result. Checkpoints written before the flag existed carry no
+    such key and all used the substrates-only view, which is the fallback.
+    """
+    field = read_format_marker(model_dir).get("reactants_field", REACTANTS_FIELDS[0])
+    if field not in REACTANTS_FIELDS:
+        raise ValueError(f"{FORMAT_MARKER_FILE} names unknown reactants_field {field!r}")
+    return field
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     from retro_eval.condition_similarity import component_groups
@@ -254,6 +269,8 @@ def main() -> None:
     target_format = resolve_target_format(model_dir, args.target_format)
     fields = resolve_condition_fields(model_dir, args.condition_fields)
     always_fields = resolve_always_fields(model_dir)
+    reactants_field = resolve_reactants_field(model_dir)
+    LOGGER.info("Reactant side of the input: %s", reactants_field)
     prompt_schema = full_schema_code(always_fields) if always_fields else ""
     LOGGER.info("Parsing generations as target_format=%s over fields %s", target_format, ", ".join(fields))
     if always_fields:
@@ -303,7 +320,7 @@ def main() -> None:
     processed = 0
     for batch_start in range(0, len(rows), args.batch_size):
         batch = rows[batch_start : batch_start + args.batch_size]
-        prompts = [format_input(row, prompt_schema) for row in batch]
+        prompts = [format_input(row, prompt_schema, reactants_field) for row in batch]
         inputs = tokenizer(
             prompts, return_tensors="pt", padding=True, truncation=True, max_length=args.max_source_length
         ).to(args.device)
@@ -439,6 +456,7 @@ def main() -> None:
         "num_beams": args.num_beams,
         "target_format": target_format,
         "condition_fields": list(fields),
+        "reactants_field": reactants_field,
         "force_numeric": bool(args.force_numeric),
         "json_valid_rate_top1": json_valid_top1 / n if n else 0.0,
     }
