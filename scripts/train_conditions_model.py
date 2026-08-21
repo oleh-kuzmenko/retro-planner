@@ -215,7 +215,14 @@ EMPTY_SCHEMA = "0"
 
 
 def schema_code(row: dict, always_fields: tuple[str, ...]) -> str:
-    """Which of the mandatory fields this row can actually supervise."""
+    """Which of the mandatory fields this row can actually supervise.
+
+    With no mandatory field the scheme is not in use at all, and the input carries no marker:
+    that is what the evaluator prompts with when the format marker names no `always_fields`,
+    so returning a code here would train the model on a prefix it is never asked with.
+    """
+    if not always_fields:
+        return ""
     known = [SCHEMA_CODES[field] for field in always_fields if row.get(field) not in (None, "")]
     return "".join(known) or EMPTY_SCHEMA
 
