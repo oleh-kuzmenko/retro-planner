@@ -59,9 +59,10 @@ def parse_args() -> argparse.Namespace:
         "--limit",
         type=int,
         default=None,
-        help="Score a random subset of this size instead of the whole test file. The draw is "
-        "seeded and the rows keep their original index, so the reference-input run can be "
-        "restricted to the same rows and the comparison stays paired.",
+        help="Score a random subset of this size instead of the whole test file. Rows are "
+        "visited in a seeded random order and keep their original index, so the reference-input "
+        "run can be restricted to exactly the rows this one reached -- whether it finished or "
+        "the session died halfway -- and the comparison stays paired over a uniform sample.",
     )
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--output", type=Path, required=True, help="Substituted test file (JSONL, appended to).")
@@ -86,8 +87,9 @@ def main() -> None:
 
     rows = [json.loads(line) for line in args.test_file.read_text(encoding="utf-8").splitlines() if line.strip()]
     indices = list(range(len(rows)))
-    if args.limit and args.limit < len(rows):
-        indices = sorted(random.Random(args.seed).sample(indices, args.limit))
+    random.Random(args.seed).shuffle(indices)  # so a run cut short is still a uniform sample
+    if args.limit:
+        indices = indices[: args.limit]
     LOGGER.info("Stage 1 over %d of %d row(s) from %s", len(indices), len(rows), args.test_file)
 
     done = set()
