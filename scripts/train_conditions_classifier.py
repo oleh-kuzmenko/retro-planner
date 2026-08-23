@@ -192,6 +192,10 @@ class ConditionClassifier(nn.Module):
     encoder was never trained to summarize a sequence into one slot.
     """
 
+    # Read by Trainer when it reloads the best checkpoint; a plain module has no such
+    # attribute and the lookup would raise instead of warning about the dropped alias.
+    _keys_to_ignore_on_save = None
+
     def __init__(self, encoder, head_sizes: dict[str, int]):
         super().__init__()
         self.encoder = encoder
@@ -200,6 +204,24 @@ class ConditionClassifier(nn.Module):
         self.heads = nn.ModuleDict(
             {field: nn.Linear(encoder.config.d_model, size) for field, size in head_sizes.items()}
         )
+
+    def state_dict(self, *args, **kwargs):
+        """Drop the embedding alias before anything tries to serialize it.
+
+        T5 points `encoder.embed_tokens.weight` at `shared.weight`, one buffer under two
+        names. `PreTrainedModel.save_pretrained` knows to drop the alias; safetensors, which
+        the Trainer reaches for on a plain module, refuses to write it at all -- and the
+        `save_safetensors` switch that would sidestep it does not exist in every transformers
+        release this repo runs on. Dropping the duplicate name is version-independent: the
+        tie is rebuilt on load, because both names still point at the one parameter.
+        """
+        state = super().state_dict(*args, **kwargs)
+        for key in [name for name in state if name.endswith("encoder.encoder.embed_tokens.weight")]:
+            state.pop(key)
+        return state
+
+    def load_state_dict(self, state_dict, strict=True, assign=False):
+        return super().load_state_dict(state_dict, strict=False, assign=assign)
 
     def forward(self, input_ids=None, attention_mask=None, **labels):
         hidden = self.encoder(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
@@ -338,10 +360,6 @@ def main() -> None:
         seed=args.seed,
         remove_unused_columns=False,
         label_names=[f"labels_{field}" for field in fields],
-        # The encoder ties `shared.weight` to `encoder.embed_tokens.weight`, and safetensors
-        # refuses to write two names over one buffer. `PreTrainedModel.save_pretrained` knows
-        # to drop the alias; a plain module checkpoint does not, so write the torch format.
-        save_safetensors=False,
         **length_grouping,
     )
 
