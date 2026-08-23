@@ -1,0 +1,21 @@
+{
+  "id": "kuzmenkooleh/retro-planner-e2-classifier-6epochs",
+  "title": "retro-planner-e2-classifier-6epochs",
+  "code_file": "../43_E2_classifier_6epochs.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "keywords": [
+    "gpu"
+  ],
+  "dataset_sources": [
+    "kuzmenkooleh/retro-planner-ord-conditions-full"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}
