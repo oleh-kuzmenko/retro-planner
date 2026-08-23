@@ -125,18 +125,30 @@ def class_key(field: str, value):
     return None if key is None else ".".join(sorted(key))
 
 
-def build_vocabularies(rows: list[dict], fields: tuple[str, ...], budget: dict[str, int]) -> dict:
+def read_rows(path: Path):
+    """Stream a corpus file. The 486,330-row corpus is never held in memory as dicts: two
+    processes each materializing it is what an OOM kill on a 2xT4 Kaggle node looks like."""
+    with path.open(encoding="utf-8") as handle:
+        for line in handle:
+            yield json.loads(line)
+
+
+def build_vocabularies(path: Path, fields: tuple[str, ...], budget: dict[str, int]) -> dict:
     """Most frequent values per field, plus the absent class where absence is an answer."""
-    vocabularies = {}
-    for field in fields:
-        counts = collections.Counter()
-        absent = 0
-        for row in rows:
+    counters = {field: collections.Counter() for field in fields}
+    absences = {field: 0 for field in fields}
+    for row in read_rows(path):
+        for field in fields:
             key = class_key(field, row.get(field))
             if key is None:
-                absent += 1
-                continue
-            counts[key] += 1
+                absences[field] += 1
+            else:
+                counters[field][key] += 1
+
+    vocabularies = {}
+    for field in fields:
+        counts = counters[field]
+        absent = absences[field]
         classes = [key for key, _ in counts.most_common(budget[field])]
         covered = sum(counts[key] for key in classes)
         named = sum(counts.values())
@@ -237,7 +249,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     args = parse_args()
 
-    from datasets import Dataset
+    from datasets import load_dataset
     from transformers import (
         AutoTokenizer,
         T5EncoderModel,
@@ -249,12 +261,13 @@ def main() -> None:
     fields = parse_condition_fields(args.condition_fields)
     budget = parse_num_classes(args.num_classes, fields)
 
-    train_rows = [json.loads(line) for line in args.train_file.open(encoding="utf-8")]
-    val_rows = [json.loads(line) for line in args.val_file.open(encoding="utf-8")]
-    logger.info("Train examples: %d | validation: %d", len(train_rows), len(val_rows))
+    raw = load_dataset(
+        "json", data_files={"train": str(args.train_file), "validation": str(args.val_file)}
+    )
+    logger.info("Train examples: %d | validation: %d", len(raw["train"]), len(raw["validation"]))
     logger.info("Reactant side of the input: %s", args.reactants_field)
 
-    vocabularies = build_vocabularies(train_rows, fields, budget)
+    vocabularies = build_vocabularies(args.train_file, fields, budget)
     indexes = {
         field: {key: position for position, key in enumerate(vocabularies[field]["classes"])}
         for field in fields
@@ -262,12 +275,17 @@ def main() -> None:
 
     tokenizer = AutoTokenizer.from_pretrained(args.base_model)
     encoder = T5EncoderModel.from_pretrained(args.base_model)
-    texts = [format_input(row, "", args.reactants_field) for row in train_rows + val_rows]
+    texts = (
+        format_input(row, "", args.reactants_field)
+        for path in (args.train_file, args.val_file)
+        for row in read_rows(path)
+    )
     ensure_full_char_coverage(tokenizer, encoder, texts, logger)
 
     model = ConditionClassifier(encoder, {field: len(vocabularies[field]["classes"]) for field in fields})
 
-    def encode(rows: list[dict]) -> Dataset:
+    def preprocess(examples):
+        rows = [dict(zip(examples.keys(), values)) for values in zip(*examples.values())]
         encoded = tokenizer(
             [format_input(row, "", args.reactants_field) for row in rows],
             max_length=args.max_source_length,
@@ -277,12 +295,15 @@ def main() -> None:
             encoded[f"labels_{field}"] = [
                 label_of(field, row.get(field), vocabularies[field], indexes[field]) for row in rows
             ]
-        return Dataset.from_dict(dict(encoded))
+        return encoded
 
-    train_dataset, val_dataset = encode(train_rows), encode(val_rows)
+    tokenized = raw.map(preprocess, batched=True, remove_columns=raw["train"].column_names)
+    train_dataset, val_dataset = tokenized["train"], tokenized["validation"]
     for field in fields:
-        usable = sum(1 for value in train_dataset[f"labels_{field}"] if value != -100)
-        logger.info("%s: %d of %d training rows carry a label", field, usable, len(train_dataset))
+        labelled = vocabularies[field]["train_rows_with_value"]
+        if vocabularies[field]["absent_class"] is not None:
+            labelled += vocabularies[field]["train_rows_absent"]
+        logger.info("%s: %d of %d training rows carry a label", field, labelled, len(train_dataset))
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     args.local_work_dir.mkdir(parents=True, exist_ok=True)
@@ -344,7 +365,7 @@ def main() -> None:
         "reactants_field": args.reactants_field,
         "max_source_length": args.max_source_length,
         "vocabularies": vocabularies,
-        "train_rows": len(train_rows),
+        "train_rows": len(raw["train"]),
     }
     if os.environ.get("RANK", "0") == "0":
         save_classifier(model, tokenizer, meta, args.output_dir / "final")
