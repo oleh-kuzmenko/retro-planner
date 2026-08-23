@@ -33,7 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "models"))
 
 from train_conditions_classifier import ABSENT, NUMERIC_FIELDS, load_classifier
 from train_conditions_model import format_input, format_target
-from models.reaggregate_conditions_topk import recompute
+from reaggregate_conditions_topk import recompute
 
 
 def parse_args() -> argparse.Namespace:
