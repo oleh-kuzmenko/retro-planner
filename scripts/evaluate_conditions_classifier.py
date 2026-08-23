@@ -33,6 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "models"))
 
 from train_conditions_classifier import ABSENT, NUMERIC_FIELDS, load_classifier
 from train_conditions_model import format_input, format_target
+from evaluate_conditions_model_topk import fix_legacy_tokenizer_config
 from reaggregate_conditions_topk import recompute
 
 
@@ -61,6 +62,10 @@ def class_text(field: str, name) -> str | None:
 
 def main() -> None:
     args = parse_args()
+    # A checkpoint written by Kaggle's transformers carries `extra_special_tokens` as a list,
+    # which this machine's older release cannot read back. Same in-place repair the generative
+    # evaluator applies, for the same reason.
+    fix_legacy_tokenizer_config(args.model_dir / "encoder")
     model, tokenizer, meta = load_classifier(args.model_dir)
     model.eval().to(args.device)
 
