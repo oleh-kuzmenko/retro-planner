@@ -77,6 +77,11 @@ def parse_args() -> argparse.Namespace:
     funnel = sub.add_parser("funnel", parents=[common], help="Count the funnel.")
     funnel.add_argument("--link2", type=Path, required=True, help="Model 2 scored on the expanded rows.")
     funnel.add_argument("--output", type=Path, help="Where to write the counts as JSON.")
+    funnel.add_argument(
+        "--detail",
+        action="store_true",
+        help="Also report link 1 at top-1/3/5 and link 2 per field on the records link 1 got right.",
+    )
     return parser.parse_args()
 
 
@@ -177,6 +182,68 @@ def conditions_match(reference: dict, parsed: dict | None) -> tuple[bool, bool]:
     return strict, relaxed
 
 
+FIELD_REPORT = (
+    "solvent exact",
+    "solvent group",
+    "catalyst exact",
+    "temperature exact",
+    "temperature range",
+    "full answer exact",
+    "full answer relaxed",
+)
+
+
+def tally_fields(
+    per_field: dict[str, list[int]],
+    reference: dict,
+    matched: list[dict | None],
+    strict: bool,
+    relaxed: bool,
+) -> None:
+    """Per-field counts on one record whose left side link 1 got right.
+
+    A field counts once per record, and a record counts as a hit when any route with the
+    right left side carries the right value -- the same OR over routes the funnel itself
+    uses, so the rows of the two tables cannot disagree.
+    """
+    from retro_eval.condition_similarity import component_groups
+
+    def bump(name: str, hit: bool) -> None:
+        per_field[name][0] += int(hit)
+        per_field[name][1] += 1
+
+    solvent_ref = normalize_components(reference.get("solvent"))
+    if solvent_ref is not None:
+        bump("solvent exact", any(normalize_components((p or {}).get("solvent")) == solvent_ref for p in matched))
+
+    catalyst_ref = normalize_components(reference.get("catalyst"))
+    if catalyst_ref is not None:
+        bump("catalyst exact", any(normalize_components((p or {}).get("catalyst")) == catalyst_ref for p in matched))
+
+    groups = component_groups(reference.get("solvent"), GROUP_CLASSIFIERS.get("solvent"))
+    if groups:
+        bump(
+            "solvent group",
+            any(
+                (predicted := component_groups((p or {}).get("solvent"), GROUP_CLASSIFIERS.get("solvent")))
+                and groups <= predicted
+                for p in matched
+            ),
+        )
+
+    number = to_number(reference.get("temperature_celsius"))
+    if number is not None:
+        predictions = [to_number((p or {}).get("temperature_celsius")) for p in matched]
+        bump("temperature exact", any(v is not None and abs(v - number) <= TEMPERATURE_TOLERANCE_C for v in predictions))
+        bump(
+            "temperature range",
+            any(v is not None and same_bucket(v, number, NUMERIC_BUCKET_EDGES["temperature_celsius"]) for v in predictions),
+        )
+
+    bump("full answer exact", strict)
+    bump("full answer relaxed", relaxed)
+
+
 def do_funnel(args: argparse.Namespace) -> None:
     rows, by_product = load(args.link1, args.test_file)
     link2 = json.loads(args.link2.read_text(encoding="utf-8"))
@@ -190,29 +257,41 @@ def do_funnel(args: argparse.Namespace) -> None:
 
     position = 0
     link1_hits = end_to_end_strict = end_to_end_relaxed = 0
+    link1_at_k = {1: 0, 3: 0, 5: 0}
+    per_field = {name: [0, 0] for name in FIELD_REPORT}
     for row in rows:
         product = canonical(row["product_smiles"])
         reference = substrate_set(row["full_reactants_smiles"], product)
         routes = surviving_routes(by_product.get(row["product_smiles"])) or [""]
 
         record_hit = record_strict = record_relaxed = False
-        for route in routes:
+        first_hit = None
+        matched: list[dict | None] = []
+        for index, route in enumerate(routes):
             candidate = scored[position]
             position += 1
             route_ok = route != "" and substrate_set(route, product) == reference
             record_hit |= route_ok
             if not route_ok:
                 continue
+            if first_hit is None:
+                first_hit = index
             # Rank 1 only: the cascade offers one condition set per route, and crediting a
             # lower-ranked one would score a list the chemist was never shown.
             parsed = decode_and_parse(candidate["candidates_raw"][0], target_format, fields)
             strict, relaxed = conditions_match(row, parsed)
+            matched.append(parsed)
             record_strict |= strict
             record_relaxed |= relaxed
 
         link1_hits += record_hit
         end_to_end_strict += record_strict
         end_to_end_relaxed += record_relaxed
+        for k in link1_at_k:
+            if first_hit is not None and first_hit < k:
+                link1_at_k[k] += 1
+        if record_hit:
+            tally_fields(per_field, row, matched, record_strict, record_relaxed)
 
     total = len(rows)
     result = {
@@ -229,6 +308,23 @@ def do_funnel(args: argparse.Namespace) -> None:
     print(f"  link 1 found the left side (top-5): {link1_hits} ({link1_hits / total * 100:.1f}%)")
     print(f"  one proposal right end to end, strict: {end_to_end_strict} ({end_to_end_strict / total * 100:.1f}%)")
     print(f"  the same, relaxed: {end_to_end_relaxed} ({end_to_end_relaxed / total * 100:.1f}%)")
+    if args.detail:
+        result["link1_at_k"] = link1_at_k
+        result["link2_on_correct_routes"] = {
+            name: {"records": total_n, "hits": hits, "share": (hits / total_n if total_n else 0.0)}
+            for name, (hits, total_n) in per_field.items()
+        }
+        print("  link 1 by depth:", end=" ")
+        print(
+            " | ".join(
+                f"top-{k} {v} ({v / total * 100:.1f}%)" for k, v in sorted(link1_at_k.items())
+            )
+        )
+        print("  link 2 on the records link 1 got right:")
+        for name, (hits, total_n) in per_field.items():
+            share = hits / total_n * 100 if total_n else 0.0
+            print(f"    {name:<34}{total_n:>5}{share:>8.1f}%")
+
     if args.output:
         args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"written to {args.output}")

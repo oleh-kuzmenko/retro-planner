@@ -1,0 +1,52 @@
+{
+  "records": 299,
+  "link1_top5": 141,
+  "link1_top5_share": 0.47157190635451507,
+  "end_to_end_strict": 41,
+  "end_to_end_strict_share": 0.13712374581939799,
+  "end_to_end_relaxed": 61,
+  "end_to_end_relaxed_share": 0.2040133779264214,
+  "link2_file": "experiments/v2_model2_roles/E2_cascade_routes_topk.json",
+  "link1_at_k": {
+    "1": 108,
+    "3": 131,
+    "5": 141
+  },
+  "link2_on_correct_routes": {
+    "solvent exact": {
+      "records": 135,
+      "hits": 57,
+      "share": 0.4222222222222222
+    },
+    "solvent group": {
+      "records": 127,
+      "hits": 72,
+      "share": 0.5669291338582677
+    },
+    "catalyst exact": {
+      "records": 32,
+      "hits": 7,
+      "share": 0.21875
+    },
+    "temperature exact": {
+      "records": 42,
+      "hits": 24,
+      "share": 0.5714285714285714
+    },
+    "temperature range": {
+      "records": 42,
+      "hits": 31,
+      "share": 0.7380952380952381
+    },
+    "full answer exact": {
+      "records": 141,
+      "hits": 41,
+      "share": 0.2907801418439716
+    },
+    "full answer relaxed": {
+      "records": 141,
+      "hits": 61,
+      "share": 0.4326241134751773
+    }
+  }
+}
