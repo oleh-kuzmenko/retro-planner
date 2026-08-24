@@ -1,0 +1,54 @@
+{
+  "records_with_a_correct_route": 141,
+  "identical_molecule_set": 58,
+  "groups": {
+    "same": {
+      "n": 58,
+      "route": 18,
+      "gold": 18
+    },
+    "donors_only": {
+      "n": 83,
+      "route": 8,
+      "gold": 20
+    }
+  },
+  "totals": {
+    "route": {
+      "full strict": [
+        26,
+        141
+      ],
+      "solvent": [
+        39,
+        135
+      ],
+      "temperature_celsius": [
+        21,
+        42
+      ],
+      "catalyst": [
+        4,
+        32
+      ]
+    },
+    "gold": {
+      "full strict": [
+        38,
+        141
+      ],
+      "solvent": [
+        49,
+        135
+      ],
+      "temperature_celsius": [
+        17,
+        42
+      ],
+      "catalyst": [
+        6,
+        32
+      ]
+    }
+  }
+}
