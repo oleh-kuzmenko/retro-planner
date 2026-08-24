@@ -1,0 +1,113 @@
+{
+  "records": 299,
+  "budgets": [
+    {
+      "routes": 1,
+      "conditions": 1,
+      "proposals": 1,
+      "strict": 19,
+      "strict_share": 0.06354515050167224,
+      "relaxed": 35,
+      "relaxed_share": 0.11705685618729098
+    },
+    {
+      "routes": 1,
+      "conditions": 2,
+      "proposals": 2,
+      "strict": 34,
+      "strict_share": 0.11371237458193979,
+      "relaxed": 49,
+      "relaxed_share": 0.16387959866220736
+    },
+    {
+      "routes": 1,
+      "conditions": 3,
+      "proposals": 3,
+      "strict": 43,
+      "strict_share": 0.14381270903010032,
+      "relaxed": 57,
+      "relaxed_share": 0.19063545150501673
+    },
+    {
+      "routes": 1,
+      "conditions": 5,
+      "proposals": 5,
+      "strict": 52,
+      "strict_share": 0.17391304347826086,
+      "relaxed": 70,
+      "relaxed_share": 0.23411371237458195
+    },
+    {
+      "routes": 3,
+      "conditions": 1,
+      "proposals": 3,
+      "strict": 37,
+      "strict_share": 0.12374581939799331,
+      "relaxed": 56,
+      "relaxed_share": 0.18729096989966554
+    },
+    {
+      "routes": 3,
+      "conditions": 2,
+      "proposals": 6,
+      "strict": 51,
+      "strict_share": 0.1705685618729097,
+      "relaxed": 69,
+      "relaxed_share": 0.23076923076923078
+    },
+    {
+      "routes": 3,
+      "conditions": 3,
+      "proposals": 9,
+      "strict": 59,
+      "strict_share": 0.19732441471571907,
+      "relaxed": 79,
+      "relaxed_share": 0.26421404682274247
+    },
+    {
+      "routes": 3,
+      "conditions": 5,
+      "proposals": 15,
+      "strict": 69,
+      "strict_share": 0.23076923076923078,
+      "relaxed": 93,
+      "relaxed_share": 0.3110367892976589
+    },
+    {
+      "routes": 5,
+      "conditions": 1,
+      "proposals": 5,
+      "strict": 41,
+      "strict_share": 0.13712374581939799,
+      "relaxed": 61,
+      "relaxed_share": 0.2040133779264214
+    },
+    {
+      "routes": 5,
+      "conditions": 2,
+      "proposals": 10,
+      "strict": 61,
+      "strict_share": 0.2040133779264214,
+      "relaxed": 80,
+      "relaxed_share": 0.26755852842809363
+    },
+    {
+      "routes": 5,
+      "conditions": 3,
+      "proposals": 15,
+      "strict": 66,
+      "strict_share": 0.22073578595317725,
+      "relaxed": 88,
+      "relaxed_share": 0.29431438127090304
+    },
+    {
+      "routes": 5,
+      "conditions": 5,
+      "proposals": 25,
+      "strict": 77,
+      "strict_share": 0.25752508361204013,
+      "relaxed": 102,
+      "relaxed_share": 0.3411371237458194
+    }
+  ]
+}
